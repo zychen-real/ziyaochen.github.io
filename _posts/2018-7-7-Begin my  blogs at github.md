@@ -8,6 +8,7 @@ header-img: "img/2017-bg.jpg"
 catalog: true
 mathjax: true
 tags:
+    -NLP
     - Relation classification
 ---
 
