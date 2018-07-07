@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Brgin my blogs in github"
+title:      "Begin my blogs in github.io"
 subtitle:   ""
 date:       2018-7-7
 author:     "ziyaochen"
@@ -10,9 +10,9 @@ mathjax: true
 tags:
     -NLP 
     -Task-Oriented Dialogue
-    -ML
+    -Machine Learning - ML
     -QA
-    -IR
+    -Information Retrive - IR
 ---
 
 ### 1. 来源
