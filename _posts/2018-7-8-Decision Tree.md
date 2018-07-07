@@ -16,5 +16,5 @@ tags:
 ### 2. 决策树基本介绍
 
 决策树，顾名思义就是类似树状的一种结构，当然你也可以将其设计成其他形状，但“树”更贴切。树故有结点，决策树中，分为叶结点与内部结点（非叶结点）。叶节点为某一类，内部结点表示某个特征或者属性。如下图所示：
-<div align=center><img width="150" height="150" src=/img/Decision-Tree/decision_tree.png/></div>
+<div align=center><img width="300" height="300" src=/img/Decision-Tree/decision_tree.png/></div>
 
