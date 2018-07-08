@@ -150,6 +150,28 @@ CART的生成算法其实跟上述的决策树类似
 
 ### 5.3 CART的剪枝
 
+CART的剪枝在我理解来看，最重要的是$$\alpha$$的求解，跟ID3算法一样的定义，我们有loss函数
+
+$$C_{\alpha}(T)=C(T)+\alpha\vert{T}\vert$$
+
+那么对于T中内部的每一个结点t，若其作为根结点，它大的loss函数为：
+
+$$C_{\alpha}(T_{t})=C(T_{t})+\alpha\vert{T_{t}}\vert$$
+
+如对这个进行剪枝为单结点，loss函数为：
+
+$$C_{\alpha}(T_{t})=C(T_{t})+\alpha$$
+
+于是我们得到平衡的$$\alpha$$：
+
+$$\alpha=\frac{C(t)-C(T_t)}{\vert{T_t}\vert-1}$$
+
+于是我们对T的内部结点自下而上计算每个结点的$$\alpha$$，选取最小的$$\alpha$$剪枝得到T1.同时将$$\alpha$$变更为此时最小的$$\alpha$$。
+
+于是我们能得到一系列的$$T_0,T_1,...T_n$$,通过交叉验证，选取最好的CART树。
+
+
+
 
 
 
