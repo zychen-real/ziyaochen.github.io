@@ -29,7 +29,7 @@ ID3算法根据特征的信息增益来选取特征，那什么是信息增益�
 熵表示不确定性，熵越大，不确定性越大。
 熵的表示公式为
 
-$$-H(X)=\sum_{i=1}^{n}p_ilogp_i$$
+$$H(X)=-\sum_{i=1}^{n}p_ilogp_i$$
 
 举个例子，例如投一枚硬币，正常情况下，正负概率是$$\frac{1}{2}$$,这时候你算出熵是最大的，当一枚不均匀的硬币时，相比前面熵减小了，因为它倾向于某一个概率了。下面看熵是怎么跟信息增益联系起来的。 
 
@@ -37,11 +37,11 @@ $$-H(X)=\sum_{i=1}^{n}p_ilogp_i$$
 
 第一步，H(D)的计算
 
-$$-\sum_{i=1}^{K}\frac{\vert{C_i}\vert}{D}log\frac{\vert{C_i}\vert}{D}$$
+$$H(D)=-\sum_{i=1}^{K}\frac{\vert{C_i}\vert}{D}log\frac{\vert{C_i}\vert}{D}$$
 
 第二步， $$H(D\vert{A})$$的计算
 
-$$-\sum_{i=1}^{n}\frac{\vert{D_i}\vert}{D}\sum_{k=1}{K}\frac{\vert{D_{ik}}\vert}{\vert{D_i}\vert}log\frac{\vert{D_{ik}}\vert}{\vert{D_i}\vert}$$
+$$H(D\vert{A})=-\sum_{i=1}^{n}\frac{\vert{D_i}\vert}{D}\sum_{k=1}{K}\frac{\vert{D_{ik}}\vert}{\vert{D_i}\vert}log\frac{\vert{D_{ik}}\vert}{\vert{D_i}\vert}$$
 
 第三步，计算熵增益，
 
@@ -98,7 +98,9 @@ $$C_{\alpha}(T)=C(T)+\alpha\vert{T}\vert$$
 故整体的剪枝算法如下：
 
 1 计算每个结点的信息熵
+
 2 从叶节点递归的向上剪枝操作
+
 3 对比前后剪枝的损失函数，若loss函数在剪枝后小于等于剪枝前，则进行剪枝。
 
 
