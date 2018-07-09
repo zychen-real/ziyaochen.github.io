@@ -19,6 +19,7 @@ tags:
 ### 2. Mem2Seq
 
 模型的整体框架图如下
+
 figue
 
 接下来逐个模块介绍。
@@ -97,6 +98,10 @@ figure
 #### 3.3. 评价结果
 
 figure
+
+figure
+
+同时作者深入探究了不同hop的影响以及同时可视化了最后一个hop输出的memory的attention，就是对历史对话消息与KB的一个概率分布。
 
 
 
