@@ -8,7 +8,7 @@ header-img: "img/2017-bg.jpg"
 catalog: true
 mathjax: true
 tags:
-    - Task
+    - TASK
 ---
 
 ### 1. 写在前面的话
