@@ -20,7 +20,7 @@ tags:
 
 模型的整体框架图如下
 
-figue
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Model.png)
 
 接下来逐个模块介绍。
 
