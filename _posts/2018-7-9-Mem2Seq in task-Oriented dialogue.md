@@ -26,9 +26,9 @@ tags:
 
 #### 2.1.Encode
 
-使用MemNNs作为历史对话追踪的的原因
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Encode.png)
 
-figure
+使用MemNNs作为历史对话追踪的的原因
 
 1. MemNNs实际操作中是query对若干个embedding矩阵进行addressing与reading的操作，具体如下：
 
@@ -46,7 +46,7 @@ $$o^k=\sum_{i}{ }p_i^kC_i^{k+1}$$
 
 $$q^{k+1}=q^k+o^k$$的表示有歧义，其实这里不能认为是q，作者的代码中也体现了这一点，其实是随机初始化的u作为更新对象：
 
-figure
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/uattention.png)
 
 也就是说，encode的输出其实是muti-hop加强后的attention，作为decode的初始化隐藏层初始值。
 
@@ -56,7 +56,7 @@ Decode的模型作者选用了GRU模型，每个词生成的时候会进行与me
 
 具体细节如下：
 
-figue
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Decode.png)
 
 1. decode 每个隐藏层的求解：
 
@@ -72,11 +72,11 @@ ptr可以理解为经过整个memory最后输出的一个attention,就是对memo
 
 4. 两者分布计算的源码如下：
 
-figure
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Distribution.png)
 
 loss计算源码片段如下：
 
-figure
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Loss.png)
 
 ### 3. Result
 
@@ -97,9 +97,13 @@ figure
 
 #### 3.3. 评价结果
 
-figure
+三种数据集跑的结果如下
 
-figure
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/Result.png)
+
+模型训练相比其他模型的优势：
+
+![](/img/Mem2Seq-in-dialogue-oriented-dialogue/responseRate.png)
 
 同时作者深入探究了不同hop的影响以及同时可视化了最后一个hop输出的memory的attention，就是对历史对话消息与KB的一个概率分布。
 
