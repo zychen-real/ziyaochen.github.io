@@ -87,7 +87,7 @@ $$H_t(T)=-\sum_{k=1}^{K}\frac{N_{tk}}{N_t}log\frac{N_{tk}}{N_t}$$
 
 损失函数
 
-$$C_{\alpha}(T)=-\sum_{t=1}^{\vert{T}\vert}N_tH_t(T)+\alpha\vert{T}\vert$$
+$$C_{\alpha}(T)=\sum_{t=1}^{\vert{T}\vert}N_tH_t(T)+\alpha\vert{T}\vert$$
 
 简写为：
 
@@ -113,7 +113,7 @@ CART可以用于分类与回归，每个结点的标记为YES or NO，即假设�
 
 但如何进行单元的划分呢，采用启发式的方式，我们选一个样本$$x^{(j)}$$ 将空间分为两个单元进行一次计算，然后寻找最优的切分点
 
-$$min_{j,s}[min_{c1}\sum_{xi}{y_i-c_1}+min_{c2}\sum_{xi}{y_i-c_2}]$$
+$$min_{j,s}^{}[min_{c1}^{}\sum_{xi}^{}{y_i-c_1}^2+min_{c2}^{}\sum_{xi}^{}{y_i-c_2}^2]$$
 
 概括起来包含以下几步：
 
