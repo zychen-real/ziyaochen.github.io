@@ -57,7 +57,10 @@ Attentive Read 就是使用上面的Attention机制，利用decode的隐藏层�
 
 Decoder部分也就是重点所在
 
-decoder的输入有四部分组成，$$c_t$$为当前的content vector，$$s_{t}$$ 为上一轮的decode的隐藏层输出，$$M$$实际指encode的所有隐藏层输出的序列，这里指包括右图DNN的的这样一个state update模块，$$y_{t-1}$$为上一轮预测的词分布。
+decoder的输入有四部分组成，$$c_t$$为当前的content vector，$$s_{t}$$ 为decode的隐藏层输出，这里要强调一下这里的$$s_t$$是由
+$$p(s_t\vert{s_{t-1},c_t,y_{t-1}})$$首先得到的，
+
+$$M$$实际指encode的所有隐藏层输出的序列，这里指包括右图DNN的的这样一个state update模块，$$y_{t-1}$$为上一轮预测的词分布。
 
 decoder的输出包括两部分，一种是在词表上的分布，另外一种是在历史信息中的词分布的概率，这样得到最终的一个词表+InputX的分布。
 
@@ -67,13 +70,35 @@ decoder的输出包括两部分，一种是在词表上的分布，另外一种�
 
 Prediction模块包括两部分，即copying与generation，最后的一个混合概率即可以用下面的公式表示，具体参数含义上面已介绍过：
 
-$$p(y_t\vert{s_t,y_{t-1},c_{t},M})=p(y_t,g\vert{s_t,y_{t-1},c_t,M})+p(y_t,c\vert{s_t,y_{t-1},c_t,M})$$
+$$p(y_t\vert{s_t,y_{t-1},c_{t},M})=p(y_t,g\vert{s_t,y_{t-1},c_t,M})+p(y_t,c\vert{s_t,y_{t-1},c_t,M})$$ 
 
 g表示generation mode，c表示copying mode。
 
 figure
 
-上图中表示的很清晰，当word来自不同的区间，对应不同的这样一个概率计算方法。
+上述集合的图表示的很清晰，当target word来自不同的区间，对应不同的这样一个概率计算方法。当词语来自上文与词表的这样一个分布时，概率会有比如叠加的效果，当target word仅仅来自词表同时不在上文中，那么此时就是单一的概率计算分布，后面同样时这个道理。
+
+上面的公式具体设计两个mode的具体计算
+
+generation采用如下的方式对每个词打分，
+
+$$\psi_g=(y_t=v_i)=v_i^TW_0s_t$$
+
+其实就是每个词的embedding与decode隐藏层点乘作为该词的评分，同时并以
+
+$$\frac{1}{Z}e^{\psi_g(y_t)}$$
+
+作为该词的概率。
+
+copying采用如下的方式对每个词打分，
+
+$$\psi(y_t=x_j)=\sigma(h_j^TW_c)s_t$$ 作为上文中每个字的评分函数，同时采用相同的如下
+
+$$\frac{1}{Z}e^{\psi_g(y_t)}$$
+
+作为概率的计算，只不过这时候的$$y_t$$区间来自上文的字
+
+$$\psi$$
 
 
 
