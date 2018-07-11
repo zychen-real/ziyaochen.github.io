@@ -41,7 +41,7 @@ $$c_t=\sum_{\tau=1}^{T_s}\alpha_{t\tau}h_{\tau}$$
 
 ### 2. Model
 
-![](/img/Copy-mechanism/Model.PNG.png)
+![](/img/Copy-mechanism/Model.png)
 
 #### 2.1 Encoder
 
