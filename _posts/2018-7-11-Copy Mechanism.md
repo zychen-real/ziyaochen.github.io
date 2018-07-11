@@ -16,7 +16,7 @@ tags:
 
 Copying Mechanism的出现缓解了NLP的一个难题，即OOV问题。什么是OOV就是通常情况下我们的词表大小是确定的，但是测试集中有可能会出现词表中没有陌生词，之前的处理方式就是直接用UNK的符号表示这一类OOV，因为通常情况下OOV不会非常多，但是你要想再提高比如1%的准确率，那么这个Copying Mechanism你不可或缺。Copying Mechanism 能解决例如旅行者背包的问题。整体来看，现在这个Copying Mechanism是十分常用的一种手段，例如在对话系统中，sequence-to-sequence的这样一个encode-decode框架下，decode预测的词是除了词表的分布外结合对话上文出现词的这样一个概率和。借用manning的这篇 Key-Value Retrieval Networks for Task-Oriented Dialogue表示一下这个分布结果：
 
-figure
+![](/img/Copy-mechanism/Distribution.png)
 
 可以看到同时又词表的分布与上文的分布，对于两者重叠的词将会有更大的概率。
 
@@ -30,8 +30,6 @@ $$att=softmax(F(Query,Key))*Value$$
 
 假设$$s_{t-1}$$代表上一轮decode的隐藏层，$$h_{\tau}$$ 代表encode的第$$\tau$$此时的隐藏那么可以得到对于每个encode隐藏层的这样一个权重计算公式：
 
-$$\alpha_{t\tau}=$$
-
 $$\alpha_{t\tau}=\frac{e^{\eta(s_{t-1},h_{\tau})}}{\sum_{\tau^i}^{ }e^{\eta(s_{t-1},h_{\tau^{i}})}}$$
 
 这样我们就可以得到当前的一个context vector 用$$c_t$$表示如下：
@@ -43,13 +41,11 @@ $$c_t=\sum_{\tau=1}^{T_s}\alpha_{t\tau}h_{\tau}$$
 
 ### 2. Model
 
-figure
+![](/img/Copy-mechanism/Model.PNG.png)
 
 #### 2.1 Encoder
 
-Encode 部分比较简单
-就是一个Bi-RNN的模型
-
+Encode 部分比较简单就是一个Bi-RNN的模型
 
 #### 2.2 Attentive Read
 
@@ -59,25 +55,23 @@ Attentive Read 就是使用上面的Attention机制，利用decode的隐藏层�
 
 Decoder部分也就是重点所在,decode相比于原来通用的sequence2sequence的模板有了一些改变，其中原来decoder的输入是基于$$c_t$$,$$s_{t-1}$$，以及$$y_{t-1}$$来更新state($$s_t$$)的状态，现在的state update（也就是decode的输出$$s_t$$）是把简单的$$y_{t-1}$$的这个输入变为
 
-$$(e{y_{t-1}};\zeta(y_{t-1}))$$  接一个DNN网络这样的形式
+$$(e{y_{t-1}};\zeta(y_{t-1}))$$  接一个DNN网络这样的形式,见state update的子图
 
 其中重点是$$\zeta(y_{t-1})$$其实是类似于attention，文章中叫做select read，是为了突出第i-1个词的位置信息
 具体计算是根据t-1时刻的decode的输出与M计算的一个attention，公式如下：
 
 $$\zeta(y_{t-1})=\sum_{\tau=1}^{T_s}\rho_{t\tau}h_{\tau}$$
 
-$$\rho_{t\tau}=frac{1}{K}p(x_r,c\vert{s_{t-1},M})$$
+$$\rho_{t\tau}=\frac{1}{K}p(x_r,c\vert{s_{t-1},M})$$
 
-decoder的输入有四部分组成，$$c_t$$为当前的content vector，$$s_{t}$$ 为decode的隐藏层输出，这里要强调一下这里的$$s_t$$是由
+decoder的输入有四部分组成，$$c_t$$为当前的context vector，$$s_{t}$$ 为decode的隐藏层输出，这里要强调一下这里的$$s_t$$是由
 上面得到的，
 
 $$M$$实际上是由每个词的隐藏层输出与位置encode特征组成的序列，见图，这里指包括右图DNN的的这样一个state update模块。
 
 decoder的输出包括两部分，一种是在词表上的分布，另外一种是在历史信息中的词分布的概率，这样得到最终的一个词表+历史对话信息的分布。
 
-接下来详细分析各模块
-
-1 Prediction模块
+接下来进行到Prediction模块
 
 Prediction模块包括两部分，即copying与generation，最后的一个混合概率即可以用下面的公式表示，具体参数含义上面已介绍过：
 
@@ -85,7 +79,7 @@ $$p(y_t\vert{s_t,y_{t-1},c_{t},M})=p(y_t,g\vert{s_t,y_{t-1},c_t,M})+p(y_t,c\vert
 
 g表示generation mode，c表示copying mode。
 
-figure
+![](/img/Copy-mechanism/Set.png)
 
 上述集合的图表示的很清晰，当target word来自不同的区间，对应不同的这样一个概率计算方法。当词语来自上文与词表的这样一个分布时，概率会有比如叠加的效果，当target word仅仅来自词表同时不在上文中，那么此时就是单一的概率计算分布，后面同样时这个道理。
 
@@ -103,13 +97,13 @@ $$\frac{1}{Z}e^{\psi_g(y_t)}$$
 
 copying采用如下的方式对每个词打分，
 
-$$\psi(y_t=x_j)=\sigma(h_j^TW_c)s_t$$ 作为上文中每个字的评分函数，同时采用相同的如下
+$$\psi(y_t=x_j)=\sigma(h_j^TW_c)s_t$$ 
+
+作为上文中每个字的评分函数，同时采用相同的如下
 
 $$\frac{1}{Z}e^{\psi_g(y_t)}$$
 
-作为概率的计算，只不过这时候的$$y_t$$区间来自上文的字
-
-$$\psi$$
+作为概率的计算，只不过这时候的$$y_t$$区间来自上文的字.
 
 
 
