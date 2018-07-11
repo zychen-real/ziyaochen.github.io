@@ -30,6 +30,8 @@ $$att=softmax(F(Query,Key))*Value$$
 
 假设$$s_{t-1}$$代表上一轮decode的隐藏层，$$h_{\tau}$$ 代表encode的第$$\tau$$此时的隐藏那么可以得到对于每个encode隐藏层的这样一个权重计算公式：
 
+$$\alpha_{t\tau}=$$
+
 $$\alpha_{t\tau}=\frac{e^{\eta(s_{t-1},h_{\tau})}}{\sum_{\tau^'=1}^{T_s}e^{\eta(s_{t-1},h_{\tau^{'}})}}$$
 
 这样我们就可以得到当前的一个context vector 用$$c_t$$表示如下：
