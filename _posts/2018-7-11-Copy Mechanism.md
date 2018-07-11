@@ -43,6 +43,40 @@ $$c_t=\sum_{\tau=1}^{T_s}\alpha_{t\tau}h_{\tau}$$
 
 figure
 
+#### 2.1 Encoder
+
+Encode 部分比较简单
+就是一个Bi-RNN的模型
+
+
+#### 2.2 Attentive Read
+
+Attentive Read 就是使用上面的Attention机制，利用decode的隐藏层与encode的隐藏层做一个Attention，得到当前的一个$$c_t$$作为decode输入的一部分。
+
+#### 2.3 Decoder
+
+Decoder部分也就是重点所在
+
+decoder的输入有四部分组成，$$c_t$$为当前的content vector，$$s_{t}$$ 为上一轮的decode的隐藏层输出，$$M$$实际指encode的所有隐藏层输出的序列，这里指包括右图DNN的的这样一个state update模块，$$y_{t-1}$$为上一轮预测的词分布。
+
+decoder的输出包括两部分，一种是在词表上的分布，另外一种是在历史信息中的词分布的概率，这样得到最终的一个词表+InputX的分布。
+
+接下来详细分析各公式
+
+主要分成Prediction即预测词与
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
