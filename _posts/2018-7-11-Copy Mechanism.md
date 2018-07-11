@@ -61,9 +61,20 @@ decoder的输入有四部分组成，$$c_t$$为当前的content vector，$$s_{t}
 
 decoder的输出包括两部分，一种是在词表上的分布，另外一种是在历史信息中的词分布的概率，这样得到最终的一个词表+InputX的分布。
 
-接下来详细分析各公式
+接下来详细分析各模块
 
-主要分成Prediction即预测词与
+1 Prediction模块
+
+Prediction模块包括两部分，即copying与generation，最后的一个混合概率即可以用下面的公式表示，具体参数含义上面已介绍过：
+
+$$p(y_t\vert{s_t,y_{t-1},c_{t},M})=p(y_t,g\vert{s_t,y_{t-1},c_t,M})+p(y_t,c\vert{s_t,y_{t-1},c_t,M})$$
+
+g表示generation mode，c表示copying mode。
+
+figure
+
+上图中表示的很清晰，当word来自不同的区间，对应不同的这样一个概率计算方法。
+
 
 
 
