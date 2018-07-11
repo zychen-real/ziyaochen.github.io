@@ -32,7 +32,7 @@ $$att=softmax(F(Query,Key))*Value$$
 
 $$\alpha_{t\tau}=$$
 
-$$\alpha_{t\tau}=\frac{e^{\eta(s_{t-1},h_{\tau})}}{\sum_{\tau^'=1}^{T_s}e^{\eta(s_{t-1},h_{\tau^{'}})}}$$
+$$\alpha_{t\tau}=\frac{e^{\eta(s_{t-1},h_{\tau})}}{\sum_{\tau^'}^{ }e^{\eta(s_{t-1},h_{\tau^{'}})}}$$
 
 这样我们就可以得到当前的一个context vector 用$$c_t$$表示如下：
 
