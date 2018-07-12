@@ -122,12 +122,21 @@ $$L=-\frac{1}{N}\sum_{k=1}^{N}\sum_{t=1}^{T}log(p(y_t^{(k)}\vert{y_{<t}^{(k)},X^
 
 1. 简单的模板
 
+即设计规则生成的数据
+
+![](/img/Copy-mechanism/R1.PNG)
+
 2. 文本摘要
 
+基于LCSTC数据集
+
+![](/img/Copy-mechanism/R2.PNG)
 
 3. 单论对话
 
+作者自己设计的单轮对话数据集
 
+![](/img/Copy-mechanism/R3.PNG)
 
 
 
