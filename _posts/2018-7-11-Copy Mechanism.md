@@ -53,25 +53,29 @@ Attentive Read 就是使用上面的Attention机制，利用decode的隐藏层�
 
 #### 2.3 Decoder
 
+##### 2.3.1 State update
+
 Decoder部分也就是重点所在,decode相比于原来通用的sequence2sequence的模板有了一些改变，其中原来decoder的输入是基于$$c_t$$,$$s_{t-1}$$，以及$$y_{t-1}$$来更新state($$s_t$$)的状态，现在的state update（也就是decode的输出$$s_t$$）是把简单的$$y_{t-1}$$的这个输入变为
 
-$$(e{y_{t-1}};\zeta(y_{t-1}))$$  接一个DNN网络这样的形式,见state update的子图
+$$(e{y_{t-1}};\zeta(y_{t-1}))$$  
 
-其中重点是$$\zeta(y_{t-1})$$其实是类似于attention，文章中叫做select read，是为了突出第i-1个词的位置信息
-具体计算是根据t-1时刻的decode的输出与M计算的一个attention，公式如下：
+接一个DNN网络这样的形式,见state update的子图,其中重点是
+
+$$\zeta(y_{t-1})$$
+
+其实是类似于attention，文章中叫做select read，是为了突出第i-1个词的位置信息,具体计算是根据t-1时刻的decode的输出与M计算的一个attention，公式如下：
 
 $$\zeta(y_{t-1})=\sum_{\tau=1}^{T_s}\rho_{t\tau}h_{\tau}$$
 
 $$\rho_{t\tau}=\frac{1}{K}p(x_r,c\vert{s_{t-1},M})$$
 
-decoder的输入有四部分组成，$$c_t$$为当前的context vector，$$s_{t}$$ 为decode的隐藏层输出，这里要强调一下这里的$$s_t$$是由
-上面得到的，
+##### 2.3.2 Decoder的输入组成
 
-$$M$$实际上是由每个词的隐藏层输出与位置encode特征组成的序列，见图，这里指包括右图DNN的的这样一个state update模块。
+decoder的输入有四部分组成，$$c_t$$为当前的context vector，$$s_{t}$$ 为decode的隐藏层输出，$$M$$实际上是由每个词的隐藏层输出与位置encode特征组成的序列，见图，这里指state update模块。
 
 decoder的输出包括两部分，一种是在词表上的分布，另外一种是在历史信息中的词分布的概率，这样得到最终的一个词表+历史对话信息的分布。
 
-接下来进行到Prediction模块
+##### 2.3.3 Prediction模块
 
 Prediction模块包括两部分，即copying与generation，最后的一个混合概率即可以用下面的公式表示，具体参数含义上面已介绍过：
 
@@ -104,6 +108,27 @@ $$\psi(y_t=x_j)=\sigma(h_j^TW_c)s_t$$
 $$\frac{1}{Z}e^{\psi_g(y_t)}$$
 
 作为概率的计算，只不过这时候的$$y_t$$区间来自上文的字.
+
+##### 2.3.4
+
+因为生成的$$y_t$$具有整个词表+历史信息的一个分布，所以Loss函数实际上是在包含OOV的词表上计算极大似然估计:
+
+$$L=-\frac{1}{N}\sum_{k=1}^{N}\sum_{t=1}^{T}log(p(y_t^{(k)}\vert{y_{<t}^{(k)},X^{(k)}}))$$
+
+
+### 3 模型的结果
+
+模型在三种数据集上面做了实验：
+
+1. 简单的模板
+
+2. 文本摘要
+
+
+3. 单论对话
+
+
+
 
 
 
