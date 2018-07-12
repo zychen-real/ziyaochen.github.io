@@ -74,6 +74,22 @@ figure
 
 #### 4.2 Result
 
+NDM 
+
+NDM+Att+SS
+
+LIDM
+
+KVRN
+
+这几种模型与本文比较如下：
+
+figure
+
+OOV的test结果如下：
+
+figure
+
 
 
 
