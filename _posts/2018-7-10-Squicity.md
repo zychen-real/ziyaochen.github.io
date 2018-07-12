@@ -48,9 +48,9 @@ $$\sum_{j=1}^{m}y_jlogP_j(y_j)$$
 
 由于decode一些templet比decode一些其他词更重要，文章中采用了RL进行训练，将decode的网络理解为policy网络，表示为$$\pi_{\theta}(y_j)$$，用于decode $$y_j$$,其中$$m^i+1<=j<=m$$，每个选择的$$y_j$$可以认为action，被GRU产生的隐藏表示，可以认为state，训练时候的policy gradient 如下：
 
-##\sum_{j=1}^{m}y_jlogP_j(y_j)\frac{\partial{log\pi_{\theta}(y_j)}}{\theta}##
+##\frac{1}{m-m^、}\sum_{j=1+m^、}^{m}r^{(j)}\frac{\partial{log\pi_{\theta}(y_j)}}{\partial\theta}##
 
-其中 $$r^{(j)}=r^{(j)}+\lambdar^{(j)}+\lambdar^{(j+1)}...\lambda^{m-j+1}r^{(m)}$$
+其中 $$r^{(j)}=r^{(j)}+\lambda{r^{(j+1)}}+...\lambda^{m-j+1}r^{(m)}$$
 
 reward采用这么设置，当request_slot被decode的时候，reward为1，否则其他的为-0.1，$$\lambda$$设置为0.8
 
