@@ -69,6 +69,8 @@ $$\zeta(y_{t-1})=\sum_{\tau=1}^{T_s}\rho_{t\tau}h_{\tau}$$
 
 $$\rho_{t\tau}=\frac{1}{K}p(x_r,c\vert{s_{t-1},M})$$
 
+再补充一点，如果这个词不在上文中出现我们有$$\zeta(y_{t-1})=0$$，这不就正好退化到原来普通的$$y_{t-1}$$！这样看应该十分直观了~
+
 ##### 2.3.2 Decoder的输入组成
 
 decoder的输入有四部分组成，$$c_t$$为当前的context vector，$$s_{t}$$ 为decode的隐藏层输出，$$M$$实际上是由每个词的隐藏层输出与位置encode特征组成的序列，见图，这里指state update模块。
