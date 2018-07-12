@@ -93,7 +93,7 @@ g表示generation mode，c表示copying mode。
 
 generation采用如下的方式对每个词打分，
 
-$$\psi_g=(y_t=v_i)=v_i^TW_0s_t$$
+$$\psi_g(y_t=v_i)=v_i^TW_0s_t$$
 
 其实就是每个词的embedding与decode隐藏层点乘作为该词的评分，同时并以
 
