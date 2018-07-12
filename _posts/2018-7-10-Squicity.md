@@ -21,7 +21,8 @@ tags:
 
 ### 2. Sequicity
 
-figure
+![](/img/Squicity/Model.png)
+
 
 接下来详细聊一下sequicity这个框架，先介绍一下基本单元，$$B_t$$表示当前对话的隐藏状态，即当前所涉及到的slot信息，包括request_slot与inform_slot，理解为上文到时间t的一个状态追踪，$$U_t$$为t时刻的用户的回答，$$R_t$$为t时刻的机器回复。训练的时候数据是这样组织的，{$$(B_0R_0U_1;B_1R_1);(B_1R_1U_2;B_2R_2);...;(B_{t-1}R_{t-1}U_t;B_tR_t)$$},$$B_0,R_0$$初始化为空。从图中可以看到，训练的时候采用的是模板的形式，测试的时候会从实际的KB中寻找替换成具体的value，如餐厅的具体名字。由于B的分布与R的分布不一样，作者采用分步decode的方式，先用第一步decode生成$$B_t$$,再利用第二步decode生成$$R_t$$，并且第一步产生的$$B_t$$也是生成$$R_t$$的条件之一。表达式可以写成如下：
 
@@ -30,8 +31,6 @@ $$B_t=seq2seq(B_{t-1}R_{t-1}U_t\vert{0,0})$$
 $$R_t=seq2seq(B_{t-1}R_{t-1}U_t\vert{B_t,k_t})$$
 
 ### 3. Two-Stage CopyNet
-
-figure
 
 文章中在这个通用框架上实例化了一个例子。使用基于copyNet的decode，copy mechanical 这里不再叙述，有需要的同学可以去我的另外一篇专门讲到过：https://ziyaochen.github.io/2018/07/11/Copy-Mechanism/
 
@@ -59,8 +58,7 @@ reward采用这么设置，当request_slot被decode的时候，reward为1，否�
 
 数据集介绍如图：
 
-figure
-
+![](/img/Squicity/dataset.png)
 
 #### 4.1 评价指标
 
@@ -84,11 +82,11 @@ KVRN
 
 这几种模型与本文比较如下：
 
-figure
+![](/img/Squicity/Result.png)
 
 OOV的test结果如下：
 
-figure
+![](/img/Squicity/OOVtest.png)
 
 
 
