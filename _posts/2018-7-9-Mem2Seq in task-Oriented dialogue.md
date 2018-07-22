@@ -30,14 +30,14 @@ tags:
 
 使用MemNNs作为历史对话追踪的的原因
 
-1. MemNNs实际操作中是query对若干个embedding矩阵进行addressing与reading的操作，具体如下：
+1. MemNNs实际操作中是query(文章中是用zero_vector来表示query)对若干个embedding矩阵进行addressing与reading的操作，具体如下：
 
-2. 文章中的每个memory都是词表级别的embedding矩阵，第k个memory记为$$C_k$$,   假设有K+1个memory unit，记为$$C_1,C_2,...C_{k+1}$$，query的输入为one-hot的表示；
-3. Addressing的操作就是在query在词表中的embedding，进行softmax得到概率分布p,下面是对第i个memory unit的reading操作
+2. 文章中的每个memory都是词表级别的embedding矩阵，第k个memory记为$$C_k$$,   假设有K+1个memory unit，记为$$C_1,C_2,...C_{k+1}$$；
+3. Addressing的操作就是在历史对话信息(story)在词表中的embedding与query的乘积进行softmax得到概率分布p,下面是对第i个memory unit的reading操作
 
 $$p_i^k=Softmax((q^k)^TC_i^k)$$
 
-$$p^k$$ 可以认为是memory选择器，就是对query中的相关的memory进行选择，注意这里的query=KB+history dialogue。
+$$p^k$$ 可以认为是memory选择器，就是对query中的相关的memory进行选择。
 4. 对第i+1的memory unit 进行reading，实际是就是得到attention的向量输出：
 
 $$o^k=\sum_{i}{ }p_i^kC_i^{k+1}$$
@@ -46,7 +46,7 @@ $$o^k=\sum_{i}{ }p_i^kC_i^{k+1}$$
 
 $$q^{k+1}=q^k+o^k$$
 
-的表示有歧义，其实这里不能认为是q，作者的代码中也体现了这一点，其实是随机初始化的u作为更新对象：
+这里也就是源码中的u其实就是zero vector 也就是query：
 
 ![](/img/Mem2Seq-in-dialogue-oriented-dialogue/uattention.png)
 
