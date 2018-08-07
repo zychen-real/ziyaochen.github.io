@@ -41,7 +41,6 @@ tags:
 
 ![](/img/Nueral-dialogue/p1.png)
 
-
 ![](/img/Nueral-dialogue/p2.png)
 
 ![](/img/Nueral-dialogue/p3.png)
@@ -50,7 +49,7 @@ tags:
 
 warm start 采用rule policy 的方式，当experience reply pool 达到一定的size的时候停止warm start，开始RL training。
 
-figure
+![](/img/Nueral-dialogue/warmStart.png)
 
 DQN具体实现细节：
 
@@ -62,7 +61,13 @@ DQN的train过程：
 
 每个sample的格式如下：
 
-figure
+![](/img/Nueral-dialogue/form.png)
+
+### 3 Result
+
+![](/img/Nueral-dialogue/res.png)
+
+
 
 
 
