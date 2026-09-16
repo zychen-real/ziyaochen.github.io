@@ -1,54 +1,103 @@
+# ============================================================
 # Site settings
+# ============================================================
 title: ziyaochen's Blog
 SEOTitle: ziyaochen's Blog
 header-img: img/2017-bg.jpg
 email: ziychen@zju.edu.cn
-description: ""
-keyword: ""
-url: "http://ziyaochen.github.io"              # your host, for absolute URL
-baseurl: ""                             # for example, '/blog' if your blog hosted on 'host/blog'
+description: "记录学习过程中的一些心得与总结"
+keyword: "NLP, 自然语言处理, 对话系统, 机器学习, 深度学习"
+lang: zh-CN
+timezone: Asia/Shanghai
 
+# 站点地址。
+# 若仓库名为 <用户名>.github.io  ->  url = https://<用户名>.github.io ，baseurl 留空
+# 若为普通项目仓库             ->  url = https://<用户名>.github.io ，baseurl = /<仓库名>
+url: "https://zychen-real.github.io"
+baseurl: ""
+
+# ============================================================
 # SNS settings
-# weibo_username: 
-# zhihu_username: 
-github_username: ziyaochen
+# ============================================================
+# weibo_username:
+# zhihu_username:
+github_username: zychen-real
 
+# ============================================================
 # Build settings
-# from 2016, 'pygments' is unsupported on GitHub Pages. Use 'rouge' for highlighting instead.
+# ============================================================
 highlighter: rouge
-permalink: pretty
+permalink: /:year/:month/:day/:title/
 paginate: 10
-exclude: ["less","node_modules","Gruntfile.js","package.json","README.md","README.zh.md"]
-anchorjs: true                          # if you want to customize anchor. check out line:181 of `post.html`
+paginate_path: "/page:num/"
 
-# Gems
-# to support local preview for Jekyll 3.0
-gems: [jekyll-paginate]
+plugins:
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-seo-tag
 
+exclude:
+  - less
+  - node_modules
+  - Gruntfile.js
+  - package.json
+  - package-lock.json
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - README.zh.md
+  - LICENSE
+  - vendor
+  - .github
+
+# 给所有文章统一补默认值，避免每篇都写重复字段
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      author: ziyaochen
+      header-img: img/2017-bg.jpg
+      catalog: true
+      mathjax: true
+
+anchorjs: true
+
+# ============================================================
 # Markdown settings
-# replace redcarpet to kramdown,
-# although redcarpet can auto highlight code, the lack of header-id make the catalog impossible, so I switch to kramdown
-# document: http://jekyllrb.com/docs/configuration/#kramdown
+# ============================================================
 markdown: kramdown
 kramdown:
-  input: GFM                            # use Github Flavored Markdown !important
+  input: GFM
+  syntax_highlighter: rouge
+  hard_wrap: false
 
+# ============================================================
 # Baidu Share
-bd_share: false                         # whether or not using baidu share
+# ============================================================
+bd_share: false
 
+# ============================================================
 # Analytics settings
-# Baidu Analytics
-# ba_track_id: 07529a93af5fa9f808261a1318c3aba4
+# ============================================================
+# ba_track_id:
 
+# ============================================================
 # Sidebar settings
-sidebar: true                           # whether or not using Sidebar.
-sidebar-about-description: ""
-sidebar-avatar: /img/avar.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
+# ============================================================
+sidebar: true
+sidebar-about-description: "Keep Thinking."
+sidebar-avatar: /img/avar.jpg
 
+# ============================================================
 # Featured Tags
-featured-tags: true                     # whether or not using Feature-Tags
-featured-condition-size: 1              # A tag will be featured if the size of it is more than this condition value
+# ============================================================
+featured-tags: true
+featured-condition-size: 1
 
+# ============================================================
 # Friends
-#friends: [
-#]
+# ============================================================
+# friends: []

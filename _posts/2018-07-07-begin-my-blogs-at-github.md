@@ -2,7 +2,7 @@
 layout:     post
 title:      "Begin my blogs in github.io"
 subtitle:   ""
-date:       2018-7-7
+date:       2018-07-07
 author:     "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true

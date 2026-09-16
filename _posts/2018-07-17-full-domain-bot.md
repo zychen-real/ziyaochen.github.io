@@ -2,7 +2,7 @@
 layout:     post
 title:      "全领域的聊天机器人的一些心得"
 subtitle:   ""
-date:       2018-7-17
+date:       2018-07-17
 author:     "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true

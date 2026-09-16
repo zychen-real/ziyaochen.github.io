@@ -2,14 +2,13 @@
 layout:     post
 title:      "《平凡的世界》有感"
 subtitle:   ""
-date:       2018-7-31
+date:       2018-07-31
 author:     "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true
 mathjax: true
 tags:
-    - TASK
-
+    - 读书
 ---
 ## 开始
 
