@@ -2,29 +2,26 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ site.description }}">
-    <meta name="keywords"  content="{{ site.keyword }}">
-    
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <meta name="keywords"  content="{{ page.keywords | default: site.keyword }}">
+
     <title>{% if page.title %}{{ page.title }} - {{ site.SEOTitle }}{% else %}{{ site.SEOTitle }}{% endif %}</title>
 
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ site.baseurl }}/img/favicon.ico">
-    
     <!-- Canonical URL -->
-    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | absolute_url }}">
+
+    <!-- RSS -->
+    {% feed_meta %}
 
     <!-- Bootstrap Core CSS -->
-    <link rel="stylesheet" href="{{ "/css/bootstrap.min.css" | prepend: site.baseurl }}">
+    <link rel="stylesheet" href="{{ '/css/bootstrap.min.css' | relative_url }}">
 
-    <!-- font-awesome CSS -->
-    <link rel="stylesheet" href="http://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
+    <!-- font-awesome CSS (cdnjs，原 cdn.bootcss.com 已停止服务) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ "/css/hux-blog.min.css" | prepend: site.baseurl }}">
+    <link rel="stylesheet" href="{{ '/css/hux-blog.min.css' | relative_url }}">
 
     <!-- Highlight CSS -->
-    <link rel="stylesheet" href="{{ "/css/googlecode.css" | prepend: site.baseurl }}">
-
-    <!-- ga & ba script hoook -->
-    <script></script>
+    <link rel="stylesheet" href="{{ '/css/googlecode.css' | relative_url }}">
 </head>

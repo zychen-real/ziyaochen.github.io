@@ -2,7 +2,7 @@
 layout:     post
 title:      "End2End Task Completion nueral dialogue systems"
 subtitle:   ""
-date:       2018-8-7
+date:       2018-08-07
 author:     "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true

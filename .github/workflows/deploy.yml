@@ -1,0 +1,58 @@
+name: Build and Deploy Jekyll Site
+
+on:
+  push:
+    branches: [master, main]
+  # 允许在 Actions 页面手动触发
+  workflow_dispatch:
+
+# GITHUB_TOKEN 权限：读代码 + 写 Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署，新的推送会取消排队中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true   # 自动 bundle install 并缓存 gem
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build site
+        # baseurl 由 configure-pages 自动推导：
+        #   <user>.github.io 仓库 -> ""，普通项目仓库 -> "/<repo>"
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

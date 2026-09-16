@@ -2,7 +2,7 @@
 layout:     post
 title:      "ACL_2018_Mem2Seq: Effectively Incorporating Knowledge Bases into End-to-End Task-Oriented Dialog Systems"
 subtitle:   ""
-date:       2018-7-9
+date:       2018-07-09
 author:     "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true
