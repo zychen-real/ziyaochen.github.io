@@ -120,11 +120,11 @@ layout: default
 <!-- anchor-js, Doc:https://www.bryanbraun.com/anchorjs/ -->
 <script>
     async("https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.3.1/anchor.min.js",function(){
-        anchors.options = {
-          visible: 'always',
-          placement: 'right',
-          icon: '#'
-        };
+anchors.options = {
+      visible: 'hover',
+      placement: 'right',
+      icon: '#'
+    };
         anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
     })
 </script>
