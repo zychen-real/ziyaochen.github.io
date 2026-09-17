@@ -157,7 +157,8 @@ article:has(.rq-kmeans-fsq-report) > .container,
 article:has(.sglang-report) > .container,
 article:has(.vllm-report) > .container,
 article:has(.search-recall-report) > .container,
-article:has(.toy-demo) > .container {
+article:has(.toy-demo) > .container,
+.toy-post-page article > .container {
   width: auto;
   max-width: 1280px;
   padding-left: 20px;
@@ -173,7 +174,8 @@ article:has(.toy-demo) > .container {
 .post-container:has(.sglang-report),
 .post-container:has(.vllm-report),
 .post-container:has(.search-recall-report),
-.post-container:has(.toy-demo) {
+.post-container:has(.toy-demo),
+.toy-post-page .post-container {
   width: 100%;
   max-width: 100%;
   margin-left: 0;
@@ -214,16 +216,21 @@ article:has(.search-recall-report) .catalog-container {
  * 首页 Toy 视频墙
  * ------------------------------------------------------------
  * 首页用 layout:page，正文被 col-lg-8 + 右侧 sidebar 夹窄，
- * 视频墙需要更大横向空间，所以这里把「包含视频墙的那个」
- * .container 放开、正文列占满整行，并隐藏侧栏。
- * 注意用 .container:has(.toy-wall) 而不是 body:has(...) .container，
- * 否则页头 intro-header 和页脚的 .container 会一起被撑宽，
- * 导致标题和页脚文案跟着偏移。
- * 思路与报告类文章的三层撑宽一致（见本文件上半部分）。
+ * 视频墙需要更大横向空间，所以要放开外层 .container、让正文列
+ * 占满整行，并隐藏侧栏。
+ *
+ * 这里刻意不用 :has()。之前用 .container:has(.toy-wall) 实测线上
+ * 整版失效（侧栏没隐藏、宽度没放开、卡片没进网格），排查过 CSS 已
+ * 正确上线、主题也无覆盖规则，问题就在 :has() 本身不可靠。
+ * 改成由 index.html 的 front matter 声明 body-class: toy-wall-page，
+ * _layouts/default.html 把它渲染到 <body class="...">，这里用普通
+ * 后代选择器命中——所有浏览器都稳。
  * ========================================================== */
 
-/* 1. 放开 Bootstrap .container 的 1170px 硬限制 */
-.container:has(.toy-wall) {
+/* 1. 放开 Bootstrap .container 的 1170px 硬限制。
+      只作用于主内容区：用 > .container 会同时命中 header/footer 的
+      container，导致页头标题和页脚跟着偏移，所以排除它们。 */
+.toy-wall-page > .container {
   width: auto;
   max-width: 1400px;
   padding-left: 24px;
@@ -231,7 +238,7 @@ article:has(.search-recall-report) .catalog-container {
 }
 
 /* 2. 正文列占满整行，抵消 col-lg-offset-* 偏移 */
-.postlist-container:has(.toy-wall) {
+.toy-wall-page .postlist-container {
   width: 100%;
   max-width: 100%;
   margin-left: 0;
@@ -242,7 +249,7 @@ article:has(.search-recall-report) .catalog-container {
 }
 
 /* 3. 首页隐藏右侧栏（热门标签 / About / 友链），把宽度全留给视频 */
-.container:has(.toy-wall) .sidebar-container {
+.toy-wall-page .sidebar-container {
   display: none !important;
 }
 
@@ -263,10 +270,11 @@ article:has(.search-recall-report) .catalog-container {
   line-height: 1.7;
 }
 
-/* 自适应网格：宽屏两列，窄屏自动单列 */
+/* 自适应网格：宽屏两列，窄屏自动单列。
+   minmax 的下限用 min(460px,100%)，否则窄容器下 460px 会撑破网格。 */
 .toy-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
   gap: 26px;
   margin-bottom: 40px;
 }
@@ -276,6 +284,7 @@ article:has(.search-recall-report) .catalog-container {
   border: 1px solid #e1e4e8;
   border-radius: 14px;
   overflow: hidden;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
@@ -293,6 +302,7 @@ article:has(.search-recall-report) .catalog-container {
 }
 .toy-card-media video {
   width: 100%;
+  max-width: 100%;
   height: auto;
   display: block;
   background: #000;
