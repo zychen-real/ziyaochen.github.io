@@ -213,6 +213,111 @@ article:has(.search-recall-report) .catalog-container {
 }
 
 /* ==========================================================
+ * 导航栏年份合集下拉
+ * ------------------------------------------------------------
+ * 入口只显示最新年份，悬停展开其余年份。
+ * 宽屏（>=768px）：绝对定位浮层，靠 :hover 展开。父项有一块透明的
+ *   ::after 把按钮和浮层之间的缝隙盖住，否则鼠标斜着移过去会因为
+ *   中途离开元素而导致菜单闪退。
+ * 窄屏（<768px）：主题的 .navbar-collapse 本身就是一块白色面板，
+ *   浮层在里面会被裁切，所以改成内联展开（由 nav.html 的脚本加
+ *   .open class 控制）。
+ * ========================================================== */
+.nav-years {
+  position: relative;
+}
+.nav-years-caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: .75;
+}
+
+.nav-years-menu {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+.nav-years-menu > li {
+  display: block;
+}
+
+@media only screen and (min-width: 768px) {
+  /* 盖住按钮与浮层之间的空隙，避免鼠标移动途中菜单闪退 */
+  .nav-years::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 12px;
+  }
+  .nav-years-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    min-width: 152px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: rgba(0, 0, 0, .12) 0 1px 6px, rgba(0, 0, 0, .24) 0 1px 4px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s;
+    z-index: 1001;
+  }
+  .nav-years:hover .nav-years-menu,
+  .nav-years:focus-within .nav-years-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  /* 浮层在白底上，必须覆盖主题那套「导航链接为白色」的规则 */
+  .navbar-custom .nav .nav-years-menu li a {
+    display: block;
+    padding: 9px 18px;
+    color: #404040 !important;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: none;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .navbar-custom .nav .nav-years-menu li a:hover,
+  .navbar-custom .nav .nav-years-menu li a:focus {
+    background: #f5f7fa;
+    color: #1f6feb !important;
+  }
+  .navbar-custom .nav .nav-years-menu li.is-current a {
+    color: #1f6feb !important;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  /* 窄屏：内联展开，默认收起 */
+  .nav-years-menu {
+    display: none;
+    padding: 0 0 4px;
+  }
+  .nav-years.open .nav-years-menu {
+    display: block;
+  }
+  .navbar-custom .nav .nav-years-menu li a {
+    padding-left: 34px;
+    font-size: 13.5px;
+    text-transform: none;
+    opacity: .85;
+  }
+}
+
+/* ==========================================================
  * 首页 Toy 视频墙
  * ------------------------------------------------------------
  * 首页用 layout:page，正文被 col-lg-8 + 右侧 sidebar 夹窄，

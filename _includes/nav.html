@@ -19,12 +19,46 @@
                     <li>
                         <a href="{{ '/' | relative_url }}">Home</a>
                     </li>
-                    <li>
-                        <a href="{{ '/2018/' | relative_url }}">2018</a>
+                    {%- comment -%}
+                      年份合集下拉：站点所有 collection 里名字形如 y<年份>
+                      的都算年份合集，按年份倒序。入口显示最新年份，
+                      悬停（窄屏点击）展开其余年份。
+                      新增 y<年> collection 后这里会自动收录，无需改动。
+
+                      只用 append / split / sort / reverse 这几个标准
+                      Liquid 过滤器：拼成字符串再切分。不要用 push——
+                      那是 Ruby 的 Array 方法，Liquid 没有这个过滤器，
+                      用了数组会一直是空的，年份入口会整个消失。
+                    {%- endcomment -%}
+                    {%- assign yr_list = "" -%}
+                    {%- for col in site.collections -%}
+                      {%- assign yr = col.label | remove_first: "y" -%}
+                      {%- assign yr_num = yr | plus: 0 -%}
+                      {%- if yr_num > 1990 -%}
+                        {%- assign yr_list = yr_list | append: yr | append: "," -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {%- assign years = yr_list | split: "," | sort | reverse -%}
+
+                    {%- if years.size > 0 -%}
+                    <li class="nav-years">
+                        <a href="{{ years[0] | prepend: '/' | append: '/' | relative_url }}"
+                           class="nav-years-toggle"
+                           aria-haspopup="true"
+                           aria-expanded="false">
+                            {{ years[0] }}<span class="nav-years-caret" aria-hidden="true"></span>
+                        </a>
+                        {%- if years.size > 1 -%}
+                        <ul class="nav-years-menu">
+                            {%- for y in years -%}
+                            <li{% if forloop.first %} class="is-current"{% endif %}>
+                                <a href="{{ y | prepend: '/' | append: '/' | relative_url }}">{{ y }} 合集</a>
+                            </li>
+                            {%- endfor -%}
+                        </ul>
+                        {%- endif -%}
                     </li>
-                    <li>
-                        <a href="{{ '/2026/' | relative_url }}">2026</a>
-                    </li>
+                    {%- endif -%}
                     <li>
                         <a href="{{ '/toy/' | relative_url }}">Toy</a>
                     </li>
@@ -87,6 +121,36 @@
     document.addEventListener('click', function(e){
         if(e.target == $toggle) return;
         if(e.target.className == 'icon-bar') return;
+        if(e.target.closest && e.target.closest('.nav-years')) return;
         __HuxNav__.close();
     })
+
+    /**
+     * 年份下拉：宽屏纯 CSS :hover 展开，这里只处理触屏 / 窄屏——
+     * 悬停在触屏上不存在，所以第一次点击父项改为展开菜单而不是跳转，
+     * 再点一次才跟随链接。子项（具体年份）不拦截，正常跳转。
+     */
+    (function(){
+        var years = document.querySelector('.nav-years');
+        if(!years) return;
+        var toggle = years.querySelector('.nav-years-toggle');
+        var menu = years.querySelector('.nav-years-menu');
+        if(!toggle || !menu) return;
+
+        toggle.addEventListener('click', function(e){
+            // 宽屏靠 :hover，不接管点击
+            if(window.matchMedia('(min-width: 768px)').matches) return;
+            if(years.classList.contains('open')) return;   // 第二次点击放行
+            e.preventDefault();
+            years.classList.add('open');
+            toggle.setAttribute('aria-expanded', 'true');
+        });
+
+        document.addEventListener('click', function(e){
+            if(!years.contains(e.target)){
+                years.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
 </script>
