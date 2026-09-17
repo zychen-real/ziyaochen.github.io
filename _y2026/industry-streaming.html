@@ -27,7 +27,7 @@ tags:
     --warn:#ff6b8a;
     --ok:#58d68d;
   }
-  .industry-streaming-report html, .industry-streaming-report body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;line-height:1.7;}
+  .industry-streaming-report html, 
   .industry-streaming-report ::selection{background:#3a4d8a;color:#fff}
   .industry-streaming-report .glass{background:linear-gradient(180deg,rgba(30,40,70,.55),rgba(15,22,40,.55));backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px}
   .industry-streaming-report .chip{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--mute);background:rgba(255,255,255,.02)}
@@ -159,6 +159,10 @@ tags:
   .industry-streaming-report #tocToggle { top: 14px !important; right: 14px !important; }
 }
 
+
+/* fix_body_scope.py：原规则为 `.industry-streaming-report body{...}`，但 body 是容器的
+   祖先而非后代，选择器永不匹配（深色报告会丢背景）。改为作用于容器自身。 */
+.industry-streaming-report{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;line-height:1.7;padding:clamp(16px,3vw,28px);border-radius:12px}
 </style>
 
 <div class="industry-streaming-report">

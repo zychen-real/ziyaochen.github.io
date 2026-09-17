@@ -23,7 +23,7 @@ tags:
   }
   .search-recall-report *{box-sizing:border-box}
   .search-recall-report html{scroll-behavior:smooth}
-  .search-recall-report body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75;font-size:15px}
+  
   .search-recall-report a{color:var(--accent);text-decoration:none}
   .search-recall-report a:hover{text-decoration:underline}
   .search-recall-report code{font-family:var(--mono);font-size:.85em;background:var(--code);padding:2px 6px;border-radius:4px;color:#8fd3ff;white-space:nowrap;border:1px solid var(--line)}
@@ -143,6 +143,10 @@ tags:
   }
 }
 
+
+/* fix_body_scope.py：原规则为 `.search-recall-report body{...}`，但 body 是容器的
+   祖先而非后代，选择器永不匹配（深色报告会丢背景）。改为作用于容器自身。 */
+.search-recall-report{background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75;font-size:15px;padding:clamp(16px,3vw,28px);border-radius:12px}
 </style>
 
 <div class="search-recall-report">

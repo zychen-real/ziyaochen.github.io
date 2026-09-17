@@ -35,7 +35,7 @@ tags:
 }
 .vllm-report *{margin:0;padding:0;box-sizing:border-box}
 .vllm-report html{scroll-behavior:smooth;scroll-padding-top:24px}
-.vllm-report body{font-family:var(--font);font-size:16px;line-height:1.85;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+
 .vllm-report ::selection{background:var(--primary);color:#fff}
 
 
@@ -243,7 +243,7 @@ tags:
   .vllm-report .toc, .vllm-report #backTop, .vllm-report #tocToggle, .vllm-report #progressBar{display:none}
   .vllm-report .layout{display:block;max-width:none;padding:0}
   .vllm-report .chapter{box-shadow:none;break-inside:avoid}
-  .vllm-report body{background:#fff}
+  
 }
 
 @media (max-width: 768px) {
@@ -325,6 +325,10 @@ tags:
   .vllm-report #tocToggle { top: 14px !important; right: 14px !important; }
 }
 
+
+/* fix_body_scope.py：原规则为 `.vllm-report body{...}`，但 body 是容器的
+   祖先而非后代，选择器永不匹配（深色报告会丢背景）。改为作用于容器自身。 */
+.vllm-report{font-family:var(--font);font-size:16px;line-height:1.85;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;background:#fff}
 </style>
 
 <div class="vllm-report">

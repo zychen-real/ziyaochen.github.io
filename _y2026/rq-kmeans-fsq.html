@@ -34,13 +34,7 @@ tags:
 }
 .rq-kmeans-fsq-report *{ box-sizing: border-box; margin: 0; padding: 0; }
 .rq-kmeans-fsq-report html{ scroll-behavior: smooth; }
-.rq-kmeans-fsq-report body{
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-  background: linear-gradient(135deg, #0a0e1a 0%, #131825 100%);
-  color: var(--text-primary);
-  line-height: 1.7;
-  min-height: 100vh;
-}
+
 
 
 .rq-kmeans-fsq-report .layout{
@@ -431,7 +425,7 @@ tags:
 
 
 @media print {
-  .rq-kmeans-fsq-report body{ background: white; color: black; }
+  
   .rq-kmeans-fsq-report .sidebar{ display: none; }
   .rq-kmeans-fsq-report .main{ padding: 20px; max-width: 100%; }
   .rq-kmeans-fsq-report .qa-card{ break-inside: avoid; box-shadow: none; }
@@ -516,6 +510,14 @@ tags:
   .rq-kmeans-fsq-report #tocToggle { top: 14px !important; right: 14px !important; }
 }
 
+
+/* fix_body_scope.py：原规则为 `.rq-kmeans-fsq-report body{...}`，但 body 是容器的
+   祖先而非后代，选择器永不匹配（深色报告会丢背景）。改为作用于容器自身。 */
+.rq-kmeans-fsq-report{font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #0a0e1a 0%, #131825 100%);
+  color: var(--text-primary);
+  line-height: 1.7;
+  min-height: 100vh;background: white; color: black}
 </style>
 
 <div class="rq-kmeans-fsq-report">

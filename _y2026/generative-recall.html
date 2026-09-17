@@ -37,7 +37,7 @@ tags:
 }
 .generative-recall-report *{margin:0;padding:0;box-sizing:border-box}
 .generative-recall-report html{scroll-behavior:smooth;scroll-padding-top:24px}
-.generative-recall-report body{font-family:var(--font);font-size:16px;line-height:1.85;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+
 .generative-recall-report ::selection{background:var(--primary);color:#fff}
 
 
@@ -215,7 +215,7 @@ tags:
   .generative-recall-report .toc, .generative-recall-report #backTop, .generative-recall-report #tocToggle, .generative-recall-report #progressBar{display:none}
   .generative-recall-report .layout{display:block;max-width:none;padding:0}
   .generative-recall-report .chapter{box-shadow:none;break-inside:avoid}
-  .generative-recall-report body{background:#fff}
+  
 }
 
 /* === 移动端进一步收紧（≤768px）===
@@ -245,6 +245,10 @@ tags:
   .generative-recall-report p { line-height: 1.75 !important; }
 }
 
+
+/* fix_body_scope.py：原规则为 `.generative-recall-report body{...}`，但 body 是容器的
+   祖先而非后代，选择器永不匹配（深色报告会丢背景）。改为作用于容器自身。 */
+.generative-recall-report{font-family:var(--font);font-size:16px;line-height:1.85;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;background:#fff}
 </style>
 
 <div class="generative-recall-report">
