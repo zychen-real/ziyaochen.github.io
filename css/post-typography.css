@@ -156,6 +156,21 @@
   margin-right: auto;
 }
 
+/* 报告类文章同时隐藏主题自带的右侧 Side Catalog（._layouts/post.html
+   第 86 行那个 col-lg-2 catalog-container）。报告本身已经有自己的目录
+   （包括可折叠浮层和生成式召回的浮动目录），主题内置的自动 catalog
+   在这里属于"占位但信息冗余"，且会让正文右侧多出一个空列。 */
+.post-container:has(.rank-mixer-report) ~ .catalog-container,
+.post-container:has(.generative-recall-report) ~ .catalog-container,
+.post-container:has(.fit-report) ~ .catalog-container,
+.post-container:has(.industry-streaming-report) ~ .catalog-container,
+.post-container:has(.rq-kmeans-fsq-report) ~ .catalog-container,
+.post-container:has(.sglang-report) ~ .catalog-container,
+.post-container:has(.vllm-report) ~ .catalog-container,
+.post-container:has(.search-recall-report) ~ .catalog-container {
+  display: none !important;
+}
+
 /* --- 列表页（年份合集 / 首页）--- */
 .page-article-count {
   color: #888;

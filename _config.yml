@@ -66,6 +66,11 @@ collections:
   y2026:
     output: true
     permalink: /2026/:path/
+  # Toy 合集：放小工具 / 小实验 / Demo 视频，跟年份解耦。
+  # 文件放 _toy/ 下，新建 toy.html 列出全部条目，nav.html 加 Toy 入口。
+  toy:
+    output: true
+    permalink: /toy/:path/
 
 # 给所有文章统一补默认值，避免每篇都写重复字段
 defaults:
@@ -96,6 +101,15 @@ defaults:
       header-img: img/2017-bg.jpg
       catalog: true
       mathjax: true
+  - scope:
+      path: ""
+      type: toy
+    values:
+      layout: post
+      author: ziyaochen
+      header-img: img/2017-bg.jpg
+      catalog: false
+      mathjax: false
 
 anchorjs: true
 

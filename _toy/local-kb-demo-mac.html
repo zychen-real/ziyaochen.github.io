@@ -1,0 +1,135 @@
+---
+layout: post
+title: "本地知识库 Demo for Mac"
+subtitle: "一个跑在 macOS 上的本地知识库小工具演示"
+date: 2026-09-17 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: false
+mathjax: false
+tags:
+    - Toy
+    - 本地知识库
+    - macOS
+    - Demo
+---
+
+<style>
+  .toy-demo{ max-width: 980px; margin: 0 auto; }
+  .toy-demo .video-card{
+    background: #161c24;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  }
+  .toy-demo .video-card video{
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    background: #000;
+  }
+  .toy-demo .meta-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #8b98a8;
+    font-size: 13.5px;
+    margin: 14px 4px 0;
+  }
+  .toy-demo .meta-row b{ color: #d7e0ea; font-weight: 500; }
+  .toy-demo .desc{
+    background: #f6f8fa;
+    border-left: 4px solid #4f9fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .toy-demo .desc b{ color: #1f6feb; }
+  .toy-demo .download{
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #1f6feb;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background .15s;
+  }
+  .toy-demo .download:hover{ background: #0d47a1; color: #fff; text-decoration: none; }
+  .toy-demo .specs{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .toy-demo .specs th, .toy-demo .specs td{
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  .toy-demo .specs th{ background: #f6f8fa; color: #57606a; font-weight: 600; }
+  .toy-demo .changelog li{ margin: 6px 0; }
+</style>
+
+<div class="toy-demo">
+
+<p>这是 <b>Toy 合集</b>的第一条记录 —— 一个跑在 macOS 上的<b>本地知识库小工具</b>演示。视频里走了一遍从启动、索引本地文档、到问答检索的完整流程。</p>
+
+<div class="video-card">
+  <video controls preload="metadata" poster="{{ '/img/toys/local-kb-demo-mac-poster.png' | relative_url }}">
+    <source src="{{ '/img/toys/local-kb-demo-mac.mp4' | relative_url }}" type="video/mp4">
+    你的浏览器不支持 HTML5 video 标签。
+  </video>
+  <div class="meta-row">
+    <span><b>时长</b> 02:23</span>
+    <span><b>分辨率</b> 3456×2234 → 1920×1240</span>
+    <span><b>编码</b> H.264 / AAC</span>
+    <span><b>大小</b> 7.1 MB</span>
+  </div>
+</div>
+
+<div style="text-align:center; margin-top:18px;">
+  <a class="download" href="{{ '/img/toys/local-kb-demo-mac.mp4' | relative_url }}" download>下载视频（mp4 · 7.1 MB）</a>
+</div>
+
+<h2 id="about">关于这个小工具</h2>
+
+<div class="desc">
+  完全跑在本地，文档不出本机。索引、检索、问答都在 macOS 进程内完成，不需要任何云端 API，
+  适合随手攒一些笔记、代码片段、PDF 又不想上传到第三方服务的场景。
+</div>
+
+<h2 id="specs">基本信息</h2>
+
+<table class="specs">
+  <tr><th>项目</th><th>说明</th></tr>
+  <tr><td>平台</td><td>macOS 14+（Apple Silicon 原生，Intel 兼容）</td></tr>
+  <tr><td>安装</td><td>下载后直接拖入 Applications</td></tr>
+  <tr><td>索引位置</td><td><code>~/Library/Application Support/LocalKB/</code></td></tr>
+  <tr><td>支持格式</td><td>TXT / Markdown / PDF / 代码文件</td></tr>
+  <tr><td>网络依赖</td><td>无（纯本地运行）</td></tr>
+</table>
+
+<h2 id="changelog">演示流程</h2>
+
+<ol class="changelog">
+  <li>启动应用，选择一个本地资料目录（例如 <code>~/Documents/notes</code>）。</li>
+  <li>首次扫描：自动抽取文本、切片、向量化、写入本地索引。</li>
+  <li>进入问答界面，输入问题 → 检索相关片段 → 拼接答案。</li>
+  <li>所有中间产物都保留在本机，重启后无需重新索引。</li>
+</ol>
+
+<h2 id="notes">说明</h2>
+
+<ul>
+  <li>原视频是 <code>.mov</code>（Retina 录屏，3456×2234，164 MB）。为方便网页嵌入，
+      已用 <code>ffmpeg</code> 转码为 1920×1240 H.264 mp4（~7 MB），并截了一张第 5 秒的帧做封面。</li>
+  <li>本条目放在新建的 <code>toy</code> 合集下，未来还会有别的小工具 / 小实验放在这里。</li>
+  <li>工具代码暂未开源，演示版本用于功能展示。</li>
+</ul>
+
+</div>

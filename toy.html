@@ -1,0 +1,37 @@
+---
+layout: page
+title: Toy 合集
+description: "小工具 / 小实验 / Demo 视频合集"
+permalink: /toy/
+header-img: img/2017-bg.jpg
+---
+
+<p class="page-article-count">共 {{ site.toy | size }} 个玩具 · 不定期更新</p>
+
+{% assign items = site.toy | sort: 'date' | reverse %}
+{% if items.size == 0 %}
+<p class="page-empty">Toy 合集暂还没有内容。</p>
+{% else %}
+
+{% for item in items %}
+<div class="post-preview">
+    <a href="{{ item.url | relative_url }}">
+        <h2 class="post-title">{{ item.title }}</h2>
+        {% if item.subtitle and item.subtitle != "" %}
+        <h3 class="post-subtitle">{{ item.subtitle }}</h3>
+        {% endif %}
+    </a>
+    <p class="post-meta">
+        {{ item.date | date: "%Y-%m-%d" }}
+        {% if item.tags and item.tags.size > 0 %}
+        &nbsp;|&nbsp;
+        {% for tag in item.tags %}
+        <span class="tag">{{ tag }}</span>{% unless forloop.last %} &middot; {% endunless %}
+        {% endfor %}
+        {% endif %}
+    </p>
+</div>
+<hr>
+{% endfor %}
+
+{% endif %}
