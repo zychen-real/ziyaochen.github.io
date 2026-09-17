@@ -156,7 +156,8 @@ article:has(.industry-streaming-report) > .container,
 article:has(.rq-kmeans-fsq-report) > .container,
 article:has(.sglang-report) > .container,
 article:has(.vllm-report) > .container,
-article:has(.search-recall-report) > .container {
+article:has(.search-recall-report) > .container,
+article:has(.toy-demo) > .container {
   width: auto;
   max-width: 1280px;
   padding-left: 20px;
@@ -171,7 +172,8 @@ article:has(.search-recall-report) > .container {
 .post-container:has(.rq-kmeans-fsq-report),
 .post-container:has(.sglang-report),
 .post-container:has(.vllm-report),
-.post-container:has(.search-recall-report) {
+.post-container:has(.search-recall-report),
+.post-container:has(.toy-demo) {
   width: 100%;
   max-width: 100%;
   margin-left: 0;
