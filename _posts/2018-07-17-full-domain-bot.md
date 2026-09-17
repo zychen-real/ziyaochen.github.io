@@ -1,66 +1,65 @@
 ---
-layout:     post
-title:      "全领域的聊天机器人的一些心得"
-subtitle:   ""
-date:       2018-07-17
-author:     "ziyaochen"
+layout: post
+title: "全领域的聊天机器人的一些心得"
+subtitle: ""
+date: 2018-07-17
+author: "ziyaochen"
 header-img: "img/2017-bg.jpg"
 catalog: true
 mathjax: true
 tags:
-    - Bot
-    
+  - Bot
+
 ---
 
-### 1. 写在前面的话
+## 1. 写在前面的话
 
-目前业界上的一些聊天机器人demo主要负责两个模块的工作，一个是闲聊型，一个是任务型。所用的模型主要有三种，模板式模型(Rule-based model)，检索式模型（Retrieval-based model），生成式模型(Generative model)。
+目前业界上的一些聊天机器人 demo 主要负责两个模块的工作，一个是闲聊型，一个是任务型。所用的模型主要有三种，模板式模型(Rule-based model)，检索式模型（Retrieval-based model），生成式模型(Generative model)。
 
-### 模板式模型
+## 模板式模型
 
-模板式模型其实就是规则的集合，或者认为是有限状态机，比较经典的是AIML（Artificial Intelligence Markup Language），应该也是业界常用的，mark一下后续用到再回来看看。
+模板式模型其实就是规则的集合，或者认为是有限状态机，比较经典的是 AIML（Artificial Intelligence Markup Language），应该也是业界常用的，mark 一下后续用到再回来看看。
 
-### 检索式模型
+## 检索式模型
 
-检索式模型就是事先定义好一些question和answer的pairs，采用语句的相似性计算召回答案。
-主要方法有TF-IDF，BM25，编辑距离等。
+检索式模型就是事先定义好一些 question 和 answer 的 pairs，采用语句的相似性计算召回答案。
+主要方法有 TF-IDF，BM25，编辑距离等。
 
-经典的BM25上一下公式：
+经典的 BM25 上一下公式：
 
 $$Score(D,Q)=\sum_{i=1}^{n}IDF(q_i)\frac{f(q_i,D)(k_1+1)}{f(q_i,D)+k_1(1-b+b\frac{\vert{D}\vert}{avgd1})}$$
 
-上述，D为该文档，Q为当前的query，b是为了惩罚长文设置的经验常数。
+上述，D 为该文档，Q 为当前的 query，b 是为了惩罚长文设置的经验常数。
 
-### 机器学习
+## 机器学习
 
-采用词的表示，如（BOW）进行一些分类，如SVM，NB等做意图分类
+采用词的表示，如（BOW）进行一些分类，如 SVM，NB 等做意图分类
 
-### 深度学习
+## 深度学习
 
 Sequence to Sequence with Attention model。
 
-具体见：http://jacoxu.com/encoder_decoder/   
+具体见：http://jacoxu.com/encoder_decoder/
 
 Mark 一下
 
-### 多轮任务型对话
+## 多轮任务型对话
 
-![](/img/BOT/Intent.jpg)
+![Intent](/img/BOT/Intent.jpg)
 
+@zake7749 给了我很多启发，见上面的语意图，我们不断从根节点计算与用户当前对话的相似度，采用如 IR 的模型来评分，不断往下走，直到走到根节点，就是用户当前的意图。看上去十分直观。同时该语义的路径可以为多轮对话做铺垫，因为根据该路径涉及到用户的多个槽位信息。
 
-@zake7749 给了我很多启发，见上面的语意图，我们不断从根节点计算与用户当前对话的相似度，采用如IR的模型来评分，不断往下走，直到走到根节点，就是用户当前的意图。看上去十分直观。同时该语义的路径可以为多轮对话做铺垫，因为根据该路径涉及到用户的多个槽位信息。
+但是存在以上几个通用的难点，1.本身意图树的构造就十分困难，用户多意图树的构造将变得更加十分困难，其实如同决策树一样可以看成 if-then 的规则集合。2.节点偏短，词贡献权重很大，容易出现相似计算的误差。
 
-但是存在以上几个通用的难点，1.本身意图树的构造就十分困难，用户多意图树的构造将变得更加十分困难，其实如同决策树一样可以看成if-then的规则集合。2.节点偏短，词贡献权重很大，容易出现相似计算的误差。
+## Badcase 怎么处理
 
-### Badcase怎么处理
+采用多个模型拼接，如外界 KB，提供更多的后备知识。
 
-采用多个模型拼接，如外界KB，提供更多的后备知识。
-
-### 如何做自学习
+## 如何做自学习
 
 其实就是类似推荐系统，有用户的偏好在，如用户点击选择的要占更大的权重。
 
-### Reference
+## Reference
 
 感谢 http://zake7749.github.io/2016/12/17/how-to-develop-chatbot/ 的博客
 感谢 http://jacoxu.com/encoder_decoder/ 的博客

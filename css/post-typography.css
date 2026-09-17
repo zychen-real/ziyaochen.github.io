@@ -1,0 +1,130 @@
+/* ==========================================================
+ * post-typography.css
+ * 文章正文排版增强：标题层级、段落节奏、图片、公式、引用、代码
+ * 在 hux-blog.min.css 之后加载，用于覆盖与补充
+ * ========================================================== */
+
+/* --- 标题层级 ---
+   正文最高级为 h2（h1 留给文章标题）。
+   注意：原主题 .post-container 只定义了 h5/h6，h1-h4 用的是浏览器默认字号，
+   导致 h4(21px) 反而比 h3(18.7px) 大，层级倒挂，这里一并修正。 */
+.post-container h2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 44px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+.post-container h3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 34px 0 12px;
+}
+.post-container h4 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 26px 0 10px;
+}
+.post-container h5,
+.post-container h6 {
+  font-weight: 600;
+}
+
+/* --- 段落与列表节奏 --- */
+.post-container p {
+  margin: 0 0 22px;
+  line-height: 1.85;
+}
+.post-container ul,
+.post-container ol {
+  margin: 0 0 22px;
+  padding-left: 26px;
+  line-height: 1.85;
+}
+.post-container li {
+  margin-bottom: 8px;
+}
+.post-container li > ul,
+.post-container li > ol {
+  margin: 8px 0 0;
+}
+
+/* --- 图片 ---
+   kramdown 会把独立成行的图片包进 <p>，这里让它居中并加圆角/阴影 */
+.post-container img {
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+.post-container p > img:only-child {
+  margin: 28px auto;
+}
+
+/* --- 行内代码与代码块 --- */
+.post-container code {
+  padding: 2px 5px;
+  font-size: 0.9em;
+  color: #c7254e;
+  background: #f7f7f9;
+  border-radius: 3px;
+}
+.post-container pre {
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: #f7f7f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  line-height: 1.6;
+}
+.post-container pre code {
+  padding: 0;
+  color: inherit;
+  background: none;
+}
+
+/* --- 引用 --- */
+.post-container blockquote {
+  margin: 24px 0;
+  padding: 4px 18px;
+  color: #6a737d;
+  font-style: normal;
+  font-size: 1em;
+  border-left: 4px solid #dfe2e5;
+}
+.post-container blockquote p {
+  margin: 8px 0;
+}
+
+/* --- 数学公式：窄屏可横向滚动，避免撑破容器 --- */
+.post-container .MathJax_Display,
+.post-container mjx-container[jax="CHTML"][display="true"] {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+
+/* --- 水平分隔线 --- */
+.post-container hr {
+  margin: 36px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+/* --- 窄屏收敛 --- */
+@media screen and (max-width: 768px) {
+  .post-container h2 {
+    font-size: 21px;
+    margin-top: 34px;
+  }
+  .post-container h3 {
+    font-size: 18px;
+    margin-top: 26px;
+  }
+  .post-container h4 {
+    font-size: 16px;
+  }
+}
