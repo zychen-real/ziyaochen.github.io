@@ -129,6 +129,27 @@
   }
 }
 
+/* ==========================================================
+ * 报告类文章的 post-container 撑宽
+ * ------------------------------------------------------------
+ * 报告（rank-mixer-report / generative-recall-report 等）自带
+ * 1180~1200px 的内部布局，原本想"独立成页"展示。被塞进 Jekyll
+ * 的 col-lg-8 容器后只剩 ~800px，居中显示时两侧空白很大、内容显
+ * 得"夹在中间很窄"。
+ * 用 :has() 检测 .post-container 内部是否含这些作用域，是则覆
+ * 盖 col-* 的列宽，让 post-container 撑到 1140px，标题里就带：
+ * flex: 0 0 100% + max-width + 居中。
+ * :has() 在 Chrome 105+ / Safari 15.4+ / Firefox 121+ 均支持，
+ * 旧浏览器降级为不撑宽（无副作用）。
+ * ========================================================== */
+.post-container:has(.rank-mixer-report),
+.post-container:has(.generative-recall-report) {
+  flex: 0 0 100%;
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* --- 列表页（年份合集 / 首页）--- */
 .page-article-count {
   color: #888;

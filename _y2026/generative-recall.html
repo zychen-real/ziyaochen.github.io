@@ -59,7 +59,7 @@ tags:
 .generative-recall-report .rh-meta .chip svg{width:15px;height:15px;flex:none;opacity:.85}
 
 
-.generative-recall-report .layout{max-width:1200px;margin:0 auto;padding:36px 24px 80px;display:flex;gap:36px;align-items:flex-start}
+.generative-recall-report .layout{max-width:100%;margin:0 auto;padding:36px 24px 80px;display:flex;gap:36px;align-items:flex-start}
 .generative-recall-report main{flex:1;min-width:0;max-width:860px;margin:0 auto}
 
 
@@ -208,6 +208,33 @@ tags:
   .generative-recall-report .layout{display:block;max-width:none;padding:0}
   .generative-recall-report .chapter{box-shadow:none;break-inside:avoid}
   .generative-recall-report body{background:#fff}
+}
+
+/* === 移动端进一步收紧（≤768px）===
+   1080px 那条规则已经把 TOC 收成抽屉，再针对手机屏做字号、卡片、
+   表格、章节 padding 的细化。 */
+@media (max-width: 768px) {
+  .generative-recall-report .report-header { padding: 36px 16px 32px !important; }
+  .generative-recall-report .report-header .inner { padding: 0 !important; }
+  .generative-recall-report .report-header h1 { font-size: 24px !important; line-height: 1.35 !important; }
+  .generative-recall-report .report-header .sub { font-size: 15px !important; }
+  .generative-recall-report .rh-meta { gap: 8px !important; }
+  .generative-recall-report .rh-meta .chip { font-size: 12.5px !important; padding: 6px 12px !important; }
+  .generative-recall-report .layout { padding: 20px 14px 48px !important; }
+  .generative-recall-report .toc { padding: 14px !important; margin-bottom: 20px !important; }
+  .generative-recall-report .chapter { padding: 22px 18px !important; margin-bottom: 16px !important; border-radius: 10px !important; }
+  .generative-recall-report .chapter h2 { font-size: 20px !important; gap: 6px !important; }
+  .generative-recall-report .chapter h3 { font-size: 17px !important; }
+  .generative-recall-report .card-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .generative-recall-report .concept-card, .generative-recall-report .paper-card { padding: 14px !important; }
+  .generative-recall-report .paper-card h4 { font-size: 15px !important; }
+  .generative-recall-report .callout { padding: 12px 14px 12px 44px !important; font-size: 14px !important; line-height: 1.7 !important; }
+  .generative-recall-report .fig { padding: 14px 10px !important; }
+  .generative-recall-report .timeline { padding-left: 20px !important; }
+  .generative-recall-report .tbl-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .generative-recall-report .tbl-wrap table { font-size: 12.5px !important; }
+  .generative-recall-report thead th, .generative-recall-report tbody td { padding: 8px 10px !important; }
+  .generative-recall-report p { line-height: 1.75 !important; }
 }
 
 </style>
