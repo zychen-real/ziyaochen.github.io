@@ -1,0 +1,699 @@
+---
+layout: post
+title: "FIT: A Learnable Fully Interacted Two-Tower Model 论文精读"
+date: 2026-09-17 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: true
+mathjax: false
+tags:
+    - 论文
+    - 推荐系统
+    - 双塔模型
+    - 深度学习
+---
+
+<style>
+
+  :root{
+    --bg:#0f1419; --panel:#161c24; --panel2:#1c242e; --line:#2a3441;
+    --txt:#d7e0ea; --muted:#8b98a8; --accent:#4f9fff; --accent2:#36d399;
+    --warn:#fbbd23; --danger:#f87272; --code:#0b0f14; --chip:#243240;
+    --pur:#b48cff; --org:#ff9d6f;
+  }
+  .fit-report *{box-sizing:border-box}
+  .fit-report html{scroll-behavior:smooth}
+  .fit-report body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.75;font-size:15px}
+  .fit-report .wrap{display:flex;max-width:1400px;margin:0 auto}
+  
+  .fit-report nav{position:sticky;top:0;align-self:flex-start;width:300px;height:100vh;overflow-y:auto;
+    padding:28px 18px;border-right:1px solid var(--line);background:var(--panel)}
+  .fit-report nav h2{font-size:13px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:0 0 14px}
+  .fit-report nav a{display:block;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px;
+    font-size:13.5px;margin-bottom:2px;border-left:2px solid transparent}
+  .fit-report nav a:hover{color:var(--txt);background:var(--panel2)}
+  .fit-report nav a.sub{padding-left:26px;font-size:12.5px}
+  .fit-report main{flex:1;min-width:0;padding:40px 48px 120px}
+  
+  .fit-report header{margin-bottom:36px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+  .fit-report header .tag{display:inline-block;background:var(--chip);color:var(--accent);font-size:12px;
+    padding:4px 12px;border-radius:20px;margin-bottom:14px;letter-spacing:.5px}
+  .fit-report header h1{font-size:30px;margin:0 0 12px;line-height:1.3;background:linear-gradient(90deg,#4f9fff,#36d399);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .fit-report header .meta{color:var(--muted);font-size:13px}
+  
+  .fit-report h2.sec{font-size:24px;margin:54px 0 18px;padding-left:14px;border-left:4px solid var(--accent);scroll-margin-top:20px}
+  .fit-report h3{font-size:18px;margin:30px 0 12px;color:#eaf2fb;scroll-margin-top:20px}
+  .fit-report h4{font-size:15.5px;margin:22px 0 10px;color:var(--accent2)}
+  .fit-report p{margin:10px 0}
+  
+  .fit-report .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 26px;margin:18px 0}
+  .fit-report .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .fit-report .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:1100px){.fit-report .grid2, .fit-report .grid3{grid-template-columns:1fr}}
+  
+  .fit-report .note{border-radius:12px;padding:14px 18px;margin:16px 0;border-left:4px solid var(--accent);background:var(--panel2)}
+  .fit-report .note.good{border-color:var(--accent2)}
+  .fit-report .note.warn{border-color:var(--warn)}
+  .fit-report .note.danger{border-color:var(--danger)}
+  .fit-report .note b{color:#fff}
+  
+  .fit-report table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--panel);
+    border-radius:10px;overflow:hidden}
+  .fit-report th, .fit-report td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  .fit-report th{background:var(--panel2);color:#eaf2fb;font-weight:600;font-size:13px}
+  .fit-report tr:last-child td{border-bottom:none}
+  .fit-report td code, .fit-report p code, .fit-report li code{background:var(--code);color:#7fd1ff;padding:2px 6px;border-radius:5px;font-size:12.5px;
+    font-family:"SF Mono",Consolas,Monaco,monospace}
+  
+  .fit-report pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:18px;overflow-x:auto;
+    font-family:"SF Mono",Consolas,Monaco,monospace;font-size:12.5px;line-height:1.6;color:#c5d4e3}
+  .fit-report pre .c{color:#5f7488}
+  .fit-report pre .k{color:#ff9d6f}
+  .fit-report pre .s{color:#8fdb8f}
+  
+  .fit-report .flow{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:20px;
+    font-family:"SF Mono",Consolas,monospace;font-size:12.5px;white-space:pre;overflow-x:auto;color:#9fd3ff}
+  
+  .fit-report .chip{display:inline-block;background:var(--chip);border:1px solid var(--line);border-radius:6px;
+    padding:2px 9px;font-size:12px;margin:2px 3px;color:var(--muted)}
+  .fit-report .chip.a{color:var(--accent);border-color:#2d4d6e}
+  .fit-report .chip.g{color:var(--accent2);border-color:#1f5c44}
+  .fit-report .chip.w{color:var(--warn);border-color:#5c4a14}
+  .fit-report .chip.p{color:var(--pur);border-color:#4b3b6e}
+  .fit-report ul, .fit-report ol{margin:10px 0;padding-left:24px}
+  .fit-report li{margin:6px 0}
+  .fit-report .pill{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+  .fit-report .pill.arch{background:#1b3a5c;color:#7fbfff}
+  .fit-report .pill.train{background:#1f4d3a;color:#6fe0aa}
+  .fit-report .pill.serve{background:#4b3b6e;color:#c8a8ff}
+  .fit-report .pill.gen{background:#5c3a25;color:#ffc8a8}
+  .fit-report .kbd{font-size:12px;background:var(--code);border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:5px;padding:1px 7px;color:#bcd}
+  .fit-report footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  .fit-report .toc-num{color:var(--accent);font-weight:600;margin-right:6px}
+  .fit-report .legend{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:13px;color:var(--muted)}
+  .fit-report .ref{margin:6px 0;font-size:13.5px;color:#bcd}
+  .fit-report .ref b{color:#eaf2fb}
+  .fit-report .ref a{color:var(--accent);text-decoration:none;word-break:break-all}
+  .fit-report .ref a:hover{text-decoration:underline}
+  .fit-report .stat{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:var(--panel2);border-radius:8px;margin:6px 0;font-size:13.5px}
+  .fit-report .stat b{color:var(--accent2);font-size:16px}
+  .fit-report .quote{border-left:3px solid var(--pur);padding:8px 14px;color:var(--muted);font-style:italic;margin:10px 0;background:var(--panel2);border-radius:0 8px 8px 0}
+  
+  .fit-report .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  @media(max-width:900px){.fit-report .compare{grid-template-columns:1fr}}
+  .fit-report .compare .item{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+  .fit-report .compare .item h5{margin:0 0 6px;font-size:14px}
+  .fit-report .compare .item.bad{border-left:3px solid var(--danger)}
+  .fit-report .compare .item.good{border-left:3px solid var(--accent2)}
+  
+  .fit-report .eq{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px 18px;
+    margin:10px 0;color:#9fd3ff;font-family:"SF Mono",Consolas,monospace;font-size:13.5px}
+
+@media (max-width: 768px) {
+  .fit-report .container, .fit-report .layout, .fit-report .wrap {
+    padding: 14px !important;
+  }
+  .fit-report h1 { font-size: 24px !important; line-height: 1.35 !important; }
+  .fit-report h2 { font-size: 20px !important; line-height: 1.4 !important; }
+  .fit-report h3 { font-size: 17px !important; }
+  .fit-report p { line-height: 1.75 !important; }
+  .fit-report table { font-size: 12.5px !important; }
+  .fit-report th, .fit-report td { padding: 8px 10px !important; }
+  .fit-report [class*="grid"], .fit-report [class*="cards"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .fit-report [class*="stat-grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+</style>
+
+<div class="fit-report">
+
+<div class="wrap">
+<nav>
+  <h2>目录</h2>
+  <a href="#summary">摘要 / TL;DR</a>
+  <a href="#info">1. 论文基本信息</a>
+  <a href="#motivation">2. 研究背景与动机</a>
+  <a href="#painpoint" class="sub">2.1 预排序的"两难"</a>
+  <a href="#prior" class="sub">2.2 现有方案的不足</a>
+  <a href="#arch">3. 整体架构</a>
+  <a href="#mqm">4. MQM 模块</a>
+  <a href="#mqm-matrix" class="sub">4.1 Item Meta Matrix</a>
+  <a href="#mqm-attn" class="sub">4.2 无参数自注意力</a>
+  <a href="#mqm-query" class="sub">4.3 Soft / Hard Query</a>
+  <a href="#mqm-temp" class="sub">4.4 温度衰减机制</a>
+  <a href="#mqm-din" class="sub">4.5 DIN 交互单元</a>
+  <a href="#lss">5. LSS 模块</a>
+  <a href="#lss-multi" class="sub">5.1 多头子空间映射</a>
+  <a href="#lss-fc" class="sub">5.2 行列式 FC</a>
+  <a href="#lss-theory" class="sub">5.3 理论保证</a>
+  <a href="#train">6. 训练与推理流程</a>
+  <a href="#train-loss" class="sub">6.1 损失函数</a>
+  <a href="#train-inf" class="sub">6.2 推理流水线</a>
+  <a href="#experiment">7. 实验</a>
+  <a href="#exp-data" class="sub">7.1 数据集</a>
+  <a href="#exp-baseline" class="sub">7.2 对比基线</a>
+  <a href="#exp-main" class="sub">7.3 主实验结果</a>
+  <a href="#exp-ablation" class="sub">7.4 消融实验</a>
+  <a href="#exp-hparam" class="sub">7.5 超参分析</a>
+  <a href="#exp-cost" class="sub">7.6 效率与存储</a>
+  <a href="#compare">8. 与相关工作对比</a>
+  <a href="#insight">9. 工程启示</a>
+  <a href="#limit">10. 局限与展望</a>
+  <a href="#refs">附录：参考资源</a>
+</nav>
+
+<main>
+<header>
+  <span class="tag">SIGIR 2025 · 蚂蚁集团 · 预排序</span>
+  <h1>FIT: A Learnable Fully Interacted Two-Tower Model for Pre-Ranking System</h1>
+  <div class="meta">作者：Chao Xiong, Xianwen Yu, Wei Xu, Lei Cheng, Chuan Yuan, Linjian Mo（蚂蚁集团）<br>
+  发表：SIGIR 2025, July 13–18, 2025, Padua, Italy<br>
+  arXiv: 2509.12948 · DOI: 10.1145/3726302.3729881<br>
+  报告生成：2026-07-15 · 适用于：搜一搜 / 推荐 / 广告 预排序召回场景</div>
+</header>
+
+<!-- ================= 摘要 ================= -->
+<h2 class="sec" id="summary">摘要 / TL;DR</h2>
+<div class="card">
+<ul>
+  <li><b>核心问题</b>：大规模推荐/广告系统的<b>预排序</b>阶段要求"毫秒级推理 + 亿级候选筛选"，传统双塔（DSSM）效率高但"晚交互"导致效果差，全交互单塔（COLD）效果好但需实时计算、扛不住十亿级候选池。</li>
+  <li><b>FIT 的答案</b>：在双塔解耦架构中，引入<b>两个轻量级模块</b>，同时实现<b>早期交互</b>和<b>晚期交互</b>，且<b>不破坏双塔的 ANN 检索效率</b>：
+    <ul>
+      <li><b>MQM（Meta Query Module）</b>：通过<b>可学习的物品元矩阵 + 软/硬查询机制</b>，在用户塔<b>底层</b>注入目标物品的语义先验。</li>
+      <li><b>LSS（Lightweight Similarity Scorer）</b>：用<b>多头子空间 + 行列式 FC</b>替代点积，在两塔输出后做<b>高效的晚期精细打分</b>。</li>
+    </ul>
+  </li>
+  <li><b>关键 Trick</b>：<b>Soft Query（训练用，softmax 加权多个硬查询）</b> + <b>Hard Query（推理用，仅 1 bit 索引）</b> + <b>温度参数 τ 线性衰减</b>（1.0 → 0.001）。这样训练稳定，推理时 1 bit 索引查表即可，几乎无额外延迟。</li>
+  <li><b>效果（4 个公开数据集）</b>：相比 DSSM / DAT / COLD / IntTower / RankTower，AUC、Logloss、RelaImpr 三项指标<b>全面 SOTA</b>。</li>
+  <li><b>效率（淘宝数据集）</b>：训练 260s（接近双塔 250s），推理 <b>26.9ms</b>（与双塔 25.4ms 几乎持平），存储开销 <b>1x</b>（与双塔相同）。</li>
+  <li><b>工业意义</b>：<b>证明"全交互 ≠ 推理慢"</b>。FIT 是预排序阶段平衡效果与效率的 SOTA 范式，可直接借鉴到图文 / 视频号预排序场景。</li>
+</ul>
+</div>
+
+<!-- ================= 1 基本信息 ================= -->
+<h2 class="sec" id="info">1. 论文基本信息</h2>
+<div class="card">
+<table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>标题</td><td>A Learnable Fully Interacted Two-Tower Model for Pre-Ranking System</td></tr>
+<tr><td>简称</td><td>FIT（Fully Interacted Two-Tower）</td></tr>
+<tr><td>作者</td><td>Chao Xiong, Xianwen Yu, Wei Xu, Lei Cheng, Chuan Yuan, Linjian Mo</td></tr>
+<tr><td>机构</td><td><b>蚂蚁集团</b>（Ant Group）</td></tr>
+<tr><td>会议</td><td>SIGIR 2025（CCF A 类）</td></tr>
+<tr><td>时间</td><td>2025 年 7 月 13–18 日，意大利帕多瓦</td></tr>
+<tr><td>arXiv</td><td>2509.12948（v1: 2025-09-16）</td></tr>
+<tr><td>DOI</td><td>10.1145/3726302.3729881</td></tr>
+<tr><td>代码</td><td>论文未公开代码仓库</td></tr>
+</table>
+</div>
+
+<!-- ================= 2 背景 ================= -->
+<h2 class="sec" id="motivation">2. 研究背景与动机</h2>
+
+<h3 id="painpoint">2.1 预排序的"两难"</h3>
+<div class="card">
+<p>大规模推荐系统的召回链路通常是：</p>
+<pre class="flow">召回（双塔 + ANN，毫秒级，亿级→千级）
+  ↓
+预排序（Pre-Ranking，要求毫秒级，千级→百级）
+  ↓
+精排（Ranking，几十~百 ms，百级→几十）
+  ↓
+重排（Re-Ranking，业务规则 + 多样性）</pre>
+
+<p>预排序的核心矛盾：</p>
+<div class="compare">
+  <div class="item bad">
+    <h5>效果差（双塔）</h5>
+    <p>DSSM 类纯双塔最后才内积交互，<b>完全没利用用户-物品的细粒度特征</b>，效果天花板低。</p>
+  </div>
+  <div class="item bad">
+    <h5>效率差（单塔）</h5>
+    <p>COLD 类全交互单塔效果虽好，但<b>每对 (user, item) 都要实时计算</b>，无法离线预存向量，扛不住千级候选。</p>
+  </div>
+</div>
+
+<p>2024–2025 年出现的 <b>DAT</b>（增强向量）、<b>IntTower</b>（多头 + Sum-Max）、<b>RankTower</b>（门控交叉注意力）尝试在双塔中引入交互，但都有不同缺陷（详见 2.2）。</p>
+</div>
+
+<h3 id="prior">2.2 现有方案的不足</h3>
+<div class="card">
+<table>
+<tr><th>方案</th><th>交互位置</th><th>问题</th></tr>
+<tr><td><b>Two-Tower (DSSM)</b></td><td>仅最后点积</td><td>无早期/晚期交互，效果差</td></tr>
+<tr><td><b>DAT</b></td><td>增强向量（隐式早期）</td><td>参数多、训练慢、增强向量共享（无个性化）</td></tr>
+<tr><td><b>COLD</b></td><td>完全早期（单塔）</td><td>无法离线预存向量，推理延迟高</td></tr>
+<tr><td><b>IntTower</b></td><td>晚期（Sum-Max）</td><td>多头 8x 存储开销，表达力有限</td></tr>
+<tr><td><b>RankTower</b></td><td>门控交叉注意力</td><td>结构复杂、推理慢（33.3ms vs 双塔 25.4ms）</td></tr>
+</table>
+<div class="note warn"><b>核心空白</b>：在"双塔解耦架构 + 离线 ANN 检索"的前提下，<b>没有方案能同时实现显式早期交互 + 强表达力的晚期交互 + 1x 存储开销 + 推理延迟近双塔</b>。FIT 正是要填补这一空白。</div>
+</div>
+
+<!-- ================= 3 架构 ================= -->
+<h2 class="sec" id="arch">3. 整体架构</h2>
+<div class="card">
+<p>FIT 沿用双塔解耦架构（User Tower + Item Tower），在两侧分别插入 MQM 和 LSS：</p>
+<pre class="flow">┌──────────────────────────────────────────────────────────────┐
+│                     User Tower (with MQM)                    │
+│                                                              │
+│  User Features + Soft/Hard Query ──► DIN 交互单元           │
+│           │                                │                │
+│           │                                ▼                │
+│           │                          兴趣加权池化             │
+│           ▼                                │                │
+│       FC + DNN  ◄──────────────────────────┘                │
+│           │                                                   │
+│           ▼                                                   │
+│      User Representation h_u^L                                │
+└──────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                       LSS（晚期交互）                        │
+│                                                              │
+│  Multi-head Projection:                                       │
+│    z_u^h = W_u^h · h_u^L + b_u^h                             │
+│    z_v^h = W_v^h · h_v^L + b_v^h                             │
+│                                                              │
+│  Similarity Matrix S ∈ R^{H_u × H_v}:                         │
+│    S_ij = (z_u^i)^T · z_v^j                                   │
+│                                                              │
+│  Row-wise FC: S' = ReLU(W_1 · S + b_1)                        │
+│  Col-wise FC: S'' = ReLU(W_2 · S' + b_2)                      │
+│                                                              │
+│  Output: p_uv = w^T · Flatten(S'')                           │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+                            │
+┌──────────────────────────────────────────────────────────────┐
+│                  Item Tower (no extra module)                │
+│                                                              │
+│  Item Features → Embedding → FC + DNN                        │
+│           │                                                   │
+│           ▼                                                   │
+│    Item Representation h_v^L                                  │
+└──────────────────────────────────────────────────────────────┘</pre>
+
+<p><b>两条关键设计原则</b>：</p>
+<ol>
+  <li><b>解耦性保持</b>：Item Tower 仍是纯 DNN，<b>可离线预计算</b> item 向量并存入 ANN 索引；User Tower 的 MQM 中物品信息只通过 <b>1 bit 的 Query Index</b> 注入，不破坏解耦。</li>
+  <li><b>受控复杂度</b>：MQM 引入 N×D 维元矩阵（N=64, D=16 → 仅 1024 个参数），LSS 仅 H<sub>u</sub>·H<sub>v</sub> 维矩阵 + 两层 FC。<b>参数与计算量远低于 RankTower / IntTower</b>。</li>
+</ol>
+</div>
+
+<!-- ================= 4 MQM ================= -->
+<h2 class="sec" id="mqm">4. MQM（Meta Query Module）：早期交互</h2>
+<p>MQM 的目标是在用户塔的<b>底层</b>注入目标物品的语义先验，弥补双塔"晚交互"的信息损失。</p>
+
+<h3 id="mqm-matrix">4.1 Item Meta Matrix（可学习物品元矩阵）</h3>
+<div class="card">
+<h4>定义</h4>
+<p>定义可训练嵌入矩阵：</p>
+<div class="eq">Q ∈ ℝ<sup>N × D</sup></div>
+<p>其中：</p>
+<ul>
+  <li><b>N = 64</b>：元向量数量（代表"物品簇"的中心点数量）；</li>
+  <li><b>D = 16</b>：嵌入维度；</li>
+  <li>初始化用 Kaiming 均匀分布以获得数值稳定性。</li>
+</ul>
+
+<h4>直观理解</h4>
+<p>可以将 <b>Q</b> 理解为 <b>N 个"伪物品"</b>，每个伪物品代表一类相似物品的"语义中心"。当一个真实物品 <code>e_c</code> 来时，先看看它"最像"哪个伪物品，再把这个伪物品的信息注入用户塔。</p>
+
+<div class="note"><b>为什么不是端到端 Cross-Attention？</b>Cross-Attention 需要实时计算 Q、K、V，对每个 (user, item) 对都要算一遍，<b>无法离线预存</b>。MQM 的"伪物品 + 1 bit 索引"是对 Cross-Attention 的<b>极致蒸馏</b>——只保留"物品属于哪一类"这一离散信息，推理时 1 bit 查表即可。</div>
+</div>
+
+<h3 id="mqm-attn">4.2 无参数自注意力（Parameter-free Self-Attention）</h3>
+<div class="card">
+<p>为了让元矩阵 Q 的 N 个伪物品之间有<b>差异性</b>（否则都是相似向量，聚类无意义），论文用了一个<b>无参数</b>的自注意力：</p>
+<div class="eq">Q<sup>*</sup> = (Q · Q<sup>T</sup>) · Q</div>
+<p>直观解释：</p>
+<ul>
+  <li>先计算 Q 中所有伪物品的相似度矩阵 Q·Q<sup>T</sup>（形状 N×N）；</li>
+  <li>用这个相似度矩阵对 Q 重新加权，得到 Q<sup>*</sup>；</li>
+  <li>效果：原本相似的伪物品被拉远，原本无关的保持不变，<b>N 个伪物品变得"差异显著"</b>，聚类更有意义。</li>
+</ul>
+
+<div class="note good"><b>优势</b>：完全无参数 → 不增加训练负担；又比随机初始化收敛更快（论文消融实验显示 <b>收敛速度 + 最终性能均优于随机初始化</b>）。</div>
+</div>
+
+<h3 id="mqm-query">4.3 Soft Query（训练） vs Hard Query（推理）</h3>
+<div class="card">
+<h4>Soft Query（训练用）</h4>
+<p>对当前候选物品的特征 <b>e<sub>c</sub></b>，与所有 N 个元向量计算相似度，用带温度 τ 的 Softmax 加权求和：</p>
+<div class="eq">k = W<sub>K</sub> · e<sub>c</sub>      // 投影到与 Q 同一空间<br>
+s_i = (k · q<sup>*</sup><sub>i</sub>) / τ    // 第 i 个伪物品的相似度<br>
+α_i = softmax(s_i)        // 权重分布<br>
+q̃<sup>*</sup> = Σ<sub>i</sub> α_i · q<sup>*</sup><sub>i</sub>    // Soft Query</div>
+<p>效果：<b>多个伪物品同时贡献</b>到用户塔，加速元矩阵学习。训练初期（τ ≈ 1.0）时权重均匀分布，<b>元矩阵的每个位置都能得到梯度更新</b>。</p>
+
+<h4>Hard Query（推理用）</h4>
+<p>仅取相似度最大的那个元向量 <b>q<sup>*</sup><sub>s</sub></b>，其索引 <b>s ∈ {0,1,...,N-1}</b>：</p>
+<ul>
+  <li>只需 <b>log<sub>2</sub>(N) = 6 bit</b> 即可存（N=64）；</li>
+  <li>论文中更激进，<b>仅用 1 bit slot 索引</b>（这是因为工程实现中按段存储）；</li>
+  <li>推理时直接查表，<b>零延迟</b>。</li>
+</ul>
+
+<div class="note"><b>训练-推理一致性</b>：Soft Query 和 Hard Query 在训练后期（τ → 0）几乎一致（softmax 趋近于 argmax），保证训练效果在推理时复现。</div>
+</div>
+
+<h3 id="mqm-temp">4.4 温度衰减机制</h3>
+<div class="card">
+<p>训练时温度参数 <b>τ</b> 从 <b>1.0 线性衰减到接近 0（如 0.001）</b>，衰减周期 = 1 个 epoch 的步数。</p>
+
+<h4>作用</h4>
+<table>
+<tr><th>阶段</th><th>τ 范围</th><th>Softmax 行为</th><th>作用</th></tr>
+<tr><td>训练初期</td><td>τ ≈ 1.0</td><td>权重均匀</td><td>元矩阵各位置都能获得梯度，加速收敛</td></tr>
+<tr><td>训练中期</td><td>τ 递减</td><td>权重集中</td><td>逐渐逼近 Hard Query</td></tr>
+<tr><td>训练后期</td><td>τ ≈ 0.001</td><td>≈ argmax</td><td>与推理 Hard Query 行为一致，避免训练-推理 gap</td></tr>
+</table>
+
+<p>消融实验显示，<b>Soft + 温度衰减</b>的训练策略最终 Soft/Hard Query 相似度接近 1.0，证明一致性收敛。</p>
+</div>
+
+<h3 id="mqm-din">4.5 DIN 交互单元</h3>
+<div class="card">
+<p>MQM 的输出（Soft/Hard Query）被作为目标物品信息的代理，<b>输入到用户塔中</b>。论文采用 <b>DIN（Deep Interest Network）</b> 结构处理用户行为序列：</p>
+
+<h4>DIN 的加权池化</h4>
+<div class="eq">e<sub>u</sub><sup>i</sup> = Σ<sub>j=1..K</sub> a(e<sub>u</sub><sup>i_j</sup>, q̃<sup>*</sup>) · e<sub>u</sub><sup>i_j</sup></div>
+<p>其中注意力权重：</p>
+<div class="eq">a(e<sub>u</sub><sup>i_j</sup>, q̃<sup>*</sup>) = Dice(W · [e<sub>u</sub><sup>i_j</sup> ⊕ q̃<sup>*</sup>] + b)</div>
+<p>直观理解：把用户历史行为物品 <b>e<sub>u</sub><sup>i_j</sup></b> 当作 Key，把 Soft/Hard Query 当作 Query，<b>计算每个历史行为与目标物品的"兴趣相关性"</b>，加权求和得到用户当前的兴趣向量。</p>
+
+<div class="note warn"><b>注意</b>：DIN 在精排中常用，<b>放到召回/预排序中通常有延迟问题</b>。FIT 的巧妙之处在于：DIN 的输入维度是 D=16（极小），且只算一次，<b>计算量与普通序列池化几乎相当</b>。这就是 "全交互 ≠ 推理慢" 的关键证据之一。</div>
+</div>
+
+<!-- ================= 5 LSS ================= -->
+<h2 class="sec" id="lss">5. LSS（Lightweight Similarity Scorer）：晚期交互</h2>
+<p>LSS 的目标是在两塔输出后，<b>替代传统点积或 Sum-Max</b>，用更轻量的方式做精细打分。</p>
+
+<h3 id="lss-multi">5.1 多头子空间映射</h3>
+<div class="card">
+<p>将用户和物品的最终表征映射到 H<sub>u</sub> / H<sub>v</sub> 个子空间（论文 H<sub>u</sub>=H<sub>v</sub>=2）：</p>
+<div class="eq">z<sub>u</sub><sup>h</sup> = W<sub>u</sub><sup>h</sup> · h<sub>u</sub><sup>L</sup> + b<sub>u</sub><sup>h</sup>     (h = 1, ..., H<sub>u</sub>)<br>
+z<sub>v</sub><sup>h</sup> = W<sub>v</sub><sup>h</sup> · h<sub>v</sub><sup>L</sup> + b<sub>v</sub><sup>h</sup>     (h = 1, ..., H<sub>v</sub>)</div>
+<p>每个子空间维度为 64（共 128 维），让相似度在不同子空间中独立计算，<b>捕捉多维度的相关性</b>。</p>
+</div>
+
+<h3 id="lss-fc">5.2 行列式 FC（结构化全连接）</h3>
+<div class="card">
+<p>计算所有用户-物品头对的点积，得到相似度矩阵 S：</p>
+<div class="eq">S ∈ ℝ<sup>H<sub>u</sub> × H<sub>v</sub></sup>,   S<sub>ij</sub> = (z<sub>u</sub><sup>i</sup>)<sup>T</sup> · z<sub>v</sub><sup>j</sup></div>
+
+<p>对 S 做 <b>结构化更新</b>（先按行、再按列，2 层 FC）：</p>
+<div class="eq">S'<sub>i,:</sub> = ReLU(W<sub>1</sub> · S<sub>i,:</sub> + b<sub>1</sub>)<br>
+S''<sub>:,j</sub> = ReLU(W<sub>2</sub> · S'<sub>:,j</sub> + b<sub>2</sub>)</div>
+
+<p>最终打分：</p>
+<div class="eq">p<sub>uv</sub> = w<sup>T</sup> · Flatten(S'')</div>
+
+<h4>为什么不直接展平 S 接 FC？</h4>
+<p>直接展平后接 FC 参数量 = H<sub>u</sub>·H<sub>v</sub>·d<sub>hidden</sub>，行列式 FC 参数量 = 2·H<sub>v</sub>·d<sub>hidden</sub> + 2·H<sub>u</sub>·d<sub>hidden</sub>，<b>大幅减少参数</b>。消融实验显示行列式 FC 性能优于直接展平 FC。</p>
+</div>
+
+<h3 id="lss-theory">5.3 理论保证</h3>
+<div class="card">
+<p>论文给出了一个重要定理：</p>
+<div class="quote">「LSS 在 ℓ<sub>2</sub> 距离下是连续评分函数的<b>通用逼近器</b>（universal approximator），表达能力严格强于传统的 Sum-Max。」</div>
+
+<p>这意味着：</p>
+<ul>
+  <li>理论上，<b>任何</b>双塔评分函数（只要是连续函数）都可以用 LSS 近似；</li>
+  <li>实际中，LSS 在 H<sub>u</sub>=H<sub>v</sub>=2 这种"轻配置"下就已经显著超过 Sum-Max；</li>
+  <li>增加头数能进一步提升，但存储开销也增加，论文主实验取 2 是为了与双塔保持相同的存储。</li>
+</ul>
+</div>
+
+<!-- ================= 6 训练推理 ================= -->
+<h2 class="sec" id="train">6. 训练与推理流程</h2>
+
+<h3 id="train-loss">6.1 损失函数</h3>
+<div class="card">
+<p>采用标准的<b>二元交叉熵</b>：</p>
+<div class="eq">loss = -1/T · Σ<sub>(u,v,y) ∈ T</sub> [y · log σ(p<sub>uv</sub>) + (1-y) · log(1-σ(p<sub>uv</sub>))]</div>
+<p>其中 σ(·) 是 Sigmoid，T 是训练样本对数。简单有效，无特殊设计。</p>
+</div>
+
+<h3 id="train-inf">6.2 推理流水线（关键工程实现）</h3>
+<div class="card">
+<p>推理时的<b>完全解耦</b>流程是 FIT 工程价值的核心：</p>
+
+<h4>离线阶段</h4>
+<ol>
+  <li>训练完成后，对每个候选物品 v 计算其在 MQM 中的 <b>Hard Query 索引 s ∈ {0,...,N-1}</b>（仅 log<sub>2</sub>N bit，N=64 → 6 bit，论文工程实现 1 bit slot）。</li>
+  <li>把 <b>(item_id, hard_query_index s, item_vector h<sub>v</sub><sup>L</sup>)</b> 一起存入向量数据库。</li>
+</ol>
+
+<h4>在线阶段</h4>
+<ol>
+  <li>从向量库取出 Top-K 候选物品（ANN 检索），得到每个候选的 (h<sub>v</sub><sup>L</sup>, s)。</li>
+  <li>在线计算<b>N 套用户表征</b>，每套对应一个可能的 Hard Query：h<sub>u</sub><sup>L</sup>(s=0), h<sub>u</sub><sup>L</sup>(s=1), ..., h<sub>u</sub><sup>L</sup>(s=N-1)。</li>
+  <li>对每个候选 (u, v)，<b>根据其 s 索引</b>，从 N 套用户表征中挑选对应的那一套：h<sub>u</sub><sup>L</sup>(s<sub>v</sub>)。</li>
+  <li>用 LSS 对 (h<sub>u</sub><sup>L</sup>(s<sub>v</sub>), h<sub>v</sub><sup>L</sup>) 打分。</li>
+</ol>
+
+<div class="note good"><b>工程优势</b>：
+<ul>
+  <li>用户侧 <b>N 套表征可并行计算</b>（一次 forward pass，N 个分支），<b>额外延迟 ≈ 0</b>。</li>
+  <li>Item 侧完全离线，与传统双塔 ANN 检索一样。</li>
+  <li>不破坏现有 ANN 索引结构（仅多存 1 bit slot）。</li>
+</ul>
+</div>
+</div>
+
+<!-- ================= 7 实验 ================= -->
+<h2 class="sec" id="experiment">7. 实验</h2>
+
+<h3 id="exp-data">7.1 数据集</h3>
+<div class="card">
+<table>
+<tr><th>数据集</th><th>说明</th><th>最大序列长度</th></tr>
+<tr><td>MovieLens-1M</td><td>经典电影评分</td><td>50</td></tr>
+<tr><td>Amazon Electronics</td><td>电商行为序列</td><td>50</td></tr>
+<tr><td>Amazon Books</td><td>图书行为序列</td><td>50</td></tr>
+<tr><td>Taobao Display Ad Click</td><td>阿里展示广告</td><td>50</td></tr>
+</table>
+<p>所有数据集均构建了用户行为序列特征，最长 50。</p>
+</div>
+
+<h3 id="exp-baseline">7.2 对比基线</h3>
+<div class="card">
+<table>
+<tr><th>基线</th><th>类型</th><th>核心机制</th><th>代表问题</th></tr>
+<tr><td><b>Two-Tower (DSSM)</b></td><td>纯双塔</td><td>最后点积</td><td>无交互</td></tr>
+<tr><td><b>DAT</b></td><td>双塔 + 增强</td><td>学习"用户→物品"增强向量</td><td>参数多、训练慢</td></tr>
+<tr><td><b>COLD</b></td><td>单塔</td><td>全早期交互</td><td>无法离线预存</td></tr>
+<tr><td><b>IntTower</b></td><td>双塔 + 多头晚期</td><td>Sum-Max 打分</td><td>8x 存储</td></tr>
+<tr><td><b>RankTower</b></td><td>双塔 + 门控交叉</td><td>门控交叉注意力 + Sum-Max</td><td>结构复杂、推理慢</td></tr>
+</table>
+</div>
+
+<h3 id="exp-main">7.3 主实验结果</h3>
+<div class="card">
+<p>FIT 在 4 个数据集上 AUC、Logloss、RelaImpr 三项指标<b>全面 SOTA</b>：</p>
+
+<h4>AUC（越大越好，主指标）</h4>
+<table>
+<tr><th>模型</th><th>ML-1M</th><th>Amazon-Elec</th><th>Amazon-Books</th><th>Taobao</th></tr>
+<tr><td>Two-Tower (DSSM)</td><td>基线</td><td>基线</td><td>基线</td><td>基线</td></tr>
+<tr><td>DAT</td><td>+少量</td><td>+少量</td><td>+少量</td><td>+少量</td></tr>
+<tr><td>COLD</td><td>++</td><td>++</td><td>++</td><td>++</td></tr>
+<tr><td>IntTower</td><td>++</td><td>++</td><td>++</td><td>++</td></tr>
+<tr><td>RankTower</td><td>+++</td><td>+++</td><td>+++</td><td>+++</td></tr>
+<tr><td><b>FIT（本文）</b></td><td><b>++++</b></td><td><b>++++</b></td><td><b>++++</b></td><td><b>++++</b></td></tr>
+</table>
+<p><b>关键观察</b>：</p>
+<ul>
+  <li>FIT 比 RankTower 再<b>显著提升</b>（论文给出 RelaImpr 通常 1~3%）。</li>
+  <li>比单塔 COLD 也更好，<b>说明早期交互 + 晚期交互的组合</b>优于"纯早期"或"纯晚期"。</li>
+  <li>Logloss 同样全面 SOTA，排序更准。</li>
+</ul>
+</div>
+
+<h3 id="exp-ablation">7.4 消融实验</h3>
+<div class="card">
+<h4>四种变体</h4>
+<table>
+<tr><th>变体</th><th>做法</th><th>结论</th></tr>
+<tr><td><b>w/o MQM</b></td><td>移除 MQM，行为序列退化为平均池化</td><td>性能显著下降 → <b>早期交互关键</b></td></tr>
+<tr><td><b>w/o LSS</b></td><td>移除 LSS，输出退化为点积</td><td>性能下降 → <b>晚期交互重要</b></td></tr>
+<tr><td><b>w SumMax</b></td><td>LSS 替换为 Sum-Max</td><td>仍劣于 FIT → <b>LSS 表达力强于 Sum-Max</b></td></tr>
+<tr><td><b>w FC</b></td><td>相似度矩阵展平后接 FC</td><td>仍劣于 FIT → <b>行列式 FC 更优</b></td></tr>
+</table>
+
+<h4>训练技巧验证</h4>
+<ul>
+  <li><b>Soft Query + 温度衰减</b>取得最佳效果；</li>
+  <li>训练后期 Soft Query 与 Hard Query 相似度 ≈ 1.0，<b>训练-推理一致性</b>达成；</li>
+  <li><b>无参数自注意力</b>加速收敛 + 提升最终性能。</li>
+</ul>
+</div>
+
+<h3 id="exp-hparam">7.5 超参分析</h3>
+<div class="card">
+<h4>Item Meta Vectors 数量 N</h4>
+<table>
+<tr><th>N</th><th>性能</th><th>存储</th><th>论文选择</th></tr>
+<tr><td>16</td><td>较低</td><td>最少</td><td>-</td></tr>
+<tr><td><b>64</b></td><td><b>性价比最优</b></td><td>1x</td><td>✓ 主实验</td></tr>
+<tr><td>256</td><td>理论最高</td><td>4x</td><td>过拟合风险 + 推理慢</td></tr>
+</table>
+<p>结论：<b>N=64 是效果与效率的甜点</b>，N 增到 256 易过拟合且增加推理延迟。</p>
+
+<h4>LSS 头数 H<sub>u</sub>, H<sub>v</sub></h4>
+<ul>
+  <li>头数增加 → 性能提升、存储增加、过拟合风险增加；</li>
+  <li>各头数配置下 LSS 均优于 Sum-Max；</li>
+  <li>主实验取 H<sub>u</sub>=H<sub>v</sub>=2，<b>保持与普通双塔相同的存储开销</b>。</li>
+</ul>
+</div>
+
+<h3 id="exp-cost">7.6 效率与存储对比（淘宝数据集）</h3>
+<div class="card">
+<table>
+<tr><th>模型</th><th>训练时间</th><th>推理延迟</th><th>Item 存储</th><th>效果</th></tr>
+<tr><td>Two-Tower (DSSM)</td><td>250s</td><td><b>25.4ms</b></td><td>1x</td><td>基线</td></tr>
+<tr><td>DAT</td><td><b>320s（最慢）</b></td><td>26.0ms</td><td>0.25x</td><td>++</td></tr>
+<tr><td>COLD</td><td>280s</td><td>31.4ms</td><td>0x（无向量库）</td><td>++</td></tr>
+<tr><td>IntTower</td><td>290s</td><td>28.0ms</td><td><b>8x</b></td><td>+++</td></tr>
+<tr><td>RankTower</td><td>280s</td><td>33.3ms</td><td>1x</td><td>+++</td></tr>
+<tr><td><b>FIT（本文）</b></td><td>260s</td><td><b>26.9ms</b></td><td><b>1x</b></td><td><b>++++</b></td></tr>
+</table>
+
+<div class="note good"><b>关键结论</b>：
+<ul>
+  <li><b>推理延迟 26.9ms vs 双塔 25.4ms</b>：仅多 1.5ms（≈ 5.9%），<b>可忽略</b>；</li>
+  <li><b>训练时间 260s vs 双塔 250s</b>：仅多 4%；</li>
+  <li><b>存储 1x</b>：与双塔完全相同；</li>
+  <li><b>效果</b>：全面 SOTA。</li>
+</ul>
+这就是"全交互 ≠ 推理慢"的核心证据。</div>
+</div>
+
+<!-- ================= 8 对比 ================= -->
+<h2 class="sec" id="compare">8. 与相关工作的详细对比</h2>
+<div class="card">
+<table>
+<tr><th>维度</th><th>DAT</th><th>COLD</th><th>IntTower</th><th>RankTower</th><th><b>FIT</b></th></tr>
+<tr><td>交互位置</td><td>早期（增强向量）</td><td>纯早期（单塔）</td><td>晚期（Sum-Max）</td><td>门控交叉 + Sum-Max</td><td><b>早期(MQM) + 晚期(LSS)</b></td></tr>
+<tr><td>可离线预存</td><td>✓</td><td>✗（单塔）</td><td>✓</td><td>✓</td><td><b>✓</b></td></tr>
+<tr><td>个性化</td><td>✗（共享）</td><td>✓</td><td>✓</td><td>✓</td><td><b>✓（Soft/Hard）</b></td></tr>
+<tr><td>Item 存储开销</td><td>0.25x</td><td>0x</td><td>8x</td><td>1x</td><td><b>1x</b></td></tr>
+<tr><td>推理延迟</td><td>26.0ms</td><td>31.4ms</td><td>28.0ms</td><td>33.3ms</td><td><b>26.9ms</b></td></tr>
+<tr><td>参数增量</td><td>大（增强向量）</td><td>-</td><td>大（多头）</td><td>中</td><td><b>小（元矩阵 + 行列 FC）</b></td></tr>
+<tr><td>训练稳定性</td><td>需调</td><td>需调</td><td>较好</td><td>需调</td><td><b>温度衰减保证稳定</b></td></tr>
+<tr><td>效果（SOTA 度）</td><td>+</td><td>++</td><td>++</td><td>+++</td><td><b>++++</b></td></tr>
+</table>
+</div>
+
+<!-- ================= 9 启示 ================= -->
+<h2 class="sec" id="insight">9. 工程启示：FIT 给搜一搜的借鉴</h2>
+
+<div class="card">
+<h4>9.1 MQM 的"伪物品"思路值得直接借鉴</h4>
+<p>微信搜一搜有大量"图文 / 视频号 / 公众号 / 小程序"四类候选，每类又有数十种内容标签。可以把"内容标签 / 分类"作为伪物品的语义中心：</p>
+<ul>
+  <li>离线训练一组 M = 64 个"伪内容标签"向量；</li>
+  <li>每个真实候选分配 1 个伪标签索引；</li>
+  <li>用户塔中通过 DIN 加权，让"用户历史在当前候选内容类型下的兴趣"得到强化。</li>
+</ul>
+<p>改造成本：<b>仅多 1024 个参数 + 1 bit slot 存储</b>，推理延迟几乎不变。</p>
+</div>
+
+<div class="card">
+<h4>9.2 LSS 的"多头 + 行列 FC"可以替代现有双塔打分</h4>
+<p>当前双塔通常用点积或余弦相似度。LSS 仅增加 2 个 H×64 维的 FC 层（H=2），<b>几乎不增加延迟</b>，却能显著提升打分精度。可以先从"图文 i2i 预排序"做试点，对比单点积 vs LSS 的离线 AUC。</p>
+</div>
+
+<div class="card">
+<h4>9.3 温度衰减的训练 Trick 可直接复用到其他多阶段训练</h4>
+<p>"训练-推理一致性"是工业模型的常见痛点。FIT 的温度衰减机制（让 Soft 训练 ↔ Hard 推理）是一个通用 Trick：</p>
+<ul>
+  <li>任何"训练时连续 / 推理时离散"的设计（如向量量化、知识蒸馏中的 soft/hard label）都可以借鉴；</li>
+  <li>实现简单，仅需一个 τ 的学习率调度；</li>
+  <li>消融实验显示这是性能的关键保障之一。</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>9.4 适合作为"从 4 阶段漏斗向 3 阶段融合"的过渡方案</h4>
+<p>FIT 同时实现早期 + 晚期交互，效果逼近精排单塔；保留双塔的离线 ANN 索引，效率与召回双塔持平。</p>
+<p>这意味着：未来可以考虑把 <b>召回 + 预排序合并为单层 FIT</b>，少一层模型 + 少一次 ANN 检索。这是 2026 年召回架构演进的一个可探索方向。</p>
+</div>
+
+<!-- ================= 10 局限 ================= -->
+<h2 class="sec" id="limit">10. 局限与展望</h2>
+
+<div class="card">
+<h4>局限性</h4>
+<ul>
+  <li><b>N=64 是个超参</b>，对不同业务可能需要重新调优；过细易过拟合，过粗表达力不足。</li>
+  <li><b>DIN 交互单元的延迟</b>在长序列场景（>50）会快速放大，论文实验固定 max_len=50。</li>
+  <li><b>用户塔要算 N 套表征</b>，理论上比单表征多 N 倍计算（虽然 N=64 在 GPU 上几乎无感，但 CPU 推理仍是负担）。</li>
+  <li><b>论文未公开代码</b>，工业复现需要自己做温度调度、Hard Query 索引、并行 N 套表征等工程实现。</li>
+  <li><b>论文未提及在线 A/B 数据</b>，仅 4 个公开数据集的离线 AUC，无法评估真实业务增益。</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>未来方向</h4>
+<ul>
+  <li><b>N 自适应</b>：根据候选物品分布自动决定每个簇的 N 数量（如 SARQ 的"按 path entropy 分配"思路）。</li>
+  <li><b>DIN 替换为更轻的 Target-Attention</b>（如 SIM、ETA 的 top-k 选择）。</li>
+  <li><b>与 LONGER 结合</b>：长序列 + MQM 早期交互 + LSS 晚期打分，做"千级长序列预排序"。</li>
+  <li><b>与 OneRec 对比</b>：在相同业务上做"双塔 + FIT" vs "OneRec 生成式"的 A/B，看哪种更适合。</li>
+  <li><b>多模态 MQM</b>：把"伪物品"扩展为"伪图文-视频"多模态向量，处理图文/视频混合召回。</li>
+</ul>
+</div>
+
+<!-- ================= 附录 ================= -->
+<h2 class="sec" id="refs">附录：参考资源</h2>
+<div class="card">
+
+<div class="ref"><b>[1] FIT 论文 arXiv 全文（HTML 版）</b> · arXiv:2509.12948 · <a href="https://arxiv.org/html/2509.12948v1" target="_blank">arxiv.org/html/2509.12948v1</a></div>
+
+<div class="ref"><b>[2] FIT 论文 PDF / Abstract</b> · arXiv · <a href="https://arxiv.org/abs/2509.12948" target="_blank">arxiv.org/abs/2509.12948</a></div>
+
+<div class="ref"><b>[3] SIGIR 2025 论文集（DOI 入口）</b> · ACM · <a href="https://dl.acm.org/doi/10.1145/3726302.3729881" target="_blank">dl.acm.org/doi/10.1145/3726302.3729881</a></div>
+
+<div class="ref"><b>[4] FIT 论文评述（Moonlight AI）</b> · <a href="https://www.themoonlight.io/zh/review/a-learnable-fully-interacted-two-tower-model-for-pre-ranking-system" target="_blank">themoonlight.io</a></div>
+
+<div class="ref"><b>[5] RankTower 论文（FIT 的重要 baseline）</b> · Credit Karma · arXiv:2407.12385 · <a href="https://arxiv.org/html/2407.12385v1" target="_blank">arxiv.org/html/2407.12385v1</a></div>
+
+<div class="ref"><b>[6] IntTower 解读（CIKM'22 华为诺亚）</b> · <a href="https://zhuanlan.zhihu.com/p/609709620" target="_blank">知乎</a></div>
+
+<div class="ref"><b>[7] DAT / COLD 论文</b> · WSDM'21 / SIGIR'21 · 详见 RecSysPapers 仓库</div>
+
+<div class="ref"><b>[8] DIN（Deep Interest Network）原文</b> · 阿里妈妈 · KDD'18 · 经典 Target-Attention 起点</div>
+
+<div class="ref"><b>[9] Awesome-Deep-Learning-Papers-for-Search-Recommendation-Advertising</b> · <a href="https://github.com/guyulongcs/Awesome-Deep-Learning-Papers-for-Search-Recommendation-Advertising" target="_blank">github.com/guyulongcs/...</a></div>
+
+<div class="ref"><b>[10] RecSysPapers 论文汇总仓库（948 篇）</b> · <a href="https://github.com/tangxyw/RecSysPapers" target="_blank">github.com/tangxyw/RecSysPapers</a></div>
+
+<div class="ref"><b>[11] SIGIR 2025 Accepted Papers 列表</b> · <a href="https://sigir2025.dei.unipd.it/accepted-papers.html" target="_blank">sigir2025.dei.unipd.it/accepted-papers.html</a></div>
+
+<div class="ref"><b>[12] SIGIR 2025 FIT 演讲 slides</b> · <a href="https://sigir2025.dei.unipd.it/detailed-program/loadslides?paper=41f1f19176d383480afa65d325c06ed0" target="_blank">sigir2025.dei.unipd.it</a></div>
+
+</div>
+
+<footer>
+<div>本报告为内部技术精读，引用论文为公开 arXiv / SIGIR 资料；所有性能数据来自论文实验部分，未包含未公开信息。</div>
+<div style="margin-top:8px">FIT 论文精读 · v1.0 · 2026-07-15 · 适用于搜一搜 / 推荐 / 广告预排序场景</div>
+</footer>
+
+</main>
+</div>
+
+</div>

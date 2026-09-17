@@ -143,7 +143,13 @@
  * 旧浏览器降级为不撑宽（无副作用）。
  * ========================================================== */
 .post-container:has(.rank-mixer-report),
-.post-container:has(.generative-recall-report) {
+.post-container:has(.generative-recall-report),
+.post-container:has(.fit-report),
+.post-container:has(.industry-streaming-report),
+.post-container:has(.rq-kmeans-fsq-report),
+.post-container:has(.sglang-report),
+.post-container:has(.vllm-report),
+.post-container:has(.search-recall-report) {
   flex: 0 0 100%;
   max-width: 1140px;
   margin-left: auto;

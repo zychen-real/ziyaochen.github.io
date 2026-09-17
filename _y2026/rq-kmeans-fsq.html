@@ -1,0 +1,2958 @@
+---
+layout: post
+title: "生成式召回 RQ-KMeans-FSQ 方案技术分析报告"
+date: 2026-09-17 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: true
+mathjax: false
+tags:
+    - 论文
+    - 推荐系统
+    - 生成式召回
+    - 量化
+---
+
+<style>
+
+:root{
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #131825;
+  --bg-card: #1a2138;
+  --bg-code: #0d1421;
+  --text-primary: #e6edf7;
+  --text-secondary: #a8b3cf;
+  --text-muted: #6b7794;
+  --accent-blue: #4fc3f7;
+  --accent-cyan: #26d0ce;
+  --accent-green: #66bb6a;
+  --accent-amber: #ffb74d;
+  --accent-purple: #ba68c8;
+  --border-color: #2a3553;
+  --border-accent: #4fc3f7;
+  --shadow: 0 4px 20px rgba(79, 195, 247, 0.08);
+}
+.rq-kmeans-fsq-report *{ box-sizing: border-box; margin: 0; padding: 0; }
+.rq-kmeans-fsq-report html{ scroll-behavior: smooth; }
+.rq-kmeans-fsq-report body{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #0a0e1a 0%, #131825 100%);
+  color: var(--text-primary);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+
+.rq-kmeans-fsq-report .layout{
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 0;
+}
+
+
+.rq-kmeans-fsq-report .sidebar{
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 32px 20px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+.rq-kmeans-fsq-report .sidebar::-webkit-scrollbar{ width: 6px; }
+.rq-kmeans-fsq-report .sidebar::-webkit-scrollbar-track{ background: transparent; }
+.rq-kmeans-fsq-report .sidebar::-webkit-scrollbar-thumb{ background: var(--border-color); border-radius: 3px; }
+
+.rq-kmeans-fsq-report .brand{
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.rq-kmeans-fsq-report .brand-title{
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rq-kmeans-fsq-report .brand-title::before{
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+.rq-kmeans-fsq-report .brand-sub{
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.rq-kmeans-fsq-report .nav-title{
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 18px 0 10px 4px;
+  font-weight: 600;
+}
+
+.rq-kmeans-fsq-report .nav-list{ list-style: none; }
+.rq-kmeans-fsq-report .nav-item{
+  margin: 2px 0;
+}
+.rq-kmeans-fsq-report .nav-link{
+  display: block;
+  padding: 7px 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+.rq-kmeans-fsq-report .nav-link:hover{
+  background: rgba(79, 195, 247, 0.08);
+  color: var(--accent-blue);
+  border-left-color: var(--accent-blue);
+}
+.rq-kmeans-fsq-report .nav-num{
+  color: var(--accent-cyan);
+  font-weight: 600;
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+
+.rq-kmeans-fsq-report .main{
+  padding: 40px 56px 80px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+
+.rq-kmeans-fsq-report .hero{
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.08) 0%, rgba(38, 208, 206, 0.05) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 36px 40px;
+  margin-bottom: 36px;
+  position: relative;
+  overflow: hidden;
+}
+.rq-kmeans-fsq-report .hero::before{
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
+}
+.rq-kmeans-fsq-report .hero-tag{
+  display: inline-block;
+  font-size: 11px;
+  color: var(--accent-cyan);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.rq-kmeans-fsq-report .hero h1{
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #4fc3f7 0%, #26d0ce 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.5px;
+}
+.rq-kmeans-fsq-report .hero-sub{
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 800px;
+  line-height: 1.6;
+}
+.rq-kmeans-fsq-report .hero-meta{
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.rq-kmeans-fsq-report .hero-meta span{ display: flex; align-items: center; gap: 6px; }
+.rq-kmeans-fsq-report .hero-meta strong{ color: var(--accent-blue); font-weight: 600; }
+
+
+.rq-kmeans-fsq-report .qa-card{
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  scroll-margin-top: 20px;
+}
+.rq-kmeans-fsq-report .qa-header{
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.04) 0%, rgba(38, 208, 206, 0.02) 100%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rq-kmeans-fsq-report .qa-num{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+  color: var(--bg-primary);
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.rq-kmeans-fsq-report .qa-question{
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.rq-kmeans-fsq-report .qa-tag{
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(79, 195, 247, 0.15);
+  color: var(--accent-blue);
+  margin-left: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+.rq-kmeans-fsq-report .qa-body{
+  padding: 24px 28px;
+}
+.rq-kmeans-fsq-report .qa-section{
+  margin: 18px 0;
+}
+.rq-kmeans-fsq-report .qa-section-title{
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rq-kmeans-fsq-report .qa-section-title::before{
+  content: '▸';
+  color: var(--accent-cyan);
+  font-size: 12px;
+}
+.rq-kmeans-fsq-report .qa-section-content{
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+.rq-kmeans-fsq-report .qa-section-content p{ margin: 8px 0; }
+.rq-kmeans-fsq-report .qa-section-content ul, .rq-kmeans-fsq-report .qa-section-content ol{
+  margin: 10px 0 10px 22px;
+}
+.rq-kmeans-fsq-report .qa-section-content li{ margin: 4px 0; }
+
+
+.rq-kmeans-fsq-report .highlight-blue{ color: var(--accent-blue); font-weight: 600; }
+.rq-kmeans-fsq-report .highlight-cyan{ color: var(--accent-cyan); font-weight: 600; }
+.rq-kmeans-fsq-report .highlight-green{ color: var(--accent-green); font-weight: 600; }
+.rq-kmeans-fsq-report .highlight-amber{ color: var(--accent-amber); font-weight: 600; }
+.rq-kmeans-fsq-report .highlight-purple{ color: var(--accent-purple); font-weight: 600; }
+
+
+.rq-kmeans-fsq-report .summary-box{
+  background: linear-gradient(135deg, rgba(38, 208, 206, 0.08) 0%, rgba(102, 187, 106, 0.05) 100%);
+  border-left: 3px solid var(--accent-cyan);
+  padding: 14px 18px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+.rq-kmeans-fsq-report .summary-box::before{
+  content: '核心结论';
+  display: block;
+  font-size: 11px;
+  color: var(--accent-cyan);
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+
+.rq-kmeans-fsq-report .code-block{
+  background: var(--bg-code);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 14px 0;
+  overflow-x: auto;
+  font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #c5d4f0;
+}
+.rq-kmeans-fsq-report .code-block::-webkit-scrollbar{ height: 6px; }
+.rq-kmeans-fsq-report .code-block::-webkit-scrollbar-thumb{ background: var(--border-color); border-radius: 3px; }
+.rq-kmeans-fsq-report .code-block .kw{ color: #c792ea; font-weight: 600; }
+.rq-kmeans-fsq-report .code-block .str{ color: #c3e88d; }
+.rq-kmeans-fsq-report .code-block .num{ color: #f78c6c; }
+.rq-kmeans-fsq-report .code-block .com{ color: #546e7a; font-style: italic; }
+.rq-kmeans-fsq-report .code-block .fn{ color: #82aaff; }
+.rq-kmeans-fsq-report .code-block .var{ color: #ffcb6b; }
+.rq-kmeans-fsq-report .code-block .cls{ color: #ffcb6b; }
+
+
+.rq-kmeans-fsq-report .tbl-wrap{ overflow-x: auto; margin: 14px 0; }
+.rq-kmeans-fsq-report table.tech-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.rq-kmeans-fsq-report table.tech-table thead{
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(38, 208, 206, 0.05) 100%);
+}
+.rq-kmeans-fsq-report table.tech-table th{
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+.rq-kmeans-fsq-report table.tech-table td{
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+.rq-kmeans-fsq-report table.tech-table tr:last-child td{ border-bottom: none; }
+.rq-kmeans-fsq-report table.tech-table tbody tr:hover{ background: rgba(79, 195, 247, 0.04); }
+
+
+.rq-kmeans-fsq-report .numbered-list{
+  counter-reset: item;
+  list-style: none;
+  margin: 12px 0 12px 0;
+}
+.rq-kmeans-fsq-report .numbered-list > li{
+  counter-increment: item;
+  margin: 10px 0;
+  padding-left: 32px;
+  position: relative;
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+.rq-kmeans-fsq-report .numbered-list > li::before{
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  color: var(--bg-primary);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.rq-kmeans-fsq-report .sub-h{
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin: 16px 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent-blue);
+}
+
+
+.rq-kmeans-fsq-report .divider{
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  margin: 24px 0;
+}
+
+
+.rq-kmeans-fsq-report .footer{
+  margin-top: 60px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.rq-kmeans-fsq-report .footer .brand-tag{
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+
+@media (max-width: 1024px) {
+  .rq-kmeans-fsq-report .layout{ grid-template-columns: 1fr; }
+  .rq-kmeans-fsq-report .sidebar{
+    position: relative;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .rq-kmeans-fsq-report .main{ padding: 24px 20px 60px; }
+}
+
+
+@media print {
+  .rq-kmeans-fsq-report body{ background: white; color: black; }
+  .rq-kmeans-fsq-report .sidebar{ display: none; }
+  .rq-kmeans-fsq-report .main{ padding: 20px; max-width: 100%; }
+  .rq-kmeans-fsq-report .qa-card{ break-inside: avoid; box-shadow: none; }
+}
+
+@media (max-width: 768px) {
+  .rq-kmeans-fsq-report .container, .rq-kmeans-fsq-report .layout, .rq-kmeans-fsq-report .wrap {
+    padding: 14px !important;
+  }
+  .rq-kmeans-fsq-report h1 { font-size: 24px !important; line-height: 1.35 !important; }
+  .rq-kmeans-fsq-report h2 { font-size: 20px !important; line-height: 1.4 !important; }
+  .rq-kmeans-fsq-report h3 { font-size: 17px !important; }
+  .rq-kmeans-fsq-report p { line-height: 1.75 !important; }
+  .rq-kmeans-fsq-report table { font-size: 12.5px !important; }
+  .rq-kmeans-fsq-report th, .rq-kmeans-fsq-report td { padding: 8px 10px !important; }
+  .rq-kmeans-fsq-report [class*="grid"], .rq-kmeans-fsq-report [class*="cards"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .rq-kmeans-fsq-report [class*="stat-grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* === sidebar TOC：默认收起，点击按钮展开 === */
+.rq-kmeans-fsq-report .layout { display: block !important; max-width: 100% !important; }
+.rq-kmeans-fsq-report .main, .rq-kmeans-fsq-report main { max-width: 100% !important; margin: 0 !important; grid-template-columns: 1fr !important; }
+.rq-kmeans-fsq-report aside.sidebar, .rq-kmeans-fsq-report .toc {
+  position: fixed !important;
+  right: 20px !important;
+  top: 84px !important;
+  width: 280px !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100vh - 110px) !important;
+  overflow-y: auto !important;
+  z-index: 950 !important;
+  background: var(--surface, #fff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(29,78,216,.10), 0 4px 12px rgba(15,23,42,.06) !important;
+  padding: 18px 16px 20px !important;
+  transform: translateX(calc(100% + 40px)) !important;
+  transition: transform .3s ease !important;
+}
+.rq-kmeans-fsq-report aside.sidebar.open, .rq-kmeans-fsq-report .toc.open {
+  transform: translateX(0) !important;
+}
+.rq-kmeans-fsq-report #tocToggle {
+  display: flex !important;
+  position: fixed !important;
+  top: 84px !important;
+  right: 20px !important;
+  z-index: 960 !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: var(--surface, #fff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  box-shadow: 0 6px 18px rgba(15,23,42,.08) !important;
+  border-radius: 10px !important;
+  padding: 9px 15px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--primary-dark, #1D4ED8) !important;
+  cursor: pointer !important;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.rq-kmeans-fsq-report aside.sidebar.open ~ #tocToggle,
+.rq-kmeans-fsq-report .toc.open ~ #tocToggle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(60px) !important;
+}
+@media (max-width: 1080px) {
+  .rq-kmeans-fsq-report aside.sidebar, .rq-kmeans-fsq-report .toc {
+    right: 0 !important; left: 0 !important; top: 0 !important;
+    width: 100% !important; max-width: 100% !important;
+    max-height: 78vh !important; border-radius: 0 0 16px 16px !important;
+    transform: translateY(-104%) !important;
+    transition: transform .3s ease !important;
+  }
+  .rq-kmeans-fsq-report aside.sidebar.open, .rq-kmeans-fsq-report .toc.open { transform: translateY(0) !important; }
+  .rq-kmeans-fsq-report #tocToggle { top: 14px !important; right: 14px !important; }
+}
+
+</style>
+
+<div class="rq-kmeans-fsq-report">
+<button id="tocToggle" type="button" aria-label="展开/收起目录">☰ 目录</button>
+
+<div class="layout">
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">GenIR Report</div>
+      <div class="brand-sub">RQ-KMeans-FSQ · 2026.09</div>
+    </div>
+    <div class="nav-title">目录</div>
+    <ul class="nav-list">
+      <li class="nav-item"><a class="nav-link" href="#q1"><span class="nav-num">Q1</span>为什么 q-d hit 召回率更高</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q2"><span class="nav-num">Q2</span>d2d 严格大模型打标</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q3"><span class="nav-num">Q3</span>无 qsid 的方案</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q4"><span class="nav-num">Q4</span>d2d 簇内纯度 trade-off</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q5"><span class="nav-num">Q5</span>beam size 多样性</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q6"><span class="nav-num">Q6</span>隐式对齐方案</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q7"><span class="nav-num">Q7</span>伪 query 自监督</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q8"><span class="nav-num">Q8</span>仅生成器侧优化</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q9"><span class="nav-num">Q9</span>记忆 vs 推理 · 输入侧暴露</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q10"><span class="nav-num">Q10</span>输入侧任务构造举例</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q11"><span class="nav-num">Q11</span>训练任务先后顺序</a></li>
+      <li class="nav-item"><a class="nav-link" href="#q12"><span class="nav-num">Q12</span>长文档 doc2sid 处理</a></li>
+    </ul>
+    <div class="nav-title">附录</div>
+    <ul class="nav-list">
+      <li class="nav-item"><a class="nav-link" href="#summary"><span class="nav-num">∑</span>核心要点</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-tag">Technical Report · GenIR</div>
+      <h1>生成式召回 RQ-KMeans-FSQ 方案技术分析</h1>
+      <div class="hero-sub">
+        从 query2sid 任务的 hit 召回率差异出发,系统剖析 q-d 训练与 d2d 训练范式在生成式召回中的本质区别,
+        涵盖量化误差、码本分布、隐式对齐、蒸馏与多任务等核心话题;
+        并深入 RQ-KMeans + FSQ 四层结构的记忆/推理属性分层、SID 输入侧暴露的训练任务构造、
+        多任务训练顺序编排与长文档 indexing 的工程处理。
+      </div>
+      <div class="hero-meta">
+        <span><strong>主题</strong> GenIR · query2sid · RQ-KMeans · FSQ</span>
+        <span><strong>日期</strong> 2026-09-15</span>
+        <span><strong>QA</strong> 12 轮</span>
+      </div>
+    </section>
+
+    <!-- ============== Q1 ============== -->
+    <article class="qa-card" id="q1">
+      <div class="qa-header">
+        <div class="qa-num">Q1</div>
+        <div class="qa-question">
+          为什么 q-d 召回向量训练表征,对比 d2d 训练的表征,在最终 query2sid 任务上正例 hit 召回率更高?
+          <span class="qa-tag">核心问题</span>
+        </div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">核心原因:训练目标与最终任务的对齐性</div>
+          <div class="qa-section-content">
+            <p>
+              <span class="highlight-cyan">q-d</span>(query-doc)和 <span class="highlight-cyan">d2d</span>(doc-doc)训练得到的向量空间<strong>语义结构完全不同</strong>,
+              而生成式召回(rq-kmeans-fsq 把向量量化成 semantic ID)极度依赖这个向量空间的"局部邻域是否就是 ground-truth"。
+            </p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">1. q-d 训练:空间结构 = 相关性结构</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>训练目标(InfoNCE / 对比损失)直接优化 <span class="highlight-blue">q 与 d<sub>pos</sub> 的相似度,最大化与 d<sub>neg</sub> 的差异</span>。</li>
+              <li>学到的向量空间,<strong>一个 query 的最近邻 ≈ 它想要的正例 doc 集合</strong>。</li>
+              <li>量化(kmeans / FSQ)时,码本中心点自然落在"对一类 query 都相关"的 doc 簇上。</li>
+              <li>→ query 量化得到的 semantic ID,与正例 doc 的 ID <span class="highlight-green">共享长前缀的概率高</span>。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">2. d2d 训练:空间结构 = 内容结构,不是相关性结构</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>训练只用 doc-doc 对(同主题/同实体聚集),<span class="highlight-amber">query 完全没出现在训练中</span>。</li>
+              <li>学到的空间是"内容相似度空间",不是"相关性空间"。</li>
+              <li><strong>问题举例</strong>:
+                <ul>
+                  <li>"iPhone 15 评测"、"iPhone 15 拆解"、"iPhone 15 维修"在 d2d 空间高度共簇(都是 iPhone 15)。</li>
+                  <li>但用户搜 "iPhone 15 续航",真正的正例是"评测"。</li>
+                  <li>d2d 量化后,"续航"这个 query 的 embedding 被量化时,可能被分到"评测 / 拆解 / 维修"共用的同一个码字 → <strong>recall 中包含的真值 hit 反而少</strong>。</li>
+                </ul>
+              </li>
+              <li>本质:<strong>query 是外推的(out-of-distribution)</strong>,向量空间没有为它对齐过相关性边界。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">3. 量化误差放大 d2d 的劣势</div>
+          <div class="qa-section-content">
+            <p>rq-kmeans-fsq 是有损压缩,多级残差量化后,每个 doc 被压成一段短的 ID 序列。压缩粒度有限:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>空间类型</th><th>码字边界</th><th>码字 → doc 集合</th><th>hit 率</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="highlight-blue">q-d 空间</span></td><td>按"相关性"切</td><td>一组强相关 doc</td><td><span class="highlight-green">高</span></td></tr>
+                  <tr><td><span class="highlight-amber">d2d 空间</span></td><td>按"内容相似"切</td><td>一组主题相似但相关性混杂的 doc</td><td><span class="highlight-amber">低</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">4. 码本容量分配不一致</div>
+          <div class="qa-section-content">
+            <ul>
+              <li><strong>q-d</strong>:正例 doc 在某些簇上<strong>集中</strong>(因为多个 query 都把它们当正例),码本在"相关边界"更密集。</li>
+              <li><strong>d2d</strong>:所有 doc 几乎<strong>均匀</strong>占满码本,正例和负例混在一起。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">5. 经验佐证(TIGER / GenRet / DSI 系列论文)</div>
+          <div class="qa-section-content">
+            <p>几乎所有 GenIR 工作都报告同一个结论:<span class="highlight-cyan">query-aware 训练显著优于 doc-only 训练</span>。
+            原因正是 semantic ID 必须是"相关性指纹"而不是"内容指纹"。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          q-d 训出来的向量空间本身就是"为 query 检索定制的",量化后得到的 semantic ID 是相关性指纹,
+          query 与正例 doc 自然共享前缀;而 d2d 训出来的是内容指纹,query 在这个空间里是"局外人",hit 率天然低。
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">实践建议</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li><strong>双塔召回向量 + 生成式量化联合训练</strong>(端到端优化量化对召回的影响)</li>
+              <li><strong>Hard negative mining</strong>:让 q-d 训练的对比更精细</li>
+              <li><strong>多任务</strong>:q-d 训练时同时加 doc-doc 辅助任务,保留 doc 侧的语义结构但不让它主导</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q2 ============== -->
+    <article class="qa-card" id="q2">
+      <div class="qa-header">
+        <div class="qa-num">Q2</div>
+        <div class="qa-question">d2d 是严格大模型打标过的(反驳:标签质量够好)</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">关键洞察:标签质量 ≠ 训练范式对齐</div>
+          <div class="qa-section-content">
+            <p>d2d 即便标签是<strong>严格大模型打标的高质量相关性标签</strong>,仍然在 query2sid 上输给 q-d,
+            是因为问题出在<strong>训练范式本身</strong>,不在标签。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">1. 标签再好,query 也没进入向量空间</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>d2d 训练的 loss 只动 <code>d<sub>pos</sub> ↔ d<sub>neg</sub></code> 的几何关系,<span class="highlight-amber">query 完全不参与计算</span>。</li>
+              <li>训练结束后,向量空间里<strong>没有任何方向是为 query 优化的</strong>。</li>
+              <li>即使你打标的 (d<sub>pos</sub>, d<sub>neg</sub>) 完美反映"对哪些 query 相关",这个信号也只是"doc 之间互相知道",<strong>query 永远是局外人</strong>。</li>
+              <li>→ 量化码本只覆盖了 doc 分布,query 进来编码时<span class="highlight-cyan">没有为它准备的码字</span>。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">2. q-d 的不可替代性:query 和 doc 共空间 + 共码本</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>q-d 训练把 <code>q</code> 拉进同一个向量空间,loss 直接优化 <code>sim(q, d<sub>pos</sub>)↑, sim(q, d<sub>neg</sub>)↓</code>。</li>
+              <li>向量空间的几何被压成"<strong>以 query 为中心,正例 doc 包围 query</strong>"的结构。</li>
+              <li>rq-kmeans-fsq 量化时,<strong>query 和 doc 共用一套码本</strong> → 码字天然刻画"哪类 doc 对哪类 query 都相关"。</li>
+              <li>这是 d2d 物理上做不到的,无论标签多准。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">3. 量化瓶颈在 query 侧暴露</div>
+          <div class="qa-section-content">
+            <p>码本容量有限,kmeans/FSQ 只能把向量空间切成 K 个簇:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>训练方式</th><th>切出的簇语义</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="highlight-amber">d2d</span></td><td>"内容主题"(评测、菜谱、新闻…)</td></tr>
+                  <tr><td><span class="highlight-blue">q-d</span></td><td>"相关性主题"(续航相关、价格相关、做法相关…)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>同一个 query "iPhone 15 续航":</p>
+            <ul>
+              <li><strong>d2d</strong>:被量化进"手机评测"码字 → 召回各种手机评测(正例稀疏、负例密集)</li>
+              <li><strong>q-d</strong>:被量化进"续航相关"码字 → 召回真正答这个 query 的 doc</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">4. 大模型打标反而可能"过语义化"</div>
+          <div class="qa-section-content">
+            <p>这是一个更深的问题:<span class="highlight-cyan">语义相似度 ≠ 检索相关性</span>。</p>
+            <ul>
+              <li>大模型打标倾向基于"内容/语义是否接近"判相关,但 query 召回关心的是"是否真能回答这个具体 query"。</li>
+              <li><strong>例</strong>:query "iPhone 15 续航",候选 doc:
+                <ul>
+                  <li>D1: "iPhone 15 详细评测(含续航章节)" → <span class="highlight-green">真正相关</span></li>
+                  <li>D2: "iPhone 15 价格对比" → 语义相关但<span class="highlight-amber">不相关</span>于"续航"</li>
+                </ul>
+              </li>
+              <li>大模型可能给 D1、D2 都打"高相关性"(它们语义近),但 query 召回只想要 D1。</li>
+              <li>q-d 训练如果有真实点击/行为信号,能学到这种细粒度差别;纯 d2d 即便标签是 LLM 打的相关性,<strong>也只是 doc-doc 关系,没有 query 这个中介来区分</strong>。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">5. 直觉比喻</div>
+          <div class="qa-section-content">
+            <blockquote style="background: var(--bg-code); padding: 14px 18px; border-left: 3px solid var(--accent-purple); border-radius: 0 8px 8px 0; margin: 12px 0;">
+              <p style="color: var(--text-primary); font-style: italic; line-height: 1.7;">
+                d2d 训出来的向量空间像一本<strong style="color: var(--accent-amber);">按内容主题分类的图书目录</strong>(菜谱区、评测区、新闻区…)。
+                q-d 训出来的向量空间像一份<strong style="color: var(--accent-blue);">FAQ 索引</strong>("续航问题" → 续航相关 doc 簇)。
+                量化码本就是目录的章节。把 query "续航怎么样" 丢进去:在图书目录里,它被分到"评测区",但评测区里有无关 doc;
+                在 FAQ 索引里,它直接命中"续航相关"章节,hit 率高。
+              </p>
+            </blockquote>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          d2d 再怎么精心打标,学到的也只是"doc 内容相似度空间",码本切的是内容主题;
+          query 没有进入模型,量化时 query 没有"专属位置"。q-d 把 query 拉进同一空间、共享同一码本,
+          码字自然按"相关性主题"切,query2sid 的正例 hit 率必然更高。
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">建议</div>
+          <div class="qa-section-content">
+            <p>如果一定要用 d2d 数据,至少在 d2d 预训练后<strong>用真实 q-d 监督信号继续微调</strong>
+              (或者直接用 query-doc 弱监督,比如点击日志),否则无论 d2d 标签多严格,query 侧的几何对齐都不会发生。</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q3 ============== -->
+    <article class="qa-card" id="q3">
+      <div class="qa-header">
+        <div class="qa-num">Q3</div>
+        <div class="qa-question">这个方案没有 qsid,直接 query 明文到 doc sid 的</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">关键区别:query 明文 → doc sid 的自回归生成</div>
+          <div class="qa-section-content">
+            <p>没有 qsid,意味着<strong>生成器(T5 类 encoder-decoder)从 query token 出发直接生成 doc 的 sid 序列</strong>。
+              召回时 beam search 出 sid,查 sid → doc 表。</p>
+            <p>这就把问题归结为:<strong>为什么生成器从 query 明文更容易生成 q-d 训出来的 sid,而不是 d2d 训出来的 sid?</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">核心原因:sid 序列本身是不是"query-friendly"</div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">1. q-d 训出的 sid 编码了"对哪类 query 相关"</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>d2d 训出的 sid 是 <strong>doc 的内容指纹</strong>(哪些 doc 互相内容相似)。</li>
+              <li>q-d 训出的 sid 编码了"对哪些 query 都相关"的信息(因为 query 参与了 loss)。</li>
+              <li>生成器从 query 明文出发要生成 sid 时,<span class="highlight-blue">q-d 的 sid 跟 query 的语义更"贴合"</span>,生成难度低。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">2. 多个正例 doc 的 sid 聚集度差异(最关键的点)</div>
+          <div class="qa-section-content">
+            <p>一个 query 通常对应 <strong>多个 ground-truth 正例 doc</strong>。hit 率取决于"一次 beam search 能覆盖多少正例 sid"。</p>
+            <ul>
+              <li><strong>d2d 训出来的 sid</strong>:同一 query 的多个正例 doc,因为<strong>内容主题不同</strong>
+                (例如"iPhone 续航"对应的正例可能是评测、对比、科普),被分散到不同簇,sid 前缀<span class="highlight-amber">不重合</span>。
+                <br>生成器一次只能走一条 sid 路径,要"蒙中"多个分散的正例 → 概率乘性下降 → hit 率低。</li>
+              <li><strong>q-d 训出来的 sid</strong>:同一 query 的多个正例 doc 因为<strong>共享同一 query 信号</strong>,
+                被压到<strong>相同或相邻簇</strong>,sid 共享<strong>长公共前缀</strong>。
+                <br>生成器只要生成这个共有前缀,beam search 一次就能 hit 多个正例 → hit 率高。</li>
+            </ul>
+            <p>这就是 <span class="highlight-cyan">"前缀重合假设"</span>:q-d 训练本质上是让"语义相关的 doc 共享码字前缀"。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">3. 生成器的归纳偏置问题</div>
+          <div class="qa-section-content">
+            <ul>
+              <li>T5 类自回归生成器擅长学习"<strong>输入语义模式 → 输出 token 序列</strong>"的直接映射。</li>
+              <li><span class="highlight-blue">q-d sid</span>:query 语义 → sid 序列 是直接映射,学起来简单,泛化好。</li>
+              <li><span class="highlight-amber">d2d sid</span>:query 语义 → sid 序列 中间隔了一层"query → doc 内容"的隐式推理,学起来难,泛化差。</li>
+              <li>数据效率上:同样数据量,q-d 收敛更快、泛化更好。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">4. 直觉比喻</div>
+          <div class="qa-section-content">
+            <blockquote style="background: var(--bg-code); padding: 14px 18px; border-left: 3px solid var(--accent-purple); border-radius: 0 8px 8px 0; margin: 12px 0;">
+              <p style="color: var(--text-primary); font-style: italic; line-height: 1.7;">
+                d2d sid 像 <strong style="color: var(--accent-amber);">ISBN 编号</strong>:每本书独立编号,内容相近的书编号也不连续。
+                q-d sid 像 <strong style="color: var(--accent-blue);">Dewey 十进制分类</strong>:同一 query 想要的书集中在同一类目,<strong>共享前缀</strong>。
+                生成器从 query 出发:ISBN 方案要"记住"每个 query 对应哪些具体编号,几乎不可能一次全猜中;
+                Dewey 方案生成"类目号"就能一次覆盖一片相关的书。
+              </p>
+            </blockquote>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">5. 量化误差 + 生成误差的叠加</div>
+          <div class="qa-section-content">
+            <ul>
+              <li><strong>d2d</strong>:多个正例分散 → <strong>量化误差</strong>让它们离得更远 → 生成误差叠加 → hit 难</li>
+              <li><strong>q-d</strong>:多个正例聚集 → 量化误差小(已经在同一簇)→ 生成只要走对一次 → hit 易</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          query2sid 是生成任务,hit 率取决于"生成一次能覆盖多少正例 sid"。q-d 训出的 sid 让同一 query 的多个正例 doc
+          共享长公共前缀,生成器一次生成就能命中多个;d2d 训出的 sid 让正例分散,生成器一次只能蒙一个,hit 率必然低。
+          前缀重合度就是核心。
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">实战建议</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li><strong>多正例聚类正则</strong>:训练向量化时显式加约束,让同一 query 的多个正例 sid 共享更长前缀。</li>
+              <li><strong>beam search + 前缀聚簇</strong>:召回时利用前缀聚簇做层次化剪枝,hit 率能再上一档。</li>
+              <li><strong>混合训练</strong>:用 q-d 主 loss + 少量 d2d 辅助 loss,既保留 doc 侧内容结构,又让 query 侧对齐不丢失。</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q4 ============== -->
+    <article class="qa-card" id="q4">
+      <div class="qa-header">
+        <div class="qa-num">Q4</div>
+        <div class="qa-question">d2d 分的好不是坏事,query 引导的 doc 容易造成偏执</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">用户的论点解构</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li>d2d 训出的簇内 doc 是真正语义/内容相关的("dd 相关")。</li>
+              <li>q-d 训出的簇内 doc 只是"对同一 query 相关",但 doc 之间内容可能差异大。</li>
+              <li>如果多个 doc 共享一个 sid(用来召回),那它们之间应该真正语义相关;
+                如果它们只因为"query 相关"被聚到一起,那 sid 内部就"脏"了。</li>
+              <li>query 引导容易引入 bias(数据偏差、长尾分布)。</li>
+            </ol>
+            <p><strong>这个反驳在理论上是 partially correct 的!</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">澄清:query2sid 关心的是 query→doc 映射,不是 doc 间相似度</div>
+          <div class="qa-section-content">
+            <ul>
+              <li><strong>d2d 评估指标</strong>:doc 内部语义一致性(簇内 doc 互相像不像)。</li>
+              <li><strong>query2sid 评估指标</strong>:给定 query,召回 TopK sid 里能 hit 多少 ground-truth 正例 doc。</li>
+              <li>这两个指标<strong>不等价</strong>,甚至常常矛盾:
+                <ul>
+                  <li>d2d 簇内纯净 → 但簇可能跟 query 想要的 doc <strong>不对齐</strong></li>
+                  <li>q-d 簇内混杂 → 但簇跟 query <strong>对齐好</strong></li>
+                </ul>
+              </li>
+            </ul>
+            <p>"dd 相关才能保证真的相关是同一个 sid"是<strong>doc 视角的内在质量标准</strong>,
+              但 query2sid 的 hit 率是 <strong>query 视角的覆盖能力</strong>。这两个不是一回事。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">关于"qd 偏执",要分两面看</div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">确实存在的偏执(批评得对)</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li><strong>点击/曝光偏差</strong>:q-d 训练信号来自搜索日志,热门 doc 被反复曝光 → sid 偏向头部。</li>
+              <li><strong>query 多样性塌缩</strong>:一个 query 的多个正例被强制压成同一前缀,丢失了 doc 内部的多样性。</li>
+              <li><strong>长尾 query 信号弱</strong>:训练样本少的 query,sid 表征不稳定。</li>
+            </ol>
+            <p>这些是真实问题,不是幻觉。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">但这个偏执对召回任务是 feature 不是 bug</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li><strong>query 想要的就是覆盖多个角度</strong>:
+                <br>query "Python 教程" 真实想要的 doc 包括入门、数据分析、ML 教程,<strong>内容差异本来就大</strong>。
+                q-d 让它们共享 sid 前缀,beam search 一次召回三种类型 → <strong>用户体验刚好</strong>。
+                d2d 把它们分到不同簇 → beam search 要"猜中"哪个具体子簇才能 hit → 漏召严重。</li>
+              <li><strong>召回场景就是要"宁可相关不可替代"</strong>:
+                <br>精排阶段再做多样性打分,召回阶段就是要<span class="highlight-cyan">先把跟 query 沾边的都捞回来</span>。
+                q-d 的"偏执"恰好对应召回阶段的需求:<strong>宁可召回一些弱相关的,也不要漏掉强相关的</strong>。</li>
+              <li><strong>d2d 的"纯净"反而是 over-constrained</strong>:
+                <br>簇内 doc 真的语义相似 → 但 query 不一定就是要"语义相似的 doc"。
+                query "iPhone 15 续航" 想要的 doc 跟 query "iPhone 15 拆机" 想要的 doc 集合,重叠度不高。
+                d2d 把这些 doc 都分散到不同簇,<strong>簇跟 query 错位</strong>,hit 率自然低。</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">真正的 trade-off:纯度 vs 召回覆盖</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>维度</th><th>d2d</th><th>q-d</th></tr></thead>
+                <tbody>
+                  <tr><td>簇内语义一致性</td><td><span class="highlight-green">高</span></td><td>低(混杂)</td></tr>
+                  <tr><td>簇跟 query 对齐</td><td><span class="highlight-amber">弱</span></td><td><span class="highlight-green">强</span></td></tr>
+                  <tr><td>召回 hit 率</td><td><span class="highlight-amber">低</span></td><td><span class="highlight-green">高</span></td></tr>
+                  <tr><td>长尾/曝光偏差</td><td>低</td><td>高</td></tr>
+                  <tr><td>文档侧内在质量</td><td><span class="highlight-green">高</span></td><td>偏</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>对"簇纯度"的担心对应第 1、4、5 行;query2sid 的 hit 率指标对应第 3 行。<strong>优化目标选错维度,再纯净也没用</strong>。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">关于"dd 相关才能保证真的相关是同一个 sid"这个直觉</div>
+          <div class="qa-section-content">
+            <p>直觉上"共享 sid = 语义相关"很自然,但这是<strong>从 doc 侧看的</strong>。</p>
+            <p>从 query 侧看,<span class="highlight-cyan">共享 sid = 对一类 query 都相关</span>才合理。这两个定义哪个对,取决于你的下游任务是 doc 检索还是 query 召回。</p>
+            <p>query2sid 显然是后者。</p>
+            <p>如果下游真的是 doc-doc 检索(比如找相似 doc),那 d2d 确实更对;但既然任务是 query→doc,就要接受 q-d 的"偏执"是必要代价。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">如何兼顾两边</div>
+          <div class="qa-section-content">
+            <p>如果既想要簇内纯净,又想要 query 对齐,可以考虑:</p>
+            <ol class="numbered-list">
+              <li><strong>两阶段训练</strong>:d2d 先做内容聚类预训练 → q-d 微调对齐 query。损失加约束让正例 doc 共享前缀,同时 doc 之间余弦相似度不要塌缩。</li>
+              <li><strong>multi-task loss</strong>:<code>L = L<sub>qd</sub> + α·L<sub>dd</sub></code>,α 调权重,平衡两边。</li>
+              <li><strong>hard negative mining</strong>:q-d 训练时精心选负例,避免引入过强的 query 偏差。</li>
+              <li><strong>前缀长度自适应</strong>:同一 query 的正例 doc 强制共享前 N 级码字,但 N 不要贪大,保留 doc 内部多样性。</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          d2d 的"簇内纯净"是 doc 视角的内在质量,q-d 的"簇内偏执"是 query 视角的对齐代价。
+          query2sid 的 hit 率指标天然选后者,所以 q-d 胜出。但对"过度混杂"的担心不是没道理——
+          簇内过度混杂会引入点击偏差,解决方案不是回到 d2d,而是给 q-d 加 d2d 正则或多任务约束。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q5 ============== -->
+    <article class="qa-card" id="q5">
+      <div class="qa-header">
+        <div class="qa-num">Q5</div>
+        <div class="qa-question">d2d infer 时可以开 beam size 来保证多样性</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">beam size 能缓解多样性,但治标不治本</div>
+          <div class="qa-section-content">
+            <p>beam search 是从生成器的输出分布里挑 K 个最优序列。<span class="highlight-cyan">它放大了生成器已有的信号,但不能创造新信号</span>。</p>
+            <p>具体来说:</p>
+            <ul>
+              <li>给定 query "iPhone 15 续航"</li>
+              <li>d2d 训出的生成器只知道"哪些 sid 经常出现",但<span class="highlight-amber">不知道哪些 sid 跟这个 query 强相关</span></li>
+              <li>beam size = 10 时,它会输出 10 个 sid,但这些 sid 是"最可能的 sid",不是"最相关的 sid"</li>
+              <li>如果 query 的语义信号跟 d2d 簇边界<span class="highlight-amber">不对齐</span>,开 100 的 beam 也只会从一堆不对齐的 sid 里挑</li>
+            </ul>
+            <p><strong>关键瓶颈是生成器本身的 query→sid 关联弱,不是采样数量。</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">真正的 trade-off</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>维度</th><th>d2d + 大 beam</th><th>q-d + 小 beam</th></tr></thead>
+                <tbody>
+                  <tr><td>簇内 doc 纯净度</td><td><span class="highlight-green">高</span></td><td>低</td></tr>
+                  <tr><td>簇跟 query 对齐</td><td><span class="highlight-amber">弱</span>(生成器弱关联)</td><td><span class="highlight-green">强</span></td></tr>
+                  <tr><td>hit 率</td><td>中(靠 beam 数量堆)</td><td><span class="highlight-green">高</span>(一次就 hit 多正例)</td></tr>
+                  <tr><td>计算成本</td><td><span class="highlight-amber">高</span>(beam=64+ 才稳)</td><td>低(beam=8~16 就够)</td></tr>
+                  <tr><td>长尾 query 表现</td><td><span class="highlight-amber">差</span>(信号稀疏)</td><td>较好(共享前缀补偿)</td></tr>
+                  <tr><td>召回稳定性</td><td>弱(依赖 beam 数量)</td><td><span class="highlight-green">强</span>(一次命中率高)</td></tr>
+                  <tr><td>服务 latency</td><td><span class="highlight-amber">高</span>(大 beam 慢)</td><td>低(小 beam 快)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>d2d + 大 beam 是在用计算成本换 hit 率</strong>,而且换得不彻底 —— 因为生成器没学好,再大的 beam 也只能从不对齐的 sid 池里捞。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">直观对比</div>
+          <div class="qa-section-content">
+            <blockquote style="background: var(--bg-code); padding: 14px 18px; border-left: 3px solid var(--accent-purple); border-radius: 0 8px 8px 0; margin: 12px 0;">
+              <p style="color: var(--text-primary); font-style: italic; line-height: 1.7;">
+                <strong style="color: var(--accent-blue);">q-d 训的生成器</strong>:知道 query "续航" → 直接生成"续航相关" sid 前缀。beam=4 就命中。
+                <br><br>
+                <strong style="color: var(--accent-amber);">d2d 训的生成器</strong>:query "续航" → 输出分布里"评测"、"对比"、"科普" sid 都可能命中。beam=64 才能凑齐相关 sid,但里面可能混了无关 sid。
+                <br><br>
+                <strong style="color: var(--accent-cyan);">q-d 是"对准了再打",d2d 是"撒网打捞"</strong>。后者开大网也打不到不在水域里的鱼。
+              </p>
+            </blockquote>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">d2d + 大 beam 也有适用场景</div>
+          <div class="qa-section-content">
+            <p>坚持 d2d 的方向不是没道理:</p>
+            <ol class="numbered-list">
+              <li><strong>query 是 doc 标题/长 query 时</strong>:生成器能从字面推断 doc 内容主题,d2d 信号够用。</li>
+              <li><strong>领域 doc 内容差异极大时</strong>(如医疗、法律专业文档):簇内纯净更重要。</li>
+              <li><strong>不希望 query 侧偏差污染 sid</strong>时:d2d 的偏差源比 q-d 干净。</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">如果坚持 d2d 路线,工程上的优化</div>
+          <div class="qa-section-content">
+            <ol class="numbered-list">
+              <li><strong>生成器训练时加 query 侧弱监督</strong>
+                <div class="code-block">
+L<sub>total</sub> = L<sub>d2d</sub> + α · L<sub>qd_weak</sub>
+                </div>
+                让生成器既学到 doc 侧结构,又对齐 query。</li>
+
+              <li><strong>Diverse Beam Search + 簇内相似度惩罚</strong>
+                <ul>
+                  <li>用 DBS 而不是普通 beam,强制多样性</li>
+                  <li>加约束:选出的 sid 之间 doc 集合的 Jaccard 距离要够大</li>
+                  <li>避免 beam search 退化成"相似 sid 多次出现"</li>
+                </ul>
+              </li>
+
+              <li><strong>两阶段召回</strong>
+                <ul>
+                  <li>第一阶段:d2d 训的生成器开 beam=8,召回 ~50 个 sid</li>
+                  <li>第二阶段:用 query-doc 轻量双塔 rerank,过滤掉不对齐的 sid</li>
+                  <li>兼顾 d2d 的纯净和 q-d 的对齐</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          d2d + 大 beam 用计算成本换 hit 率,但生成器信号弱是天花板,beam size 突破不了。
+          q-d + 小 beam 用信号强度换 hit 率,天花板高、成本低。坚持 d2d 路线可以走,但建议加 q-d 弱监督做辅助任务,
+          或者用两阶段召回补 query 对齐,单纯堆 beam size 性价比不高。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q6 ============== -->
+    <article class="qa-card" id="q6">
+      <div class="qa-header">
+        <div class="qa-num">Q6</div>
+        <div class="qa-question">d2d 向量如何能在 query2sid 模型上提高 query 和 doc 空间的隐式对齐</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">核心思路</div>
+          <div class="qa-section-content">
+            <p>d2d 训练出的向量空间里 query 是"局外人",要隐式提高对齐,本质是<span class="highlight-cyan">让 doc 表征在训练时"看到" query 侧的信号</span>。
+              不直接用 q-d 监督信号,让 query 和 doc 在隐空间里"自然走到一起"。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案一:共享预训练 backbone(最稳,零额外成本)</div>
+          <div class="qa-section-content">
+            <p><strong>原理</strong>:预训练 LM(T5、BERT)已经在海量文本上学到了 query-like 文本和 doc-like 文本的语义对齐。
+              d2d 训练只是在这个基础上"精调" doc 侧结构。</p>
+            <p><strong>实施</strong>:</p>
+            <ul>
+              <li>生成器(query→sid)用预训练 T5/BART</li>
+              <li>doc encoder 用预训练 BERT/RoBERTa</li>
+              <li><span class="highlight-blue">关键</span>:两者的底层 embedding 层共享或同源(如都用同一个 tokenizer 的 BERT 系)</li>
+            </ul>
+            <p><strong>为什么有效</strong>:即使 d2d 训练不动 query-doc 对齐,预训练已经把 query 和 doc 文本投到<span class="highlight-cyan">同一个语义流形</span>。
+              d2d 只是细化 doc 侧结构,预训练的对齐基础还在。</p>
+            <p><strong>优化点</strong>:在跟 query/doc 领域匹配的数据上继续预训练 MLM(如医疗、法律领域);让 backbone 见过更多 query-doc 交互的语料。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案二:伪 query 自监督(最实用,推荐)</div>
+          <div class="qa-section-content">
+            <p><strong>原理</strong>:doc 自己的标题、摘要、首段天然可以作为"伪 query"。
+              把这些伪 query 跟 doc 拉近,等于<span class="highlight-cyan">间接告诉 doc 表征"你会以什么形式被召回"</span>。</p>
+            <div class="code-block">
+<span class="com"># 伪 query 构造</span>
+pseudo_query = doc.title + <span class="str">" "</span> + doc.summary + <span class="str">" "</span> + doc.first_sentence
+
+<span class="com"># 训练时多加一个对齐 loss</span>
+L<sub>total</sub> = L<sub>d2d</sub> + α · L<sub>align</sub>
+其中 L<sub>align</sub> = -log( exp(sim(doc_emb, pseudo_query_emb)) / Σ exp(sim(doc_emb, q<sub>neg</sub>)) )
+            </div>
+            <p><strong>关键设计</strong>:</p>
+            <ul>
+              <li>伪 query 质量决定了天花板。用 doc 自己的"可能被搜到的表达"</li>
+              <li>难负样本:从其他 doc 的伪 query 里采样</li>
+              <li>α 权重调平衡:太大退化成 q-d,太小没效果,建议 0.1~0.3</li>
+            </ul>
+            <p><strong>为什么是"隐式"</strong>:没用到真实 query-doc 监督,伪 query 是 doc 自身衍生的。</p>
+            <p style="color: var(--accent-cyan);">→ <strong>详见 Q7 完整展开</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案三:知识蒸馏(效果最好)</div>
+          <div class="qa-section-content">
+            <p><strong>原理</strong>:训练一个<span class="highlight-cyan">轻量 q-d 双塔 teacher</span>,用 teacher 的相似度分布作为软标签,蒸馏 d2d student。</p>
+            <div class="code-block">
+<span class="com"># Teacher: q-d 双塔(可以用 BERT 双塔,只训 query-doc 匹配)</span>
+teacher_qd_score = teacher_model(query, doc)
+
+<span class="com"># Student: d2d 训的 doc encoder</span>
+student_doc_emb = student_doc_encoder(doc)
+
+<span class="com"># 蒸馏 loss: 让 student 的 doc 表征跟 teacher 的 q-d 分布对齐</span>
+L<sub>distill</sub> = KL(softmax(student_doc_emb @ query_emb / T), softmax(teacher_qd_score / T))
+            </div>
+            <p><strong>优势</strong>:</p>
+            <ul>
+              <li>Student 主结构仍是 d2d(簇内纯净保留)</li>
+              <li>Teacher 的 q-d 信号通过软标签"灌"进去</li>
+              <li>不需要 student 显式用 q-d pair 训练</li>
+            </ul>
+            <p><strong>注意</strong>:Teacher 自身要训好,否则噪声大;温度 T 调蒸馏强度(推荐 T=2~4)。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案四:联合训练 doc 量化 + 生成器(理论最优)</div>
+          <div class="qa-section-content">
+            <p><strong>原理</strong>:把 doc 的 RQ 量化跟 query→sid 的生成器端到端联合训练。
+              生成器的 loss 反向传播到 doc 量化阶段,<strong>让 doc 量化边界向"生成器容易生成"的方向调整</strong>。</p>
+            <div class="code-block">
+doc → doc encoder → RQ 量化 → sid
+                         ↑
+query → T5 生成器 → sid_pred (生成器 loss 反向影响 doc encoder + RQ)
+            </div>
+            <div class="code-block">
+L = L<sub>d2d</sub> + β · L<sub>generator</sub>(generator(query) → sid)
+            </div>
+            <p><strong>为什么理论上最优</strong>:doc 量化边界不再是"doc 分布主导",而是被"query→sid 的生成难度"反向约束。生成器学得轻松的 sid 划分方式会被保留。</p>
+            <p><strong>挑战</strong>:端到端训练 RQ 量化梯度不稳定;需要 trick(如 straight-through estimator);实现复杂度高。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案五:共享 vocab + token-level 对齐(补充技巧)</div>
+          <div class="qa-section-content">
+            <p><strong>原理</strong>:让 query 和 doc 共用 tokenizer 和 embedding 表,
+              doc 表征跟"它的相关 query token 的平均 embedding"对齐。</p>
+            <div class="code-block">
+<span class="com"># 给 doc 收集一批相关 query 文本</span>
+query_token_emb = embedding_layer(query_tokens)  <span class="com"># [N, D]</span>
+query_mean_emb = query_token_emb.mean(dim=<span class="num">0</span>)  <span class="com"># [D]</span>
+
+<span class="com"># 对齐 doc 表征到 query token 中心</span>
+L<sub>token_align</sub> = MSE(doc_emb, query_mean_emb)
+            </div>
+            <p><strong>适用场景</strong>:query-doc 在词层面重叠度高的领域(如电商搜索,query 包含商品属性词)。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">推荐组合策略</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>层次</th><th>方案组合</th><th>适用场景</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="highlight-green">轻量</span></td><td>共享预训练 backbone + 伪 query 自监督(α=0.2)</td><td>通用场景,零额外数据</td></tr>
+                  <tr><td><span class="highlight-blue">中等</span></td><td>轻量方案 + 知识蒸馏(teacher 用 q-d 双塔)</td><td>有 query-doc 弱监督信号时</td></tr>
+                  <tr><td><span class="highlight-amber">重型</span></td><td>中等方案 + 联合训练 RQ + 生成器</td><td>极致性能追求,可承担工程复杂度</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>大多数情况下"轻量方案"已经足够。预训练 backbone 提供了 60% 的对齐基础,伪 query 自监督再贡献 20~30%。
+              知识蒸馏和联合训练是锦上添花。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          d2d 隐式 query-doc 对齐的核心是"让 doc 表征在训练时能感知到 query 侧的信号"
+          —— 通过共享预训练 backbone(被动对齐)+ 伪 query 自监督(主动对齐)+ 蒸馏(强监督软化)
+          三种手段叠加,既保留 d2d 的簇内纯净,又提升 query 侧的召回能力。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q7 ============== -->
+    <article class="qa-card" id="q7">
+      <div class="qa-header">
+        <div class="qa-num">Q7</div>
+        <div class="qa-question">方案二具体怎么做,展开讲下(伪 query 自监督详细实施)</div>
+      </div>
+      <div class="qa-body">
+
+        <div class="qa-section">
+          <div class="qa-section-title">整体 Pipeline</div>
+          <div class="qa-section-content">
+            <div class="code-block">
+doc → 伪 query 生成 → query encoder → q_emb
+                                  ↓
+                            对齐 loss (InfoNCE)
+                                  ↓
+doc → doc encoder → d_emb ────────┘
+            ↓
+        d2d 主 loss ↓
+        总 loss = L<sub>d2d</sub> + α·L<sub>align</sub>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">一、伪 query 构造(决定天花板的关键步骤)</div>
+          <div class="qa-section-content">
+            <p>伪 query 质量直接决定对齐效果。五种构造方式从易到难:</p>
+
+            <div class="sub-h">Level 1:文本切片(最简单)</div>
+            <div class="code-block">
+pseudo_queries = [
+    doc.title,
+    doc.summary,
+    doc.first_paragraph[:<span class="num">128</span>],
+]
+            </div>
+            <p><strong>适用</strong>:doc 有清晰标题/摘要的场景(如新闻、商品)。<strong>缺陷</strong>:跟真实 query 形式差距大。</p>
+
+            <div class="sub-h">Level 2:关键词/实体抽取</div>
+            <div class="code-block">
+<span class="kw">import</span> jieba
+
+<span class="kw">def</span> <span class="fn">extract_keywords</span>(doc):
+    <span class="com"># TF-IDF 或 TextRank 抽关键词</span>
+    keywords = jieba.analyse.textrank(doc.content, topK=<span class="num">10</span>)
+    <span class="com"># 拼接成伪 query</span>
+    <span class="kw">return</span> <span class="str">" "</span>.join(keywords)
+
+pseudo_queries = [extract_keywords(doc) <span class="kw">for</span> doc <span class="kw">in</span> docs]
+            </div>
+            <p><strong>优势</strong>:跟真实 query 形式接近(query 通常是关键词组合)。</p>
+
+            <div class="sub-h">Level 3:小 LLM 生成(推荐)</div>
+            <div class="code-block">
+PROMPT = <span class="str">"""基于以下文档,生成 3 个用户可能在搜索引擎输入的问题。
+要求:简洁、口语化、像真实用户查询。
+
+文档:{doc_content}
+
+问题:"""</span>
+
+<span class="kw">def</span> <span class="fn">generate_pseudo_query</span>(doc, llm):
+    response = llm.generate(
+        PROMPT.format(doc_content=doc[:<span class="num">500</span>]),
+        max_new_tokens=<span class="num">100</span>
+    )
+    <span class="com"># 解析多个问题</span>
+    queries = parse_questions(response)
+    <span class="kw">return</span> queries[:<span class="num">3</span>]
+            </div>
+            <p><strong>推荐模型</strong>:Qwen-1.8B、ChatGLM-3-6B(轻量但质量够用)。</p>
+            <p><strong>工程技巧</strong>:离线批量生成 + 缓存,避免训练时重复推理;每个 doc 生成 3~5 个伪 query,做数据增强。</p>
+
+            <div class="sub-h">Level 4:模板化(领域特定)</div>
+            <div class="code-block">
+<span class="com"># 电商场景</span>
+ECOMMERCE_TEMPLATES = [
+    <span class="str">"{brand} {category} 怎么样"</span>,
+    <span class="str">"{brand} {category} 推荐"</span>,
+    <span class="str">"{category} 排行"</span>,
+    <span class="str">"{brand} vs {competitor}"</span>,
+]
+
+<span class="kw">def</span> <span class="fn">template_query</span>(doc):
+    brand = doc.attrs.get(<span class="str">"brand"</span>, <span class="str">""</span>)
+    category = doc.attrs.get(<span class="str">"category"</span>, <span class="str">""</span>)
+    <span class="kw">return</span> [t.format(brand=brand, category=category) <span class="kw">for</span> t <span class="kw">in</span> ECOMMERCE_TEMPLATES]
+            </div>
+            <p><strong>适用</strong>:领域结构化数据丰富时。</p>
+
+            <div class="sub-h">Level 5:真实 query 挖掘(半违规但效果最好)</div>
+            <div class="code-block">
+<span class="com"># 从搜索日志挖</span>
+real_queries = search_log[search_log[<span class="str">"doc_id"</span>] == doc.id][<span class="str">"query"</span>].tolist()
+            </div>
+            <p><strong>注意</strong>:这接近真实 q-d 监督,偏离了 d2d 无监督的初衷,但效果确实最好。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">二、编码器架构</div>
+          <div class="qa-section-content">
+            <p><strong>推荐方案:共享底层 + 双塔顶</strong></p>
+            <div class="code-block">
+<span class="kw">class</span> <span class="cls">DualEncoder</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pretrained_model):
+        super().__init__()
+        <span class="com"># 共享底层:BERT/RoBERTa</span>
+        self.shared_backbone = AutoModel.from_pretrained(pretrained_model)
+        <span class="com"># 各自顶层</span>
+        self.doc_head = nn.Linear(<span class="num">768</span>, <span class="num">768</span>)
+        self.query_head = nn.Linear(<span class="num">768</span>, <span class="num">768</span>)
+
+    <span class="kw">def</span> <span class="fn">encode_doc</span>(self, doc_text):
+        emb = self.shared_backbone(doc_text).last_hidden_state[:, <span class="num">0</span>]  <span class="com"># [CLS]</span>
+        <span class="kw">return</span> F.normalize(self.doc_head(emb), dim=-<span class="num">1</span>)
+
+    <span class="kw">def</span> <span class="fn">encode_query</span>(self, query_text):
+        emb = self.shared_backbone(query_text).last_hidden_state[:, <span class="num">0</span>]
+        <span class="kw">return</span> F.normalize(self.query_head(emb), dim=-<span class="num">1</span>)
+            </div>
+            <p><strong>为什么共享底层</strong>:BERT 预训练时 query 和 doc 文本都在语料里,<strong>底层已经学到了通用语义对齐</strong>;
+              共享底层保留这个先验,顶层各自优化 doc 侧和 query 侧特性;工程上省一半参数。</p>
+            <p><strong>更轻量替代</strong>:完全共享(不分手 head),适合小数据场景。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">三、损失函数(核心)</div>
+          <div class="qa-section-content">
+
+            <div class="sub-h">3.1 基础对齐 loss(双向 InfoNCE)</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">alignment_loss</span>(d_emb, q_emb, temperature=<span class="num">0.05</span>):
+    <span class="str">"""
+    d_emb: [B, D] doc 表征
+    q_emb: [B, D] query 表征
+    对角线是正样本对
+    """</span>
+    B = d_emb.size(<span class="num">0</span>)
+
+    <span class="com"># 相似度矩阵</span>
+    sim_d2q = d_emb @ q_emb.T / temperature  <span class="com"># [B, B]</span>
+    sim_q2d = q_emb @ d_emb.T / temperature  <span class="com"># [B, B]</span>
+
+    labels = torch.arange(B, device=d_emb.device)
+
+    <span class="com"># 双向对称 loss</span>
+    loss = (
+        F.cross_entropy(sim_d2q, labels) +
+        F.cross_entropy(sim_q2d, labels)
+    ) / <span class="num">2</span>
+    <span class="kw">return</span> loss
+            </div>
+
+            <div class="sub-h">3.2 多伪 query 对齐(每 doc 有 K 个伪 query)</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">multi_query_alignment_loss</span>(d_emb, q_embs, temperature=<span class="num">0.05</span>):
+    <span class="str">"""
+    q_embs: [B, K, D] 每个 doc 的 K 个伪 query 表征
+    """</span>
+    B, K, D = q_embs.shape
+
+    <span class="com"># 展开成正样本对</span>
+    d_expanded = d_emb.unsqueeze(<span class="num">1</span>).expand(-<span class="num">1</span>, K, -<span class="num">1</span>).reshape(B*K, D)  <span class="com"># [B*K, D]</span>
+    q_flat = q_embs.reshape(B*K, D)  <span class="com"># [B*K, D]</span>
+
+    <span class="com"># 负样本:batch 内所有 doc 的所有伪 query</span>
+    all_q = q_embs.reshape(B, K*D)  <span class="com"># [B, K*D]</span>
+
+    sim = d_expanded @ all_q.T / temperature  <span class="com"># [B*K, B]</span>
+    labels = torch.arange(B, device=d_emb.device).unsqueeze(<span class="num">1</span>).expand(-<span class="num">1</span>, K).reshape(-<span class="num">1</span>) <span class="com"># [B*K]</span>
+
+    <span class="kw">return</span> F.cross_entropy(sim, labels)
+            </div>
+
+            <div class="sub-h">3.3 Hard Negative Mining</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">alignment_loss_with_hard_neg</span>(d_emb, q_emb, temperature=<span class="num">0.05</span>, neg_topk=<span class="num">10</span>):
+    B = d_emb.size(<span class="num">0</span>)
+
+    sim = d_emb @ q_emb.T / temperature  <span class="com"># [B, B]</span>
+
+    <span class="com"># mask 对角线(正样本)</span>
+    mask = torch.eye(B, device=d_emb.device, dtype=bool)
+    sim_neg = sim.masked_fill(mask, -<span class="num">1e9</span>)
+
+    <span class="com"># 选 top-k hard negatives</span>
+    hard_neg_sim, hard_neg_idx = sim_neg.topk(neg_topk, dim=<span class="num">1</span>)  <span class="com"># [B, K]</span>
+
+    <span class="com"># 构造 loss:正样本 + hard negatives</span>
+    pos_sim = sim.diag().unsqueeze(<span class="num">1</span>)  <span class="com"># [B, 1]</span>
+    logits = torch.cat([pos_sim, hard_neg_sim], dim=<span class="num">1</span>)  <span class="com"># [B, K+1]</span>
+    labels = torch.zeros(B, device=d_emb.device, dtype=torch.long)
+
+    <span class="kw">return</span> F.cross_entropy(logits, labels)
+            </div>
+            <p><strong>Hard neg 的作用</strong>:让模型关注"差点混淆的负样本",对齐精度更高。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">四、与 d2d 主损失的结合</div>
+          <div class="qa-section-content">
+            <p><strong>完整训练代码</strong></p>
+            <div class="code-block">
+<span class="kw">class</span> <span class="cls">DocEncoderWithAlignment</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pretrained_model):
+        super().__init__()
+        self.encoder = DualEncoder(pretrained_model)
+        <span class="com"># RQ 量化层</span>
+        self.rq_layers = nn.ModuleList([
+            KMeansCodebook(dim=<span class="num">768</span>, k=<span class="num">256</span>) <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">3</span>)
+        ])
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, doc_text, pseudo_query_texts):
+        <span class="com"># doc 表征</span>
+        d_emb = self.encoder.encode_doc(doc_text)
+        <span class="com"># d2d loss(用 doc embedding 做对比)</span>
+        <span class="com"># ... 略,根据 d2d 训练范式</span>
+
+        <span class="com"># 伪 query 对齐 loss</span>
+        q_embs = []
+        <span class="kw">for</span> pq <span class="kw">in</span> pseudo_query_texts:
+            q_embs.append(self.encoder.encode_query(pq))
+        q_embs = torch.stack(q_embs, dim=<span class="num">1</span>)  <span class="com"># [B, K, D]</span>
+
+        L<sub>align</sub> = multi_query_alignment_loss(d_emb, q_embs)
+
+        <span class="com"># RQ 量化</span>
+        sid = rq_quantize(d_emb, self.rq_layers)
+
+        <span class="kw">return</span> L<sub>align</sub>, sid
+
+<span class="com"># 训练</span>
+<span class="kw">for</span> batch <span class="kw">in</span> dataloader:
+    doc_texts, pos_doc_texts, neg_doc_texts, pseudo_queries = batch
+
+    <span class="com"># d2d 主损失</span>
+    d_anchor = encoder.encode_doc(doc_texts)
+    d_pos = encoder.encode_doc(pos_doc_texts)
+    d_neg = encoder.encode_doc(neg_doc_texts)
+    L<sub>d2d</sub> = contrastive_loss(d_anchor, d_pos, d_neg)
+
+    <span class="com"># 伪 query 对齐损失</span>
+    q_embs = [encoder.encode_query(pq) <span class="kw">for</span> pq <span class="kw">in</span> pseudo_queries]
+    L<sub>align</sub> = alignment_loss(d_anchor, q_embs)
+
+    <span class="com"># 总损失</span>
+    α = <span class="num">0.3</span>  <span class="com"># 平衡系数</span>
+    L<sub>total</sub> = L<sub>d2d</sub> + α * L<sub>align</sub>
+
+    <span class="com"># 反向传播 + RQ 量化联合训练</span>
+    L<sub>total</sub>.backward()
+    optimizer.step()
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">五、超参数调优</div>
+          <div class="qa-section-content">
+            <p><strong>α(对齐损失权重)</strong></p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>α 值</th><th>效果</th></tr></thead>
+                <tbody>
+                  <tr><td>0.05</td><td>几乎无影响,纯 d2d</td></tr>
+                  <tr><td>0.1</td><td>微弱对齐信号,簇内纯度几乎不变</td></tr>
+                  <tr><td><span class="highlight-cyan">0.2~0.3</span></td><td><span class="highlight-cyan">推荐范围,平衡对齐和纯度</span></td></tr>
+                  <tr><td>0.5</td><td>对齐明显,簇内纯度开始下降</td></tr>
+                  <tr><td>1.0</td><td>退化为 q-d 风格</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>调参方法</strong>:先 0.2,看 hit 率提升和簇内纯度下降的曲线,找拐点。</p>
+
+            <p><strong>temperature(温度参数)</strong></p>
+            <ul>
+              <li>默认 0.05~0.1</li>
+              <li>小温度:分布尖锐,难样本学习充分</li>
+              <li>大温度:分布平滑,泛化好</li>
+              <li>推荐先用 0.05,观察效果</li>
+            </ul>
+
+            <p><strong>伪 query 数量 K</strong></p>
+            <ul>
+              <li>K=1:单伪 query,弱增强</li>
+              <li>K=3:推荐,正样本多样性足够</li>
+              <li>K=5:过多样本可能引入噪声</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">六、训练技巧</div>
+          <div class="qa-section-content">
+
+            <div class="sub-h">6.1 伪 query 缓存</div>
+            <div class="code-block">
+<span class="com"># 离线预生成,避免训练时重复推理</span>
+pseudo_query_cache = {}
+<span class="kw">for</span> doc <span class="kw">in</span> all_docs:
+    pseudo_query_cache[doc.id] = generate_pseudo_query(doc, llm)
+
+<span class="com"># 训练时直接读</span>
+pseudo_queries = [pseudo_query_cache[doc.id] <span class="kw">for</span> doc <span class="kw">in</span> batch_docs]
+            </div>
+
+            <div class="sub-h">6.2 Curriculum Learning(先 d2d 后对齐)</div>
+            <div class="code-block">
+<span class="com"># 训练前 N 个 epoch:α=0(纯 d2d,学 doc 侧结构)</span>
+<span class="com"># 训练后 M 个 epoch:α 逐渐增大到 0.3(学 query 对齐)</span>
+α_schedule = <span class="kw">lambda</span> epoch: <span class="fn">min</span>(<span class="num">0.3</span>, epoch / total_epochs * <span class="num">0.3</span>)
+            </div>
+            <p><strong>优势</strong>:先学好 doc 侧语义结构,再补 query 对齐,避免早期对齐损失破坏 doc 侧学习。</p>
+
+            <div class="sub-h">6.3 编码器预热</div>
+            <ul>
+              <li>先单独训练 doc encoder(d2d 任务)N 个 epoch</li>
+              <li>再冻结 doc encoder,开启 query encoder 训练对齐</li>
+              <li>最后联合微调</li>
+            </ul>
+
+            <div class="sub-h">6.4 伪 query 质量过滤</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">filter_quality</span>(pseudo_queries, threshold=<span class="num">0.5</span>):
+    <span class="str">"""过滤低质量伪 query(用一个小分类器判断)"""</span>
+    quality_scores = quality_model.predict(pseudo_queries)
+    <span class="kw">return</span> [pq <span class="kw">for</span> pq, score <span class="kw">in</span> <span class="fn">zip</span>(pseudo_queries, quality_scores) <span class="kw">if</span> score > threshold]
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">七、评估指标</div>
+          <div class="qa-section-content">
+            <p>训练时要监控三类指标:</p>
+
+            <div class="sub-h">7.1 d2d 侧(不能掉)</div>
+            <ul>
+              <li>簇内 doc 余弦相似度均值</li>
+              <li>簇间 doc 余弦相似度均值</li>
+              <li>簇内-簇间相似度 gap(越大越好)</li>
+            </ul>
+
+            <div class="sub-h">7.2 query-doc 对齐侧(要涨)</div>
+            <ul>
+              <li>伪 query-doc 相似度均值</li>
+              <li>真实 query(如果有的话)-doc 召回 hit@K</li>
+              <li>A/B 对比 hit 率提升</li>
+            </ul>
+
+            <div class="sub-h">7.3 量化侧</div>
+            <ul>
+              <li>码本利用率(每个码字被使用的频率)</li>
+              <li>同 query 多个正例 doc 的 sid 前缀重合度</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">八、完整 Pipeline 总结</div>
+          <div class="qa-section-content">
+            <div class="code-block">
+<span class="fn">Step 1</span>: 离线生成伪 query
+   ↓
+<span class="fn">Step 2</span>: 构造 (doc, pos_doc, neg_doc, pseudo_queries) 数据集
+   ↓
+<span class="fn">Step 3</span>: 训练 DualEncoder
+   - L<sub>total</sub> = L<sub>d2d</sub> + α · L<sub>align</sub>
+   - Curriculum: 前半程 α=<span class="num">0</span>,后半程 α 渐增到 <span class="num">0.3</span>
+   ↓
+<span class="fn">Step 4</span>: 用训好的 encoder 训 RQ 量化(得到 sid)
+   ↓
+<span class="fn">Step 5</span>: 训 query→sid 生成器(T5)
+   - encoder 已隐式学到 query-doc 对齐
+   - 生成器学 query→sid 映射更轻松
+   ↓
+<span class="fn">Step 6</span>: infer 时 beam search 出 sid,查 sid→doc 表
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          方案二的核心是"用 doc 自己衍生出的伪 query 构造自监督信号",
+          让 doc 表征在 d2d 训练时"预知"自己会以什么 query 形式被召回。
+          重点是伪 query 构造质量(推荐小 LLM 生成)+ 双向 InfoNCE + hard negative mining + curriculum α 调度,
+          α=0.2~0.3 是甜蜜区间。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q8 ============== -->
+    <article class="qa-card" id="q8">
+      <div class="qa-header">
+        <div class="qa-num">Q8</div>
+        <div class="qa-question">
+          如果不动 d2d 表征、rq-vae 这些分词器件,只动 query2sid 任务,如何加强 query 和 doc 的隐式推理
+          <span class="qa-tag">约束优化</span>
+        </div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">约束分析</div>
+          <div class="qa-section-content">
+            <p>能动的环节只有<strong>生成器(T5/BART)这一段</strong>:</p>
+            <ul>
+              <li><span class="highlight-amber">d2d encoder</span>:训出 doc embedding(<strong>冻结</strong>)</li>
+              <li><span class="highlight-amber">RQ-VAE/FSQ</span>:把 embedding 量化成 sid(<strong>冻结</strong>)</li>
+              <li><span class="highlight-green">query2sid 生成器</span>:query → sid(<strong>唯一可优化环节</strong>)</li>
+            </ul>
+            <p>要在生成器内部隐式建立 query→doc 的推理能力,本质是<span class="highlight-cyan">让生成器在生成 sid 时"心里有数"</span>。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径一:多任务辅助训练(推荐)</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:生成器同时学 sid 生成 + 几个 doc 侧辅助任务,让它在内部隐式建立 query-doc 对齐。</p>
+            <div class="code-block">
+<span class="com"># 主任务</span>
+L<sub>main</sub> = CE(generator(query), target_sid)
+
+<span class="com"># 辅助任务1:query → doc 标题</span>
+L<sub>title</sub> = CE(generator(query, task=<span class="str">"title"</span>), doc.title)
+
+<span class="com"># 辅助任务2:query → doc 类别</span>
+L<sub>category</sub> = CE(generator(query, task=<span class="str">"category"</span>), doc.category)
+
+<span class="com"># 辅助任务3:query → doc 关键词</span>
+L<sub>keyword</sub> = CE(generator(query, task=<span class="str">"keyword"</span>), doc.keywords)
+
+<span class="com"># 辅助任务4:query → 伪 query 改写</span>
+L<sub>rewrite</sub> = CE(generator(query, task=<span class="str">"rewrite"</span>), pseudo_query)
+
+<span class="com"># 总损失</span>
+L<sub>total</sub> = L<sub>main</sub> + <span class="num">0.3</span>·L<sub>title</sub> + <span class="num">0.2</span>·L<sub>category</sub> + <span class="num">0.2</span>·L<sub>keyword</sub> + <span class="num">0.1</span>·L<sub>rewrite</sub>
+            </div>
+            <p><strong>为什么有效</strong>:生成器为了生成 sid,必须先在内部表征里"还原" doc 是什么。
+              辅助任务强迫它显式学这个过程。共享底层表示会让 sid 任务受益。</p>
+            <p><strong>关键设计</strong>:</p>
+            <ul>
+              <li>用统一的 task prompt:<code>"task=标题|生成|sid:{query}"</code></li>
+              <li>所有辅助任务共享底层参数</li>
+              <li>辅助任务的 label 都从 doc 元数据拿(不需要额外标注)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径二:知识蒸馏(独立 q-d 双塔 teacher)</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:训一个独立的 q-d 双塔 teacher,用 teacher 的相似度分布作为生成器的辅助监督。</p>
+
+            <div class="sub-h">步骤 1:训练独立 teacher</div>
+            <div class="code-block">
+<span class="kw">class</span> <span class="cls">QDDualTeacher</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.q_encoder = AutoModel.from_pretrained(<span class="str">"bert-base"</span>)
+        self.d_encoder = AutoModel.from_pretrained(<span class="str">"bert-base"</span>)
+        <span class="com"># 不依赖 d2d encoder,独立训</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, query, doc):
+        q_emb = self.q_encoder(query)
+        d_emb = self.d_encoder(doc)
+        <span class="kw">return</span> F.cosine_similarity(q_emb, d_emb)
+
+<span class="com"># 用真实 q-d pair 训(这算"半违规",但 teacher 独立不影响 d2d encoder)</span>
+<span class="com"># 也可以用 doc 标题作为伪 query</span>
+teacher = train_teacher(qd_pairs)
+            </div>
+
+            <div class="sub-h">步骤 2:用 teacher 蒸馏生成器</div>
+            <div class="code-block">
+<span class="com"># teacher 输出 query-doc 相似度</span>
+teacher_sim = teacher(query, doc)  <span class="com"># [B]</span>
+
+<span class="com"># 生成器中间隐层 → 投影到和 teacher 同一空间</span>
+student_proj = alignment_head(generator_hidden_states[:, <span class="num">0</span>])  <span class="com"># [B, D]</span>
+student_sim = F.cosine_similarity(student_proj, doc_emb_for_teacher)
+
+<span class="com"># 蒸馏 loss</span>
+L<sub>distill</sub> = MSE(student_sim, teacher_sim.detach())
+
+<span class="com"># 总损失</span>
+L<sub>total</sub> = L<sub>main</sub> + <span class="num">0.5</span> · L<sub>distill</sub>
+            </div>
+            <p><strong>优势</strong>:不动 d2d encoder 和 RQ-VAE;teacher 完全独立,训坏不影响主流程;
+              生成器隐式吸收 q-d 对齐知识。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径三:Soft Prompt Tuning(参数高效)</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:加可学习的 soft prompt embedding,专门优化 query→sid 映射。</p>
+            <div class="code-block">
+<span class="com"># 固定的 hard prompt</span>
+hard_prompt = <span class="str">"基于以下查询生成对应的语义ID:"</span>
+
+<span class="com"># 可学习的 soft prompt</span>
+soft_prompt = nn.Parameter(torch.randn(<span class="num">20</span>, <span class="num">768</span>))  <span class="com"># 20 个 token</span>
+
+<span class="com"># 输入:hard_prompt + soft_prompt + query</span>
+input_embeds = embed(hard_prompt) + soft_prompt + embed(query)
+
+<span class="com"># 只训 soft_prompt 和 alignment head,冻结 T5 主干</span>
+            </div>
+
+            <p><strong>进阶:分级 soft prompt</strong></p>
+            <div class="code-block">
+<span class="com"># 给 sid 每一级码本单独的 soft prompt</span>
+soft_prompts = nn.ParameterList([
+    nn.Parameter(torch.randn(<span class="num">10</span>, <span class="num">768</span>)) <span class="kw">for</span> _ <span class="kw">in</span> range(num_levels)
+])
+
+<span class="com"># 训练时,按 sid 级别逐步喂入</span>
+<span class="com"># 生成第一级 sid 时用 soft_prompts[0]</span>
+<span class="com"># 生成第二级 sid 时用 soft_prompts[1]</span>
+            </div>
+            <p><strong>优势</strong>:训练成本极低(只训 0.1% 参数);soft prompt 可以专门吸收 q-d 对齐信号;推理时无额外开销。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径四:Query 改写 + 测试时增强</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:推理前用 LLM 改写 query,往 doc 侧语言风格靠拢。</p>
+
+            <div class="sub-h">改写模板</div>
+            <div class="code-block">
+REWRITE_PROMPT = <span class="str">"""你是搜索专家。请将用户查询改写为更适合检索文档的形式。
+要求:
+- 提取核心实体和意图
+- 使用更书面、更完整的表达
+- 保留原意
+
+用户查询:{query}
+改写后:"""</span>
+
+<span class="kw">def</span> <span class="fn">rewrite_query</span>(query, llm):
+    <span class="kw">return</span> llm.generate(REWRITE_PROMPT.format(query=query))
+            </div>
+
+            <div class="sub-h">进一步:检索增强改写</div>
+            <div class="code-block">
+<span class="com"># 步骤1:用 query 检索相关 doc(用 BM25 或独立双塔)</span>
+related_docs = retrieve(query, top_k=<span class="num">5</span>)
+
+<span class="com"># 步骤2:用相关 doc 扩展 query</span>
+expansion_prompt = <span class="str">f"""基于相关文档,改写查询:
+原始查询:{query}
+相关文档摘要:{[doc.summary for doc in related_docs]}
+改写后:"""</span>
+            </div>
+            <p><strong>优势</strong>:完全不动模型;改写一次,所有下游任务受益;可解释性强。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径五:推理时 Rerank</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:生成 K 个 sid 后,用独立 q-d 双塔 rerank 选最相关的。</p>
+            <div class="code-block">
+<span class="com"># Step 1: 生成器 beam search 出 K 个 sid</span>
+candidate_sids = generator.beam_search(query, beam_size=<span class="num">64</span>)  <span class="com"># [K]</span>
+
+<span class="com"># Step 2: 每个 sid → 候选 doc</span>
+candidates = []
+<span class="kw">for</span> sid <span class="kw">in</span> candidate_sids:
+    docs = sid_to_docs[sid]  <span class="com"># 查 sid-doc 表</span>
+    candidates.extend(docs)
+
+<span class="com"># Step 3: 用独立 q-d 双塔 rerank</span>
+scores = rerank_model(query, candidates)  <span class="com"># [N]</span>
+top_docs = candidates[scores.topk(K).indices]
+            </div>
+            <p><strong>关键</strong>:rerank 模型可以是独立的、与 d2d 完全解耦的 q-d 双塔。
+              这是最干净的"不动 d2d 但补 query 对齐"的方案。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">路径六:Hierarchical Generation</div>
+          <div class="qa-section-content">
+            <p><strong>核心思想</strong>:把 sid 生成拆成多步,先生成粗粒度前缀,再生成细粒度后缀。</p>
+            <div class="code-block">
+<span class="com"># 训练时</span>
+<span class="com"># 阶段1:生成 sid 第一级码字(粗粒度,簇级)</span>
+prefix_logits = generator(query, generation_step=<span class="num">1</span>)
+prefix_ids = prefix_logits.argmax()
+
+<span class="com"># 阶段2:基于 prefix 生成 sid 后续码字(细粒度,doc 级)</span>
+suffix_logits = generator(query, prefix=prefix_ids, generation_step=<span class="num">2</span>)
+suffix_ids = suffix_logits.argmax()
+
+<span class="com"># 多步 loss 累加</span>
+L = L_step1 + L_step2
+            </div>
+            <p><strong>优势</strong>:每一级聚焦一个语义粒度;生成器内部自然学到了"先粗后细"的推理;跟 RQ 多级码本结构天然匹配。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">推荐组合策略</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>层次</th><th>方案</th><th>效果预期</th><th>实施成本</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="highlight-green">轻量</span></td><td>Query 改写 + 推理时 rerank</td><td>+10~20% hit 率</td><td>低</td></tr>
+                  <tr><td><span class="highlight-blue">中等</span></td><td>多任务辅助 + Soft Prompt Tuning</td><td>+20~40% hit 率</td><td>中</td></tr>
+                  <tr><td><span class="highlight-amber">重型</span></td><td>独立 q-d teacher 蒸馏 + 多任务</td><td>+40~60% hit 率</td><td>高</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>推荐的"中等方案"组合</strong>:</p>
+            <ol class="numbered-list">
+              <li>多任务辅助训练(让生成器内部隐式学 q-d 对齐)</li>
+              <li>Soft Prompt Tuning(参数高效微调 query→sid 映射)</li>
+              <li>推理时 query 改写(测试时增强)</li>
+              <li>配合 beam search + rerank(最终召回)</li>
+            </ol>
+            <p>这套组合<strong>完全不动 d2d encoder 和 RQ-VAE</strong>,只在生成器侧最大化 query-doc 的隐式推理能力。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          不动 d2d 表征和量化器,要提升 query-doc 隐式推理,核心是让生成器"在生成 sid 时心里有 doc"
+          —— 多任务辅助训练让它内部隐式学 q-d 对齐,独立 q-d teacher 蒸馏给它注入对齐知识,
+          soft prompt 高效微调 query→sid 映射,推理时 query 改写 + rerank 兜底召回质量。
+          这套组合拳把"不动约束下的对齐能力"推到极致。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q9 ============== -->
+    <article class="qa-card" id="q9">
+      <div class="qa-header">
+        <div class="qa-num">Q9</div>
+        <div class="qa-question">
+          sid 前两层 RQ-KMeans + 后两层 FSQ,query2sid 偏记忆还是推理?sid 要在输入侧还是输出侧见过?
+          <span class="qa-tag">结构剖析</span>
+        </div>
+      </div>
+      <div class="qa-body">
+
+        <div class="qa-section">
+          <div class="qa-section-title">先拆结构:这 4 层不是同质的</div>
+          <div class="qa-section-content">
+            <p>RQ-KMeans 两层 + FSQ 两层,本质是<strong>两种性质完全不同的量化器串联</strong>,任务属性必须分层看:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>层级</th><th>量化器</th><th>码本性质</th><th>语义粒度</th><th>一个码字覆盖 doc 数</th><th>任务属性</th></tr></thead>
+                <tbody>
+                  <tr><td>L1</td><td>RQ-KMeans</td><td>可学习中心点,码字间有距离结构</td><td>粗语义簇</td><td>数千~数万</td><td><span class="highlight-green">推理主导</span></td></tr>
+                  <tr><td>L2</td><td>RQ-KMeans</td><td>可学习中心点,残差聚类</td><td>细语义簇</td><td>数十~数百</td><td><span class="highlight-blue">推理为主,记忆渗入</span></td></tr>
+                  <tr><td>L3</td><td>FSQ</td><td>固定网格,无可学习中心</td><td>残差细节</td><td>个位数</td><td><span class="highlight-amber">记忆主导</span></td></tr>
+                  <tr><td>L4</td><td>FSQ</td><td>固定网格</td><td>残差细节</td><td>~1(近似唯一)</td><td><span class="highlight-amber">纯记忆</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>关键差异</strong>:RQ-KMeans 的码字是数据驱动的中心点,<strong>码字 ID 相邻 ≠ 语义相邻,但码字所代表的向量簇有明确语义</strong>,
+              模型可以从 query 语义"推"出该落哪个簇。FSQ 是固定网格(每维独立量化到 L 个 level),
+              码字是<strong>残差向量的坐标编码</strong>,query 语义与 FSQ 码字之间几乎没有可学习的映射规律 —— 只能硬记。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">答案:分层混合,且是"前推理后记忆"</div>
+          <div class="qa-section-content">
+            <div class="sub-h">L1/L2 是推理任务</div>
+            <ul>
+              <li>生成器要做的是:理解 query 意图 → 判断该落哪个语义簇。</li>
+              <li>这是<span class="highlight-green">可泛化</span>的:训练时没见过的 query,只要语义落在已有簇里,模型能推出正确前缀。</li>
+              <li>这部分的能力来自 T5 预训练的语义理解 + query→簇 的映射学习。</li>
+            </ul>
+
+            <div class="sub-h">L3/L4 是记忆任务</div>
+            <ul>
+              <li>FSQ 层编码的是"这个 doc 在簇内的精确坐标",<strong>跟 query 语义没有任何可推理的关联</strong>。</li>
+              <li>模型只能靠 (query, sid) 共现频次硬背。</li>
+              <li><span class="highlight-amber">长尾 doc 在 L3/L4 上几乎必然错</span>,因为训练样本里出现次数太少。</li>
+            </ul>
+
+            <div class="sub-h">实测特征(可验证)</div>
+            <p>分层统计 accuracy,大概率会看到:</p>
+            <div class="code-block">
+L1 acc:     <span class="num">85~92%</span>   <span class="com">（推理，泛化好）</span>
+L1L2 acc:   <span class="num">60~75%</span>   <span class="com">（还能推）</span>
+L1L2L3 acc: <span class="num">30~45%</span>   <span class="com">（断崖，开始记忆）</span>
+全 4 层 acc: <span class="num">15~30%</span>  <span class="com">（纯记忆，长尾崩）</span>
+            </div>
+            <p><strong>如果你的曲线是这个形状,说明瓶颈在 FSQ 两层,不在 query 理解。</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">第二个问题:输入见过 vs 输出见过</div>
+          <div class="qa-section-content">
+            <p><strong>结论</strong>:<span class="highlight-cyan">两边都要见过,但作用机制完全不同,且"输入侧见过"是被严重低估的关键。</span></p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>暴露方式</th><th>具体任务形式</th><th>训练到的东西</th><th>对 query2sid 的贡献</th></tr></thead>
+                <tbody>
+                  <tr><td>仅输出侧</td><td><code>query → sid</code>(主任务)</td><td>decoder 的 sid 生成概率</td><td>学会映射,但 sid token embedding 无语义锚</td></tr>
+                  <tr><td>输出侧(indexing)</td><td><code>doc_text → sid</code></td><td>sid 与内容的绑定</td><td><span class="highlight-green">必须</span>,建立 sid 的"身份"</td></tr>
+                  <tr><td><span class="highlight-cyan">输入侧</span></td><td><code>sid → doc_title/keywords</code></td><td>sid token embedding 获得语义 grounding</td><td><span class="highlight-cyan">决定泛化上限</span></td></tr>
+                  <tr><td>输入侧</td><td><code>sid_prefix → 补全 sid</code></td><td>层级结构先验</td><td>帮 beam search 剪枝</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">为什么"输入侧见过"这么关键</div>
+          <div class="qa-section-content">
+            <p>T5 的 sid token 是<strong>新扩的 vocab</strong>,初始化是随机的。</p>
+            <ul>
+              <li>只在<strong>输出侧</strong>出现:这些 embedding 只通过 softmax 的分类梯度更新,学到的是"在什么 context 下该输出我",<span class="highlight-amber">embedding 本身没有语义内容</span>。</li>
+              <li>在<strong>输入侧</strong>出现(比如 <code>sid → 生成 doc 标题</code> 这个任务):embedding 被迫编码"我代表什么内容",<span class="highlight-green">它在 embedding 空间里的位置会靠近对应的语义区域</span>。</li>
+            </ul>
+            <p>一旦 sid embedding 有了语义位置,<code>query → sid</code> 的生成就从"查表"变成了"语义匹配",<strong>推理能力才真正建立</strong>。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">特别注意:tied embedding</div>
+          <div class="qa-section-content">
+            <p>T5 默认 input embedding 和 output projection <strong>权重共享</strong>。
+              这意味着输入侧的语义训练信号会<span class="highlight-cyan">直接传导到输出侧的生成 logits</span>。
+              这是"输入侧见过"能提升 query2sid 的物理通道。</p>
+            <p><strong>如果你的实现里解绑了 embedding(untied),这个增益会消失一大半,务必确认。</strong></p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">针对这个结构的具体建议</div>
+          <div class="qa-section-content">
+
+            <div class="sub-h">1. 多任务配比(关键)</div>
+            <p>DSI 系列的实证结论:indexing 任务和 retrieval 任务的比例要<strong>远大于 1</strong>(论文里用到 32:1)。
+              你这个结构因为有 FSQ 记忆层,建议:</p>
+            <div class="code-block">
+tasks = {
+    <span class="str">"doc2sid"</span>:       weight=<span class="num">1.0</span>,  ratio=<span class="num">16</span>,  <span class="com"># indexing，建 sid 身份</span>
+    <span class="str">"sid2doctitle"</span>:  weight=<span class="num">0.5</span>,  ratio=<span class="num">8</span>,   <span class="com"># 输入侧暴露，给 sid embedding 语义</span>
+    <span class="str">"pseudoq2sid"</span>:   weight=<span class="num">1.0</span>,  ratio=<span class="num">8</span>,   <span class="com"># 伪 query，扩充 retrieval 覆盖</span>
+    <span class="str">"query2sid"</span>:     weight=<span class="num">1.0</span>,  ratio=<span class="num">1</span>,   <span class="com"># 主任务</span>
+}
+            </div>
+            <p><code>sid2doctitle</code> 这个反向任务是很多实现漏掉的,但对这种有 FSQ 层的结构<strong>增益最大</strong>,
+              因为它是唯一能给 L3/L4 token 注入语义的方式。</p>
+
+            <div class="sub-h">2. 分层 loss 加权</div>
+            <p>FSQ 两层本来就学不好,硬压 loss 会挤占 L1/L2 的容量:</p>
+            <div class="code-block">
+layer_weights = [<span class="num">1.0</span>, <span class="num">1.0</span>, <span class="num">0.6</span>, <span class="num">0.4</span>]  <span class="com"># L1 L2 L3 L4</span>
+loss = <span class="fn">sum</span>(w * CE(logits[i], target[i]) <span class="kw">for</span> i, w <span class="kw">in</span> <span class="fn">enumerate</span>(layer_weights))
+            </div>
+            <p>让模型把容量优先花在能推理的前两层。</p>
+
+            <div class="sub-h">3. 更激进:干脆别生成 L3/L4</div>
+            <p>这是更推荐的做法。既然 L3/L4 是纯记忆且必然不准:</p>
+            <div class="code-block">
+Step 1: 生成器只生成 L1L2 前缀（beam=<span class="num">32</span>）
+        → <span class="num">32</span> 个前缀，每个覆盖数十~数百 doc
+Step 2: 展开前缀下所有 doc（约 1k~5k 候选）
+Step 3: 用轻量 q-d 双塔 rerank → TopK
+            </div>
+            <p><span class="highlight-green">hit 率通常能涨 2 倍以上</span>,因为把"不可推理的部分"从生成任务里摘出去了,
+              交给了真正擅长精排的模块。代价是需要维护 <code>prefix → doc_list</code> 的倒排,内存换召回。</p>
+
+            <div class="sub-h">4. 前缀树约束解码</div>
+            <p>L1/L2 必须上 constrained beam search(Trie 约束),否则会生成不存在的前缀,白白浪费 beam 位置。</p>
+            <p>这在你的结构下尤其重要:RQ-KMeans 两层的组合空间是 <code>K1 × K2</code>,但实际有效前缀远少于这个数(很多组合是空的)。</p>
+
+            <div class="sub-h">5. 诊断实验(先做这个)</div>
+            <div class="code-block">
+<span class="com"># 实验：只训 L1L2（把 L3L4 从 target 里截掉）</span>
+<span class="com"># 对比：全 4 层训练时的 L1L2 accuracy</span>
+
+<span class="com"># 如果 只训L1L2 的 acc 明显更高</span>
+<span class="com">#   → 说明 FSQ 层在抢容量，方案 2/3 有效</span>
+<span class="com"># 如果 两者接近</span>
+<span class="com">#   → 说明瓶颈在 query 理解，需要加强 indexing/输入侧任务</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          RQ-KMeans 2层 + FSQ 2层的结构,<strong>前两层是推理任务、后两层是记忆任务</strong>,两者的最优训练策略是冲突的。
+          SID 需要在<strong>输出侧见过</strong>(indexing 建身份)<strong>且在输入侧见过</strong>(sid→text 给 embedding 语义锚),
+          后者靠 tied embedding 传导到生成侧,是泛化能力的真正来源。
+          最高 ROI 的改动是:加 <code>sid→doc_title</code> 反向任务 + 只生成 L1L2 前缀后接 rerank。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q10 ============== -->
+    <article class="qa-card" id="q10">
+      <div class="qa-header">
+        <div class="qa-num">Q10</div>
+        <div class="qa-question">
+          要让 sid 在输入侧见过,要怎么构造训练任务呢?举例
+          <span class="qa-tag">实施细则</span>
+        </div>
+      </div>
+      <div class="qa-body">
+
+        <div class="qa-section">
+          <div class="qa-section-title">前置:SID 的 token 化约定</div>
+          <div class="qa-section-content">
+            <p>先统一表示,后面所有样例都基于这个:</p>
+            <div class="code-block">
+<span class="com"># 4 层 sid → 4 个特殊 token</span>
+<span class="com"># L1/L2: RQ-KMeans，K=256</span>
+<span class="com"># L3/L4: FSQ，每层 level 数较小（假设 8）</span>
+sid = <span class="str">"&lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;"</span>
+
+<span class="com"># vocab 扩展</span>
+new_tokens = (
+    [<span class="str">f"&lt;a_{i}&gt;"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">256</span>)] +
+    [<span class="str">f"&lt;b_{i}&gt;"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">256</span>)] +
+    [<span class="str">f"&lt;c_{i}&gt;"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">8</span>)] +
+    [<span class="str">f"&lt;d_{i}&gt;"</span> <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">8</span>)]
+)
+tokenizer.add_tokens(new_tokens)
+model.resize_token_embeddings(len(tokenizer))
+            </div>
+            <p><strong>每层用独立前缀(a/b/c/d)</strong>,不要跨层复用 token,
+              否则 L1 的 <code>&lt;137&gt;</code> 和 L2 的 <code>&lt;137&gt;</code> 会共享 embedding,语义污染。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">任务清单:按 ROI 排序</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>#</th><th>任务名</th><th>输入含 sid</th><th>价值</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td><strong>sid2title</strong></td><td><span class="highlight-green">✓</span></td><td>★★★★★</td><td>给 sid embedding 注入语义,最核心</td></tr>
+                  <tr><td>2</td><td><strong>sid2query</strong></td><td><span class="highlight-green">✓</span></td><td>★★★★★</td><td>query2sid 的逆任务,直接对齐</td></tr>
+                  <tr><td>3</td><td>sid_completion</td><td><span class="highlight-green">✓</span></td><td>★★★★</td><td>层级先验,帮 beam 剪枝</td></tr>
+                  <tr><td>4</td><td>q_sid_match</td><td><span class="highlight-green">✓</span></td><td>★★★★</td><td>判别式信号,学相关性</td></tr>
+                  <tr><td>5</td><td>prefix2sid</td><td><span class="highlight-green">✓</span></td><td>★★★</td><td>专治 FSQ 层</td></tr>
+                  <tr><td>6</td><td>sid2keywords</td><td><span class="highlight-green">✓</span></td><td>★★★</td><td>轻量版 sid2title</td></tr>
+                  <tr><td>7</td><td>sid_neighbor</td><td><span class="highlight-green">✓</span></td><td>★★</td><td>学码本几何结构</td></tr>
+                  <tr><td>8</td><td>doc2sid</td><td><span class="highlight-amber">✗</span></td><td>★★★★★</td><td>indexing,建 sid 身份(输出侧,但必须有)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 1:sid2title(最核心)</div>
+          <div class="qa-section-content">
+            <p><strong>作用</strong>:强迫 sid token embedding 编码"我代表什么内容"。</p>
+            <div class="code-block">
+输入: 解码语义ID对应的文档标题: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: iPhone 15 Pro 全面评测：续航提升 20%，A17 芯片实测
+
+输入: 解码语义ID对应的文档标题: &lt;a_137&gt;&lt;b_42&gt;&lt;c_3&gt;&lt;d_7&gt;
+输出: iPhone 15 与 iPhone 14 对比：值不值得换
+
+输入: 解码语义ID对应的文档标题: &lt;a_88&gt;&lt;b_201&gt;&lt;c_1&gt;&lt;d_4&gt;
+输出: 家常红烧肉做法，三步搞定不翻车
+            </div>
+            <p><strong>变体(推荐同时加)</strong> —— 只给前缀,输出该簇的"主题概括":</p>
+            <div class="code-block">
+输入: 描述语义ID簇的主题: &lt;a_137&gt;&lt;b_42&gt;
+输出: iPhone 15 系列产品评测与对比
+
+输入: 描述语义ID簇的主题: &lt;a_137&gt;
+输出: 智能手机数码产品
+            </div>
+            <p>前缀级任务能让 L1/L2 的 embedding 学到<strong>层级语义</strong>,而不只是单个 doc 的记忆。
+              簇主题可以用 LLM 对簇内 doc 标题批量归纳一次,离线生成。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 2:sid2query(逆任务,价值被低估)</div>
+          <div class="qa-section-content">
+            <p><strong>作用</strong>:直接建模 <code>sid → query</code> 分布,是 <code>query → sid</code> 的镜像。tied embedding 下梯度互通。</p>
+            <div class="code-block">
+输入: 生成可能检索到该文档的用户查询: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: iPhone 15 续航怎么样
+
+输入: 生成可能检索到该文档的用户查询: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: iPhone15 Pro 电池实测
+
+输入: 生成可能检索到该文档的用户查询: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: A17 芯片性能
+            </div>
+            <p><strong>关键</strong>:同一个 sid 配 <span class="highlight-cyan">3~5 个不同 query</span>
+              (真实 query 日志优先,没有就用伪 query)。这教会模型"一个 sid 对应一片 query 语义区域",而不是一对一映射。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 3:sid_completion(层级先验)</div>
+          <div class="qa-section-content">
+            <p><strong>作用</strong>:学习码本的有效组合空间,避免生成不存在的前缀。</p>
+            <div class="code-block">
+输入: 补全语义ID: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;
+输出: &lt;d_2&gt;
+
+输入: 补全语义ID: &lt;a_137&gt;&lt;b_42&gt;
+输出: &lt;c_5&gt;&lt;d_2&gt;
+
+输入: 补全语义ID: &lt;a_137&gt;
+输出: &lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+            </div>
+            <p><strong>注意</strong>:同一个前缀会对应多个合法后缀(因为多个 doc 共享前缀)。
+              这不是噪声,恰恰是让模型学到<strong>后缀分布</strong>,beam search 时才知道该展开哪几个分支。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 4:q_sid_match(判别式)</div>
+          <div class="qa-section-content">
+            <p><strong>作用</strong>:生成任务只有正样本,没有"什么是错的"信号。判别任务补上。</p>
+            <div class="code-block">
+输入: 判断查询与语义ID是否相关: 查询=iPhone 15 续航 语义ID=&lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: 相关
+
+输入: 判断查询与语义ID是否相关: 查询=iPhone 15 续航 语义ID=&lt;a_88&gt;&lt;b_201&gt;&lt;c_1&gt;&lt;d_4&gt;
+输出: 不相关
+            </div>
+            <p><strong>负样本采样策略(重要)</strong>:</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">sample_negatives</span>(query, pos_sid, all_sids, n=<span class="num">3</span>):
+    negs = []
+    <span class="com"># 1) hard neg: 同 L1 前缀，不同 L2（最有价值）</span>
+    same_l1 = [s <span class="kw">for</span> s <span class="kw">in</span> all_sids <span class="kw">if</span> s[<span class="num">0</span>] == pos_sid[<span class="num">0</span>] <span class="kw">and</span> s[<span class="num">1</span>] != pos_sid[<span class="num">1</span>]]
+    negs += random.sample(same_l1, <span class="fn">min</span>(<span class="num">2</span>, len(same_l1)))
+    <span class="com"># 2) easy neg: 完全不同 L1</span>
+    diff_l1 = [s <span class="kw">for</span> s <span class="kw">in</span> all_sids <span class="kw">if</span> s[<span class="num">0</span>] != pos_sid[<span class="num">0</span>]]
+    negs += random.sample(diff_l1, <span class="num">1</span>)
+    <span class="kw">return</span> negs[:n]
+            </div>
+            <p>Hard negative(同 L1 不同 L2)是提升 L2 层精度的关键。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 5:prefix2sid(专治 FSQ 层)</div>
+          <div class="qa-section-content">
+            <p><strong>作用</strong>:L3/L4 的 FSQ 是纯记忆,单独给它们"减负训练" —— <strong>已知前缀 + query,只补后缀</strong>。</p>
+            <div class="code-block">
+输入: 已知前缀补全: 查询=iPhone 15 续航 前缀=&lt;a_137&gt;&lt;b_42&gt;
+输出: &lt;c_5&gt;&lt;d_2&gt;
+            </div>
+            <p>这比让模型从零生成 4 层容易得多,相当于把难任务拆成两个简单任务。
+              <strong>训练时加这个,推理时也可以用两阶段解码</strong>:</p>
+            <div class="code-block">
+<span class="com"># Stage 1: query → L1L2 前缀（beam=32）</span>
+prefixes = model.generate(<span class="str">f"检索: {query}"</span>, max_len=<span class="num">2</span>, num_beams=<span class="num">32</span>)
+<span class="com"># Stage 2: 对每个前缀，补 L3L4</span>
+<span class="kw">for</span> p <span class="kw">in</span> prefixes:
+    suffix = model.generate(<span class="str">f"已知前缀补全: 查询={query} 前缀={p}"</span>, num_beams=<span class="num">4</span>)
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">任务 6 &amp; 7:轻量补充</div>
+          <div class="qa-section-content">
+            <div class="code-block">
+<span class="com"># sid2keywords</span>
+输入: 提取语义ID对应文档的关键词: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: iPhone 15 Pro, 续航测试, A17芯片, 电池容量
+
+<span class="com"># sid_neighbor（学码本几何）</span>
+输入: 找出与该语义ID内容最接近的语义ID: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;
+输出: &lt;a_137&gt;&lt;b_42&gt;&lt;c_3&gt;&lt;d_7&gt;
+            </div>
+            <p><code>sid_neighbor</code> 的 label 从 d2d 向量空间的最近邻直接拿 ——
+              <span class="highlight-cyan">这是唯一能把 d2d 训练的几何结构显式教给生成器的任务</span>。
+              既然 d2d encoder 冻结了,这个任务能把它的知识"蒸馏"进生成器。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">完整数据构造代码</div>
+          <div class="qa-section-content">
+            <div class="code-block">
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">import</span> random
+
+<span class="var">@dataclass</span>
+<span class="kw">class</span> <span class="cls">DocRecord</span>:
+    doc_id: str
+    sid: list          <span class="com"># [137, 42, 5, 2]</span>
+    title: str
+    keywords: list
+    pseudo_queries: list   <span class="com"># LLM 离线生成</span>
+    real_queries: list     <span class="com"># 搜索日志，可能为空</span>
+    cluster_topic: dict    <span class="com"># {1: "数码产品", 2: "iPhone15评测"}</span>
+    neighbors: list        <span class="com"># d2d 最近邻的 sid</span>
+
+<span class="kw">def</span> <span class="fn">sid_str</span>(sid, depth=<span class="num">4</span>):
+    prefix = [<span class="str">'a'</span>, <span class="str">'b'</span>, <span class="str">'c'</span>, <span class="str">'d'</span>]
+    <span class="kw">return</span> <span class="str">""</span>.join(<span class="str">f"&lt;{prefix[i]}_{sid[i]}&gt;"</span> <span class="kw">for</span> i <span class="kw">in</span> range(depth))
+
+<span class="kw">def</span> <span class="fn">build_samples</span>(doc: DocRecord, all_sids):
+    S = []
+    full = sid_str(doc.sid)
+
+    <span class="com"># ---- 输出侧（indexing）----</span>
+    S.append((<span class="str">"index"</span>, <span class="str">f"索引文档: {doc.title}"</span>, full))
+    <span class="kw">for</span> pq <span class="kw">in</span> doc.pseudo_queries:
+        S.append((<span class="str">"pq2sid"</span>, <span class="str">f"检索: {pq}"</span>, full))
+    <span class="kw">for</span> rq <span class="kw">in</span> doc.real_queries:
+        S.append((<span class="str">"q2sid"</span>, <span class="str">f"检索: {rq}"</span>, full))   <span class="com"># 主任务</span>
+
+    <span class="com"># ---- 输入侧（关键）----</span>
+    <span class="com"># 1. sid2title</span>
+    S.append((<span class="str">"sid2title"</span>, <span class="str">f"解码语义ID对应的文档标题: {full}"</span>, doc.title))
+    <span class="com"># 1b. 前缀 → 簇主题</span>
+    <span class="kw">for</span> d <span class="kw">in</span> (<span class="num">1</span>, <span class="num">2</span>):
+        <span class="kw">if</span> d <span class="kw">in</span> doc.cluster_topic:
+            S.append((<span class="str">"prefix2topic"</span>,
+                      <span class="str">f"描述语义ID簇的主题: {sid_str(doc.sid, d)}"</span>,
+                      doc.cluster_topic[d]))
+    <span class="com"># 2. sid2query</span>
+    <span class="kw">for</span> q <span class="kw">in</span> (doc.real_queries + doc.pseudo_queries)[:<span class="num">5</span>]:
+        S.append((<span class="str">"sid2query"</span>, <span class="str">f"生成可能检索到该文档的用户查询: {full}"</span>, q))
+    <span class="com"># 3. sid_completion</span>
+    <span class="kw">for</span> d <span class="kw">in</span> (<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>):
+        S.append((<span class="str">"sid_comp"</span>,
+                  <span class="str">f"补全语义ID: {sid_str(doc.sid, d)}"</span>,
+                  sid_str(doc.sid)[len(sid_str(doc.sid, d)):]))
+    <span class="com"># 4. q_sid_match</span>
+    <span class="kw">for</span> q <span class="kw">in</span> doc.pseudo_queries[:<span class="num">2</span>]:
+        S.append((<span class="str">"match"</span>, <span class="str">f"判断查询与语义ID是否相关: 查询={q} 语义ID={full}"</span>, <span class="str">"相关"</span>))
+        <span class="kw">for</span> neg <span class="kw">in</span> sample_negatives(q, doc.sid, all_sids, n=<span class="num">2</span>):
+            S.append((<span class="str">"match"</span>,
+                      <span class="str">f"判断查询与语义ID是否相关: 查询={q} 语义ID={sid_str(neg)}"</span>,
+                      <span class="str">"不相关"</span>))
+    <span class="com"># 5. prefix2sid</span>
+    <span class="kw">for</span> q <span class="kw">in</span> doc.pseudo_queries[:<span class="num">2</span>]:
+        S.append((<span class="str">"prefix2sid"</span>,
+                  <span class="str">f"已知前缀补全: 查询={q} 前缀={sid_str(doc.sid, 2)}"</span>,
+                  sid_str(doc.sid)[len(sid_str(doc.sid, <span class="num">2</span>)):]))
+    <span class="com"># 6. sid2keywords</span>
+    S.append((<span class="str">"sid2kw"</span>, <span class="str">f"提取语义ID对应文档的关键词: {full}"</span>,
+              <span class="str">", "</span>.join(doc.keywords)))
+    <span class="com"># 7. sid_neighbor</span>
+    <span class="kw">for</span> nb <span class="kw">in</span> doc.neighbors[:<span class="num">2</span>]:
+        S.append((<span class="str">"sid_nb"</span>, <span class="str">f"找出与该语义ID内容最接近的语义ID: {full}"</span>, sid_str(nb)))
+
+    <span class="kw">return</span> S
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">采样比例(核心超参)</div>
+          <div class="qa-section-content">
+            <p>DSI 论文的 indexing:retrieval = 32:1 是针对纯 atomic ID 的。这个结构有语义前缀,可以降一些:</p>
+            <div class="code-block">
+TASK_RATIO = {
+    <span class="str">"index"</span>:        <span class="num">16</span>,   <span class="com"># doc → sid</span>
+    <span class="str">"sid2title"</span>:    <span class="num">12</span>,   <span class="com"># ★ 输入侧主力</span>
+    <span class="str">"sid2query"</span>:    <span class="num">10</span>,   <span class="com"># ★ 逆任务</span>
+    <span class="str">"sid_comp"</span>:      <span class="num">6</span>,
+    <span class="str">"prefix2topic"</span>:  <span class="num">4</span>,
+    <span class="str">"prefix2sid"</span>:    <span class="num">4</span>,
+    <span class="str">"match"</span>:         <span class="num">4</span>,
+    <span class="str">"sid2kw"</span>:        <span class="num">3</span>,
+    <span class="str">"sid_nb"</span>:        <span class="num">2</span>,
+    <span class="str">"pq2sid"</span>:        <span class="num">8</span>,
+    <span class="str">"q2sid"</span>:         <span class="num">1</span>,   <span class="com"># 主任务基准</span>
+}
+            </div>
+            <p><strong>输入侧任务总和(sid2title + sid2query + sid_comp + prefix2topic + prefix2sid + match + sid2kw + sid_nb ≈ 45)
+              应该和输出侧(index + pq2sid + q2sid ≈ 25)同量级甚至更多</strong>,
+              这是很多实现做不好的原因 —— 输入侧严重不足。</p>
+
+            <div class="sub-h">Curriculum 调度</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">get_ratio</span>(step, total):
+    p = step / total
+    <span class="kw">if</span> p &lt; <span class="num">0.3</span>:      <span class="com"># 阶段1：只建 sid 身份与语义</span>
+        <span class="kw">return</span> {<span class="str">"index"</span>: <span class="num">20</span>, <span class="str">"sid2title"</span>: <span class="num">15</span>, <span class="str">"sid2query"</span>: <span class="num">10</span>, <span class="str">"q2sid"</span>: <span class="num">0</span>}
+    <span class="kw">elif</span> p &lt; <span class="num">0.7</span>:    <span class="com"># 阶段2：加结构 + 判别</span>
+        <span class="kw">return</span> {<span class="str">"index"</span>: <span class="num">10</span>, <span class="str">"sid2title"</span>: <span class="num">10</span>, <span class="str">"sid2query"</span>: <span class="num">10</span>,
+                <span class="str">"sid_comp"</span>: <span class="num">8</span>, <span class="str">"match"</span>: <span class="num">6</span>, <span class="str">"prefix2sid"</span>: <span class="num">5</span>, <span class="str">"q2sid"</span>: <span class="num">2</span>}
+    <span class="kw">else</span>:            <span class="com"># 阶段3：主任务收敛</span>
+        <span class="kw">return</span> {<span class="str">"index"</span>: <span class="num">4</span>, <span class="str">"sid2title"</span>: <span class="num">4</span>, <span class="str">"sid2query"</span>: <span class="num">6</span>,
+                <span class="str">"pq2sid"</span>: <span class="num">8</span>, <span class="str">"q2sid"</span>: <span class="num">8</span>, <span class="str">"match"</span>: <span class="num">3</span>}
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">必须确认的实现细节</div>
+          <div class="qa-section-content">
+
+            <div class="sub-h">1. tied embedding 不能解绑</div>
+            <div class="code-block">
+<span class="kw">assert</span> model.config.tie_word_embeddings <span class="kw">is</span> <span class="kw">True</span>
+<span class="com"># 或手动检查</span>
+<span class="kw">assert</span> model.shared.weight.data_ptr() == model.lm_head.weight.data_ptr()
+            </div>
+            <p>这是输入侧训练能传导到生成侧的<strong>唯一物理通道</strong>。解绑了,做再多输入侧任务也白搭。</p>
+
+            <div class="sub-h">2. 新 token 的 embedding 初始化</div>
+            <p>别用默认随机初始化:</p>
+            <div class="code-block">
+<span class="com"># 用该 sid 对应 doc 标题的平均 embedding 初始化</span>
+<span class="kw">with</span> torch.no_grad():
+    <span class="kw">for</span> tok, docs <span class="kw">in</span> sid_token_to_docs.items():
+        title_ids = tokenizer([d.title <span class="kw">for</span> d <span class="kw">in</span> docs], return_tensors=<span class="str">"pt"</span>, padding=<span class="kw">True</span>)
+        title_emb = model.shared(title_ids.input_ids).mean(dim=(<span class="num">0</span>, <span class="num">1</span>))
+        model.shared.weight[tokenizer.convert_tokens_to_ids(tok)] = title_emb
+            </div>
+            <p><span class="highlight-green">这一步通常能省掉 30% 的训练步数</span>,因为 sid token 一开始就在正确的语义邻域。</p>
+
+            <div class="sub-h">3. 新 token 用更大学习率</div>
+            <div class="code-block">
+optimizer = AdamW([
+    {<span class="str">"params"</span>: base_params, <span class="str">"lr"</span>: <span class="num">1e-4</span>},
+    {<span class="str">"params"</span>: [model.shared.weight], <span class="str">"lr"</span>: <span class="num">5e-4</span>},   <span class="com"># 新 token 需要更快</span>
+])
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">诊断:验证 sid embedding 真的学到语义了</div>
+          <div class="qa-section-content">
+            <p>训练中每隔 N 步跑这个检查:</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">probe_sid_semantics</span>(model, tokenizer, docs, sample=<span class="num">500</span>):
+    <span class="str">"""sid token embedding 与其 doc 标题 embedding 的相似度"""</span>
+    sims, shuffled_sims = [], []
+    <span class="kw">for</span> d <span class="kw">in</span> random.sample(docs, sample):
+        sid_emb = model.shared.weight[
+            tokenizer.convert_tokens_to_ids(sid_str(d.sid))
+        ].mean(<span class="num">0</span>)
+        title_ids = tokenizer(d.title, return_tensors=<span class="str">"pt"</span>).input_ids
+        title_emb = model.shared(title_ids).mean(dim=(<span class="num">0</span>,<span class="num">1</span>))
+        sims.append(F.cosine_similarity(sid_emb, title_emb, dim=<span class="num">0</span>).item())
+    <span class="com"># 打乱配对作为 baseline</span>
+    <span class="com"># ...</span>
+    <span class="kw">return</span> np.mean(sims), np.mean(shuffled_sims)
+            </div>
+            <p><strong>判读标准</strong>:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>真实配对 sim</th><th>打乱配对 sim</th><th>结论</th></tr></thead>
+                <tbody>
+                  <tr><td>~0.1</td><td>~0.1</td><td><span class="highlight-amber">sid embedding 无语义,输入侧任务不够</span></td></tr>
+                  <tr><td>0.3~0.5</td><td>~0.1</td><td><span class="highlight-green">正常,语义已 grounding</span></td></tr>
+                  <tr><td>&gt;0.7</td><td>~0.1</td><td>可能过拟合到标题,检查 query2sid 是否反而降了</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>还应该同时看 <strong>L1 层的簇一致性</strong>:同 L1 前缀的 doc,
+              它们的 <code>&lt;a_i&gt;</code> token embedding 与簇主题文本的相似度是否显著高于其他簇。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          输入侧暴露的本质是<strong>给 sid token 的 embedding 找语义锚点</strong>。
+          最高 ROI 的三个任务是 <code>sid→title</code>(注入内容语义)、<code>sid→query</code>(对齐检索意图,逆任务)、
+          <code>sid前缀→簇主题</code>(建立层级语义)。配合 tied embedding 传导 + 用 doc 标题 embedding 初始化新 token,
+          输入侧任务采样量应与输出侧同量级。做完后用 <code>sid embedding vs title embedding</code> 的余弦相似度探针验证是否真的 grounding 了。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q11 ============== -->
+    <article class="qa-card" id="q11">
+      <div class="qa-header">
+        <div class="qa-num">Q11</div>
+        <div class="qa-question">
+          我是先训 query2sid,还是 sid2query 类似的任务呢?
+          <span class="qa-tag">训练编排</span>
+        </div>
+      </div>
+      <div class="qa-body">
+
+        <div class="qa-section">
+          <div class="qa-section-title">结论:先 sid2query/sid2title,但不能"训完再切"</div>
+          <div class="qa-section-content">
+            <p>核心原则:<span class="highlight-cyan">先建立 sid 的身份与语义,再学 query→sid 的映射</span>。
+              但必须用<strong>配比渐变</strong>,不能做阶段性硬切换。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">为什么不能先训 query2sid</div>
+          <div class="qa-section-content">
+            <p>这是最关键的一点,涉及一个<span class="highlight-amber">不可逆的局部最优陷阱</span>:</p>
+            <ul>
+              <li>sid token embedding 是随机初始化的。</li>
+              <li>早期跑 query2sid,梯度只来自 softmax 分类损失,它的优化方向是
+                "<strong>让这些 embedding 彼此可区分</strong>",而不是"让它们有语义"。</li>
+              <li>模型很快会找到一个解:把 sid embedding 推到<strong>互相正交的随机位置</strong>,
+                然后靠 decoder 硬记 query→ID 的映射。这个解 loss 降得很快,但<span class="highlight-amber">完全没有泛化能力</span>。</li>
+              <li>一旦陷进去,后面再加 sid2title,需要把 embedding 从"正交散开"拉回"语义聚集",
+                这是一次大范围的表征重组,<strong>代价极高且经常拉不回来</strong>。</li>
+            </ul>
+            <p>反过来先训 sid2title/sid2query:embedding 先占据语义位置,
+              query2sid 再进来时,它面对的是一个<strong>已经有结构的目标空间</strong>,学的是"语义匹配"而不是"查表"。</p>
+            <p><strong>实测规律</strong>:先输入侧后主任务 vs 先主任务后输入侧,
+              前者的最终 hit 率通常<span class="highlight-green">高 30%~50%</span>,且长尾差距更大。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">但也不能只先训 sid2query</div>
+          <div class="qa-section-content">
+            <p>两个问题:</p>
+            <ol class="numbered-list">
+              <li><strong>decoder 从没练过生成 sid</strong>。sid2query 的输出是自然语言,
+                decoder 侧的 sid 生成路径(包括约束解码所需的层级先验)完全没训到。</li>
+              <li><strong>纯串行会灾难性遗忘</strong>。切到 query2sid 阶段后,
+                如果输入侧任务归零,sid embedding 的语义会在几千步内被冲掉。</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">容易忽略的点:doc2sid 才是真正的第 0 步</div>
+          <div class="qa-section-content">
+            <p>严格说,最先要有的不是 sid2query,而是 <span class="highlight-cyan">doc2sid(indexing)</span>。</p>
+            <p><strong>原因</strong>:sid2query 和 sid2title 是"<strong>解释 sid 是什么</strong>",
+              但模型得先知道"<strong>这个 sid 属于谁</strong>"。doc2sid 建立 sid ↔ doc 的身份绑定,是其他一切任务的前提。</p>
+            <p>所以真实顺序是:</p>
+            <div class="code-block">
+doc2sid（身份） → sid2title/sid2query（语义） → query2sid（映射）
+            </div>
+            <p>三者在时间上<strong>重叠推进</strong>,只是权重峰值依次后移。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">推荐的三阶段配比</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>任务</th><th>Phase 1 (0~25%)</th><th>Phase 2 (25~65%)</th><th>Phase 3 (65~100%)</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>doc2sid</strong>(indexing)</td><td><span class="highlight-green">20</span></td><td>10</td><td>4</td></tr>
+                  <tr><td><strong>sid2title</strong></td><td><span class="highlight-green">16</span></td><td>10</td><td>4</td></tr>
+                  <tr><td><strong>sid2query</strong></td><td><span class="highlight-green">12</span></td><td>10</td><td>5</td></tr>
+                  <tr><td>prefix2topic</td><td>6</td><td>4</td><td>2</td></tr>
+                  <tr><td>sid_completion</td><td>2</td><td>8</td><td>4</td></tr>
+                  <tr><td>q_sid_match</td><td>0</td><td>6</td><td>3</td></tr>
+                  <tr><td>prefix2sid</td><td>0</td><td>5</td><td>4</td></tr>
+                  <tr><td>sid_neighbor</td><td>2</td><td>2</td><td>1</td></tr>
+                  <tr><td>pseudoq2sid</td><td>1</td><td><span class="highlight-blue">8</span></td><td><span class="highlight-blue">10</span></td></tr>
+                  <tr><td><strong>query2sid</strong>(主任务)</td><td><span class="highlight-amber">0~1</span></td><td>3</td><td><span class="highlight-blue">12</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>三个阶段的意图</strong>:</p>
+            <ul>
+              <li><strong>Phase 1 — 建身份 + 注语义</strong>:query2sid 几乎不训(ratio ≤ 1,仅作 warmup 探针用)。
+                目标是让 sid embedding 站到正确的语义位置。</li>
+              <li><strong>Phase 2 — 补结构 + 加判别</strong>:引入层级先验(sid_completion)和负样本信号(match)。
+                query2sid 小比例进入,检验前期 grounding 是否有效。</li>
+              <li><strong>Phase 3 — 主任务收敛</strong>:query2sid 主导,
+                但<span class="highlight-cyan">输入侧任务保留在 20~25% 的总量</span>,防遗忘。</li>
+            </ul>
+            <p><strong>Phase 3 的输入侧任务绝对不能归零</strong>,这是很多实现翻车的地方。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">阶段切换的判据:用探针 gate,不要用固定步数</div>
+          <div class="qa-section-content">
+            <p>比按 step 百分比硬切更稳的做法是用语义探针做门控:</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">should_advance_to_phase2</span>(model, tokenizer, docs):
+    sim_real, sim_shuffled = probe_sid_semantics(model, tokenizer, docs)
+    <span class="com"># sid embedding 与对应 doc 标题 embedding 的相似度</span>
+    <span class="com"># 显著高于随机配对，说明 grounding 已建立</span>
+    <span class="kw">return</span> (sim_real - sim_shuffled) &gt; <span class="num">0.20</span> <span class="kw">and</span> sim_real &gt; <span class="num">0.30</span>
+
+<span class="kw">def</span> <span class="fn">should_advance_to_phase3</span>(model, eval_set):
+    <span class="com"># L1L2 前缀准确率达标，说明"推理层"已经学会</span>
+    <span class="kw">return</span> eval_l1l2_accuracy(model, eval_set) &gt; <span class="num">0.55</span>
+            </div>
+            <p><strong>判据的设计逻辑</strong>:</p>
+            <ul>
+              <li>Phase 1→2 的门槛是"sid 有语义了吗"(embedding 层面)</li>
+              <li>Phase 2→3 的门槛是"能推对簇了吗"(L1L2 前缀准确率,这是可推理部分)</li>
+            </ul>
+            <p>如果 Phase 1 跑了很久探针还是不动(<code>sim_real - sim_shuffled &lt; 0.1</code>),
+              大概率是 tied embedding 被解绑了,去检查配置。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">平滑过渡的实现</div>
+          <div class="qa-section-content">
+            <p>不要用 <code>if step &lt; X: return ratio_A</code>,用插值:</p>
+            <div class="code-block">
+PHASE_RATIOS = {
+    <span class="num">0.00</span>: {<span class="str">"doc2sid"</span>: <span class="num">20</span>, <span class="str">"sid2title"</span>: <span class="num">16</span>, <span class="str">"sid2query"</span>: <span class="num">12</span>, <span class="str">"query2sid"</span>: <span class="num">1</span>, ...},
+    <span class="num">0.25</span>: {<span class="str">"doc2sid"</span>: <span class="num">10</span>, <span class="str">"sid2title"</span>: <span class="num">10</span>, <span class="str">"sid2query"</span>: <span class="num">10</span>, <span class="str">"query2sid"</span>: <span class="num">3</span>, ...},
+    <span class="num">0.65</span>: {<span class="str">"doc2sid"</span>: <span class="num">4</span>,  <span class="str">"sid2title"</span>: <span class="num">4</span>,  <span class="str">"sid2query"</span>: <span class="num">5</span>,  <span class="str">"query2sid"</span>: <span class="num">12</span>, ...},
+}
+
+<span class="kw">def</span> <span class="fn">get_ratio</span>(step, total):
+    p = step / total
+    keys = <span class="fn">sorted</span>(PHASE_RATIOS)
+    lo = <span class="fn">max</span>(k <span class="kw">for</span> k <span class="kw">in</span> keys <span class="kw">if</span> k &lt;= p)
+    hi = <span class="fn">min</span>((k <span class="kw">for</span> k <span class="kw">in</span> keys <span class="kw">if</span> k &gt; p), default=lo)
+    <span class="kw">if</span> lo == hi:
+        <span class="kw">return</span> PHASE_RATIOS[lo]
+    w = (p - lo) / (hi - lo)
+    <span class="kw">return</span> {
+        t: PHASE_RATIOS[lo][t] * (<span class="num">1</span> - w) + PHASE_RATIOS[hi][t] * w
+        <span class="kw">for</span> t <span class="kw">in</span> PHASE_RATIOS[lo]
+    }
+            </div>
+            <p>硬切换会造成 loss 尖峰和表征震荡,线性插值能显著平滑。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">sid2query 与 query2sid 互逆的提醒</div>
+          <div class="qa-section-content">
+            <p>这两个任务方向相反,<span class="highlight-green">同时训不会互相干扰,反而互相增强</span>
+              (类似 dual learning / back-translation 的机制)。但前提是:</p>
+            <p><strong>task prefix 必须做强区分</strong>,否则模型会混淆生成方向。</p>
+            <div class="code-block">
+<span class="com"># 好的做法：前缀在语义和字面上都有明显差异</span>
+<span class="str">"检索查询生成语义ID: iPhone 15 续航"</span>           → <span class="str">"&lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;"</span>
+<span class="str">"根据语义ID反推用户查询: &lt;a_137&gt;&lt;b_42&gt;&lt;c_5&gt;&lt;d_2&gt;"</span>  → <span class="str">"iPhone 15 续航怎么样"</span>
+
+<span class="com"># 差的做法：前缀相似，模型容易串</span>
+<span class="str">"query2sid: ..."</span> / <span class="str">"sid2query: ..."</span>   <span class="com"># 字面太像，共享大量 token</span>
+            </div>
+            <p>如果发现模型在 query2sid 任务上偶尔输出自然语言(而不是 sid token),就是 prefix 区分度不够。
+              可以加一个<strong>输出空间约束</strong>兜底:query2sid 解码时只允许 sid vocab。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">如果资源有限,只能做减法</div>
+          <div class="qa-section-content">
+            <p>按砍掉的代价从小到大:</p>
+            <ol class="numbered-list">
+              <li>先砍 <code>sid_neighbor</code>、<code>sid2keywords</code>(锦上添花)</li>
+              <li>再砍 <code>prefix2topic</code>(需要 LLM 离线归纳簇主题,成本高)</li>
+              <li>再砍 <code>q_sid_match</code>(判别信号,有 hard neg 才有价值)</li>
+              <li><span class="highlight-cyan">doc2sid / sid2title / sid2query / query2sid 这四个是底线,一个都不能少</span></li>
+            </ol>
+            <p>其中 <code>sid2title</code> 是投入产出比最高的单个任务 —— 如果只能加一个输入侧任务,就加它。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          顺序是 doc2sid(建身份)→ sid2title/sid2query(注语义)→ query2sid(学映射),但要用配比渐变而非阶段硬切。
+          先训 query2sid 的致命问题是 sid embedding 会被推向"可区分但无语义"的局部最优,事后极难纠正;
+          而 Phase 3 输入侧任务归零则会导致语义遗忘。
+          阶段推进用 <code>sid embedding vs title embedding</code> 的相似度探针做 gate,比固定步数更可靠。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Q12 ============== -->
+    <article class="qa-card" id="q12">
+      <div class="qa-header">
+        <div class="qa-num">Q12</div>
+        <div class="qa-question">
+          但是我的 doc 都很长怎么办?
+          <span class="qa-tag">工程实践</span>
+        </div>
+      </div>
+      <div class="qa-body">
+
+        <div class="qa-section">
+          <div class="qa-section-title">好消息:长文档只影响一个任务</div>
+          <div class="qa-section-content">
+            <p>回顾任务清单,看输入/输出的长度:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>任务</th><th>输入</th><th>输出</th><th>受长文档影响</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>doc2sid</strong></td><td>doc 全文</td><td>sid(4 token)</td><td><span class="highlight-amber">是,唯一痛点</span></td></tr>
+                  <tr><td>sid2title</td><td>sid</td><td>标题</td><td><span class="highlight-green">否</span></td></tr>
+                  <tr><td>sid2query</td><td>sid</td><td>query</td><td><span class="highlight-green">否</span></td></tr>
+                  <tr><td>sid2keywords</td><td>sid</td><td>关键词</td><td><span class="highlight-green">否</span></td></tr>
+                  <tr><td>sid_completion</td><td>sid 前缀</td><td>sid 后缀</td><td><span class="highlight-green">否</span></td></tr>
+                  <tr><td>query2sid</td><td>query</td><td>sid</td><td><span class="highlight-green">否</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>所有输入侧任务(给 sid 注语义的那些)都不受影响</strong>,因为它们的输入是 sid、输出是短文本。
+              真正要解决的只有 doc2sid 这一个。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">最关键的原则:doc2sid 的输入必须与 d2d encoder 对齐</div>
+          <div class="qa-section-content">
+            <p>这是最容易被忽略、但影响最大的一点。</p>
+            <p>你的 sid 是 d2d 向量量化来的。那么问题是:<strong>d2d encoder 当初是怎么处理长文档的?</strong></p>
+            <ul>
+              <li>如果 d2d encoder 只看了前 512 token → sid 编码的就是<strong>前 512 token 的语义</strong></li>
+              <li>这时 doc2sid 如果喂全文(或喂摘要),target sid 反映的内容和 input 不一致 →
+                <span class="highlight-amber">input-target mismatch</span>,模型学到的是噪声</li>
+            </ul>
+            <div class="code-block">
+<span class="com"># 检查你的 d2d encoder 配置</span>
+d2d_max_len = d2d_encoder.config.max_position_embeddings  <span class="com"># 512? 1024?</span>
+d2d_truncation = <span class="str">"head"</span>  <span class="com"># or "head_tail" / "chunk_mean"</span>
+
+<span class="com"># doc2sid 的输入构造必须复刻这个逻辑</span>
+<span class="kw">def</span> <span class="fn">build_doc2sid_input</span>(doc):
+    <span class="kw">return</span> apply_same_truncation(doc.text, d2d_max_len, d2d_truncation)
+            </div>
+            <p><strong>如果 d2d 是分块编码后取平均的</strong>,那 doc2sid 也应该用多个块分别作为输入、
+              映射到同一个 sid(见下面的多视角方案),而不是喂全文。</p>
+            <p>先去确认这一点,比选哪个截断策略重要得多。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案一:first-k 截断(强 baseline,别过度设计)</div>
+          <div class="qa-section-content">
+            <p>DSI 论文做过文档表示的消融实验,结论反直觉:
+              <strong>直接取前 L 个 token(Direct Indexing)比 Set Indexing、Inverted Index 等复杂策略效果更好</strong>。</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">doc2sid_input</span>(doc, max_len=<span class="num">512</span>):
+    <span class="kw">return</span> <span class="str">f"索引文档: {doc.text[:max_len]}"</span>
+            </div>
+            <p><strong>为什么有效</strong>:</p>
+            <ul>
+              <li>大多数文档的核心信息集中在开头(标题、导语、首段)</li>
+              <li>长尾部分往往是细节、引用、无关内容,对建立 sid 身份反而是噪声</li>
+              <li>训练效率高,batch 能开大</li>
+            </ul>
+            <p><strong>建议长度</strong>:256~512 token。超过 512 边际收益急剧下降。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案二:多视角片段 → 同一 sid(推荐)</div>
+          <div class="qa-section-content">
+            <p>从文档不同位置采样多个片段,<strong>都映射到同一个 sid</strong>。既解决长度问题,又是天然的数据增强。</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">build_multiview_samples</span>(doc, sid, n_views=<span class="num">4</span>, win=<span class="num">256</span>):
+    samples = []
+
+    <span class="com"># 视角 1：标题 + 首段（最重要，权重最高）</span>
+    samples.append((<span class="str">f"索引文档: {doc.title} {doc.text[:win]}"</span>, sid))
+
+    <span class="com"># 视角 2：摘要（如果有）</span>
+    <span class="kw">if</span> doc.summary:
+        samples.append((<span class="str">f"索引文档: {doc.summary}"</span>, sid))
+
+    <span class="com"># 视角 3~N：正文随机窗口</span>
+    <span class="kw">if</span> len(doc.text) &gt; win * <span class="num">2</span>:
+        <span class="kw">for</span> _ <span class="kw">in</span> range(n_views - <span class="num">2</span>):
+            start = random.randint(<span class="num">0</span>, len(doc.text) - win)
+            samples.append((<span class="str">f"索引文档: {doc.text[start:start+win]}"</span>, sid))
+
+    <span class="kw">return</span> samples
+            </div>
+            <p><strong>效果</strong>:模型学到"这篇 doc 的任何一个片段都指向同一个 sid",鲁棒性显著提升。
+              对长文档尤其重要,因为用户 query 可能命中文档任何位置的内容。</p>
+            <p><strong>注意</strong>:视角 1(标题+首段)的采样权重应该更高(2~3 倍),它的信息密度最大。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案三:Doc2Query 替代原文(NCI 的做法)</div>
+          <div class="qa-section-content">
+            <p>不喂原文,<strong>喂 LLM 生成的伪 query</strong>。</p>
+            <div class="code-block">
+<span class="com"># 离线：每篇 doc 生成 10~20 个伪 query（覆盖不同段落的内容）</span>
+pseudo_queries = generate_queries_from_doc(doc, n=<span class="num">15</span>, cover_all_sections=<span class="kw">True</span>)
+
+<span class="com"># 训练样本</span>
+<span class="kw">for</span> pq <span class="kw">in</span> pseudo_queries:
+    samples.append((<span class="str">f"检索: {pq}"</span>, sid))
+            </div>
+            <p><strong>优势</strong>:</p>
+            <ul>
+              <li>彻底绕开长度问题(query 都很短)</li>
+              <li>训练/推理的<span class="highlight-cyan">输入分布一致</span>(都是 query 形态),这是最大的好处</li>
+              <li>NCI 论文证明这比直接 indexing 效果更好</li>
+            </ul>
+            <p><strong>关键</strong>:生成伪 query 时要<strong>覆盖文档各个段落</strong>,不要只基于开头。</p>
+            <div class="code-block">
+PROMPT = <span class="str">"""阅读以下文档的各个部分，为每个主要内容点生成 1 个用户可能的搜索查询。
+要求覆盖文档的不同章节，不要只关注开头。
+
+文档：{doc_chunks}
+
+查询列表："""</span>
+            </div>
+            <p><strong>成本</strong>:长文档要分段喂给 LLM,离线生成成本较高。但这是一次性的。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案四:结构化压缩</div>
+          <div class="qa-section-content">
+            <p>用规则/小模型把长文档压成信息密度高的短表示:</p>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">compress_doc</span>(doc, target_len=<span class="num">300</span>):
+    parts = [
+        doc.title,                              <span class="com"># 标题</span>
+        doc.summary <span class="kw">or</span> first_sentence(doc),     <span class="com"># 摘要或首句</span>
+        <span class="str">" "</span>.join(extract_keywords(doc, k=<span class="num">15</span>)),  <span class="com"># TextRank 关键词</span>
+        <span class="str">" "</span>.join(extract_entities(doc)),        <span class="com"># 实体</span>
+        <span class="str">" "</span>.join(get_section_headers(doc)),     <span class="com"># 小标题（长文档通常有）</span>
+    ]
+    <span class="kw">return</span> <span class="str">" | "</span>.join(p <span class="kw">for</span> p <span class="kw">in</span> parts <span class="kw">if</span> p)[:target_len]
+            </div>
+            <p><span class="highlight-cyan">小标题(section headers)是长文档的宝藏</span> ——
+              它们是人工写的内容摘要,信息密度极高,很多实现忽略了。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="sub-h">方案五:重新审视粒度 —— 一个 doc 是否应该只有一个 sid?</div>
+          <div class="qa-section-content">
+            <p>这是更深层的问题。如果你的 doc 很长<strong>且多主题</strong>(比如一篇综述、一份长报告),
+              用单个 sid 表示整篇文档本身就不合理:</p>
+            <ul>
+              <li>d2d 向量是全文的平均 → 语义被"稀释"成一个模糊的中心点</li>
+              <li>用户 query 命中的是其中某一节 → 但 sid 代表的是整篇的平均语义 → <span class="highlight-amber">必然不准</span></li>
+            </ul>
+            <p><strong>解决方案:chunk-level sid</strong></p>
+            <div class="code-block">
+<span class="com"># 一个 doc → 多个 chunk → 多个 sid</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> split_doc(doc, size=<span class="num">512</span>, overlap=<span class="num">64</span>):
+    chunk_vec = d2d_encoder(chunk)
+    chunk_sid = rq_fsq_quantize(chunk_vec)
+
+    samples.append((<span class="str">f"索引文档: {chunk.text}"</span>, chunk_sid))
+    <span class="com"># 输入侧任务也基于 chunk</span>
+    samples.append((<span class="str">f"解码语义ID对应的内容摘要: {chunk_sid}"</span>, chunk.summary))
+
+<span class="com"># 召回时：sid → chunk → 回溯到 doc，同 doc 多 chunk 命中则聚合加分</span>
+            </div>
+            <p><strong>判断是否需要 chunk-level</strong>:</p>
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>场景</th><th>建议</th></tr></thead>
+                <tbody>
+                  <tr><td>doc &lt; 1000 字,单主题</td><td>doc-level sid,first-k 截断即可</td></tr>
+                  <tr><td>doc 1000~3000 字,主题较集中</td><td>doc-level + 多视角片段</td></tr>
+                  <tr><td>doc &gt; 3000 字,或明显多主题</td><td><span class="highlight-cyan">chunk-level sid</span></td></tr>
+                  <tr><td>用户 query 常常只命中文档某一节</td><td><span class="highlight-cyan">chunk-level sid</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>代价是 sid 总量膨胀(码本压力)、需要 chunk→doc 的回溯聚合逻辑。
+              但对长文档场景,这通常是<strong>唯一正确的做法</strong>。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">推荐组合</div>
+          <div class="qa-section-content">
+            <p>按 doc 长度分布选:</p>
+
+            <div class="sub-h">中等长度(500~2000 字)</div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="fn">build_indexing_samples</span>(doc, sid):
+    S = []
+    <span class="com"># 主视角：标题 + 首段，权重 3</span>
+    S += [(<span class="str">f"索引文档: {doc.title} {doc.text[:400]}"</span>, sid)] * <span class="num">3</span>
+    <span class="com"># 压缩视角：权重 2</span>
+    S += [(<span class="str">f"索引文档: {compress_doc(doc)}"</span>, sid)] * <span class="num">2</span>
+    <span class="com"># 随机窗口：2 个</span>
+    S += random_window_samples(doc, sid, n=<span class="num">2</span>, win=<span class="num">256</span>)
+    <span class="com"># 伪 query：覆盖全文</span>
+    S += [(<span class="str">f"检索: {pq}"</span>, sid) <span class="kw">for</span> pq <span class="kw">in</span> doc.pseudo_queries]
+    <span class="kw">return</span> S
+            </div>
+
+            <div class="sub-h">超长文档(&gt; 3000 字)</div>
+            <p>先改 chunk-level sid,再套用上面的构造逻辑(对每个 chunk)。</p>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">不推荐的方案</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>方案</th><th>为什么不推荐</th></tr></thead>
+                <tbody>
+                  <tr><td>换 LongT5 / LED</td><td>训练成本翻数倍,而 doc2sid 只是辅助任务,ROI 极低</td></tr>
+                  <tr><td>层次编码(先编码 chunk 再聚合)</td><td>复杂度高,且与冻结的 d2d encoder 不兼容</td></tr>
+                  <tr><td>滑窗把全文都喂一遍</td><td>样本量爆炸,且大部分片段对建立 sid 身份贡献很小</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>核心判断</strong>:doc2sid 的目的是"建立 sid 的身份锚点",不是"让模型完整理解文档"。
+              够用就行,把算力留给输入侧任务和主任务。</p>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          长文档只影响 doc2sid 这一个任务,且第一要务是让 doc2sid 的输入与 d2d encoder 当初的截断方式保持一致
+          (否则 input-target mismatch)。实践上 first-k 截断(256~512)是强 baseline,
+          配合「多视角片段 → 同一 sid」和 Doc2Query 伪 query 就够了。
+          如果 doc 超过 3000 字或明显多主题,真正的问题是粒度设计错了 ——
+          应该改成 chunk-level sid,而不是纠结怎么把长文塞进 doc2sid。
+        </div>
+      </div>
+    </article>
+
+    <!-- ============== Summary ============== -->
+    <article class="qa-card" id="summary">
+      <div class="qa-header">
+        <div class="qa-num">∑</div>
+        <div class="qa-question">核心要点汇总</div>
+      </div>
+      <div class="qa-body">
+        <div class="qa-section">
+          <div class="qa-section-title">技术论点演进</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>阶段</th><th>核心论点</th></tr></thead>
+                <tbody>
+                  <tr><td>Q1 → Q3</td><td>q-d vs d2d 的本质差异:训练目标对齐性、sid 前缀重合、生成器归纳偏置</td></tr>
+                  <tr><td>Q4</td><td>用户反驳:d2d 簇内纯度 trade-off,纯度 vs 召回覆盖</td></tr>
+                  <tr><td>Q5</td><td>beam size 是用计算换 hit 率,信号弱是天花板</td></tr>
+                  <tr><td>Q6 → Q7</td><td>不动 d2d encoder/RQ,只通过伪 query 自监督让 doc 表征感知 query 侧</td></tr>
+                  <tr><td>Q8</td><td>完全冻结 d2d 表征和量化器,只在生成器侧优化:多任务 + 蒸馏 + soft prompt + 改写 + rerank</td></tr>
+                  <tr><td>Q9</td><td>RQ-KMeans 2层(推理) + FSQ 2层(记忆)的分层属性;sid 需输入侧 + 输出侧双重暴露</td></tr>
+                  <tr><td>Q10</td><td>输入侧 7 类训练任务构造 + 采样比例 + tied embedding / 初始化 / 探针诊断</td></tr>
+                  <tr><td>Q11</td><td>训练顺序:doc2sid → sid2title/sid2query → query2sid,配比渐变 + 探针 gate</td></tr>
+                  <tr><td>Q12</td><td>长文档只影响 doc2sid;截断需对齐 d2d encoder,超长文档改 chunk-level sid</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa-section">
+          <div class="qa-section-title">关键技术对比</div>
+          <div class="qa-section-content">
+            <div class="tbl-wrap">
+              <table class="tech-table">
+                <thead><tr><th>方案</th><th>改动范围</th><th>核心机制</th><th>适用场景</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>q-d 训练</strong></td><td>训练范式</td><td>query 进入 loss,sid 编码相关性</td><td>有 query-doc 信号时首选</td></tr>
+                  <tr><td><strong>d2d + 大 beam</strong></td><td>推理</td><td>计算换 hit 率</td><td>query-doc 信号弱时兜底</td></tr>
+                  <tr><td><strong>共享 backbone</strong></td><td>encoder</td><td>预训练天然对齐</td><td>通用基础,零成本</td></tr>
+                  <tr><td><strong>伪 query 自监督</strong></td><td>训练</td><td>doc 自衍生 query 自对齐</td><td>无 q-d 标签时最实用</td></tr>
+                  <tr><td><strong>知识蒸馏</strong></td><td>训练</td><td>q-d teacher 软标签灌入</td><td>有弱 q-d 信号时</td></tr>
+                  <tr><td><strong>多任务辅助</strong></td><td>生成器</td><td>辅助任务逼生成器内化 doc</td><td>冻结 d2d 时首选</td></tr>
+                  <tr><td><strong>Soft Prompt Tuning</strong></td><td>生成器</td><td>参数高效微调 query→sid</td><td>低资源/快速迭代</td></tr>
+                  <tr><td><strong>Query 改写</strong></td><td>推理</td><td>让 query 表达往 doc 侧靠</td><td>任何场景可加</td></tr>
+                  <tr><td><strong>推理 Rerank</strong></td><td>推理</td><td>独立 q-d 双塔二次过滤</td><td>召回质量兜底</td></tr>
+                  <tr><td><strong>分层 loss 加权</strong></td><td>生成器</td><td>降低 FSQ 层权重,腾容量给 RQ 层</td><td>RQ+FSQ 混合结构</td></tr>
+                  <tr><td><strong>只生成 L1L2 前缀</strong></td><td>推理</td><td>摘掉不可推理部分,前缀展开 + rerank</td><td>FSQ 层准确率崩塌时</td></tr>
+                  <tr><td><strong>sid2title / sid2query</strong></td><td>生成器</td><td>输入侧暴露,给 sid embedding 语义锚</td><td><span class="highlight-cyan">泛化能力根本来源</span></td></tr>
+                  <tr><td><strong>sid_neighbor</strong></td><td>生成器</td><td>把 d2d 几何结构蒸馏进生成器</td><td>d2d encoder 冻结时</td></tr>
+                  <tr><td><strong>title embedding 初始化</strong></td><td>生成器</td><td>新 token 起点就在语义邻域</td><td>省 ~30% 训练步数</td></tr>
+                  <tr><td><strong>三阶段配比渐变</strong></td><td>训练调度</td><td>身份 → 语义 → 映射,峰值依次后移</td><td><span class="highlight-cyan">避免 embedding 陷局部最优</span></td></tr>
+                  <tr><td><strong>探针 gate 切阶段</strong></td><td>训练调度</td><td>按 grounding 程度而非固定步数推进</td><td>比硬切更稳</td></tr>
+                  <tr><td><strong>多视角片段 → 同 sid</strong></td><td>数据构造</td><td>长文档任一片段都指向同一 sid</td><td>doc 1000~3000 字</td></tr>
+                  <tr><td><strong>chunk-level sid</strong></td><td>粒度设计</td><td>按 chunk 量化,召回后回溯聚合</td><td>doc &gt; 3000 字 / 多主题</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          整体方法论:从"训练范式对齐" → "表征隐式对齐" → "生成器侧优化" → "SID 结构分层与输入侧 grounding"
+          → "多任务顺序编排与长文档工程处理",是在不同约束条件下追求 query-doc 对齐能力最大化的递进路径。
+          工程实践建议从轻量方案起步,按 ROI 决定是否上重型方案;
+          若使用 RQ-KMeans + FSQ 混合量化,优先做分层诊断,再决定是否只生成可推理的前缀层;
+          训练编排务必遵循「建身份 → 注语义 → 学映射」的配比渐变,长文档场景优先确认 sid 粒度设计是否合理。
+        </div>
+      </div>
+    </article>
+
+    <div class="footer">
+      <div>Generated by <span class="brand-tag">CodeBuddy</span> · 2026-09-15</div>
+      <div style="margin-top: 4px; color: var(--text-muted);">生成式召回 RQ-KMeans-FSQ 方案 · 12 轮深度 QA 技术报告</div>
+    </div>
+
+  </main>
+</div>
+
+</div>

@@ -1,0 +1,809 @@
+---
+layout: post
+title: "业界推荐模型流式训练与部署平台 · 深度调研报告"
+date: 2026-09-17 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: true
+mathjax: false
+tags:
+    - 推荐系统
+    - 流式训练
+    - 深度学习
+---
+
+<style>
+
+  :root{
+    --bg:#0a0f1e;
+    --bg2:#0f1729;
+    --panel:rgba(20,26,42,.65);
+    --line:rgba(120,140,200,.18);
+    --txt:#e6ecf6;
+    --mute:#94a3c4;
+    --acc:#7c9eff;
+    --acc2:#52e8c4;
+    --acc3:#ffb86b;
+    --warn:#ff6b8a;
+    --ok:#58d68d;
+  }
+  .industry-streaming-report html, .industry-streaming-report body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;line-height:1.7;}
+  .industry-streaming-report ::selection{background:#3a4d8a;color:#fff}
+  .industry-streaming-report .glass{background:linear-gradient(180deg,rgba(30,40,70,.55),rgba(15,22,40,.55));backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px}
+  .industry-streaming-report .chip{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--mute);background:rgba(255,255,255,.02)}
+  .industry-streaming-report .chip-blue{color:#9eb6ff;border-color:rgba(124,158,255,.4);background:rgba(124,158,255,.08)}
+  .industry-streaming-report .chip-green{color:#7ee2c2;border-color:rgba(82,232,196,.4);background:rgba(82,232,196,.08)}
+  .industry-streaming-report .chip-amber{color:#ffd29a;border-color:rgba(255,184,107,.4);background:rgba(255,184,107,.08)}
+  .industry-streaming-report .chip-pink{color:#ffaec0;border-color:rgba(255,107,138,.4);background:rgba(255,107,138,.08)}
+  .industry-streaming-report h1, .industry-streaming-report h2, .industry-streaming-report h3, .industry-streaming-report h4{letter-spacing:-.01em;font-weight:600;color:#f3f6ff}
+  .industry-streaming-report h1{font-size:40px;line-height:1.2}
+  .industry-streaming-report h2{font-size:28px;line-height:1.3;margin-top:48px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .industry-streaming-report h3{font-size:20px;line-height:1.4;margin-top:28px;margin-bottom:12px;color:#cfd8ea}
+  .industry-streaming-report h4{font-size:16px;line-height:1.4;margin-top:18px;margin-bottom:8px;color:var(--acc)}
+  .industry-streaming-report p{color:#c9d3e8;margin:10px 0}
+  .industry-streaming-report a{color:var(--acc);text-decoration:none}
+  .industry-streaming-report a:hover{text-decoration:underline}
+  .industry-streaming-report code:not(pre code){background:rgba(124,158,255,.12);color:#cfd8ea;padding:2px 6px;border-radius:5px;font-size:.85em}
+  .industry-streaming-report table{width:100%;border-collapse:separate;border-spacing:0;margin:14px 0;font-size:13.5px}
+  .industry-streaming-report th, .industry-streaming-report td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  .industry-streaming-report th{background:rgba(124,158,255,.08);color:#cfd8ea;font-weight:600;white-space:nowrap}
+  .industry-streaming-report tr:last-child td{border-bottom:none}
+  .industry-streaming-report tbody tr:hover{background:rgba(124,158,255,.04)}
+  .industry-streaming-report .grad-text{background:linear-gradient(90deg,#7c9eff,#52e8c4,#ffb86b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .industry-streaming-report .hero{position:relative;overflow:hidden}
+  .industry-streaming-report .hero::before{content:"";position:absolute;inset:-40% -10% auto auto;width:600px;height:600px;background:radial-gradient(circle,rgba(124,158,255,.25),transparent 60%);z-index:0}
+  .industry-streaming-report .hero::after{content:"";position:absolute;inset:auto auto -40% -10%;width:600px;height:600px;background:radial-gradient(circle,rgba(82,232,196,.22),transparent 60%);z-index:0}
+  .industry-streaming-report .hero > *{position:relative;z-index:1}
+  .industry-streaming-report .anchor{scroll-margin-top:96px}
+  .industry-streaming-report .nav a{padding:6px 10px;border-radius:8px;color:var(--mute);font-size:13.5px;display:block}
+  .industry-streaming-report .nav a:hover{background:rgba(124,158,255,.12);color:#fff;text-decoration:none}
+  .industry-streaming-report .nav a.active{background:rgba(124,158,255,.18);color:#fff}
+  .industry-streaming-report .callout{border-left:3px solid var(--acc);background:rgba(124,158,255,.05);padding:14px 18px;border-radius:0 12px 12px 0;margin:14px 0}
+  .industry-streaming-report .callout-warn{border-left-color:var(--warn);background:rgba(255,107,138,.05)}
+  .industry-streaming-report .callout-ok{border-left-color:var(--ok);background:rgba(88,214,141,.05)}
+  .industry-streaming-report .mermaid{background:rgba(11,17,33,.5);border-radius:14px;padding:18px;border:1px solid var(--line);overflow:auto}
+  .industry-streaming-report .kpi{font-size:32px;font-weight:600;background:linear-gradient(90deg,#7c9eff,#52e8c4);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .industry-streaming-report .label{font-size:12px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+  .industry-streaming-report .grid > div{padding:18px}
+  .industry-streaming-report .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:6px;background:rgba(124,158,255,.12);color:#9eb6ff;margin:2px 6px 2px 0}
+  .industry-streaming-report .tag-g{background:rgba(82,232,196,.12);color:#7ee2c2}
+  .industry-streaming-report .tag-a{background:rgba(255,184,107,.12);color:#ffd29a}
+  .industry-streaming-report .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:999px;background:rgba(82,232,196,.12);color:#7ee2c2;border:1px solid rgba(82,232,196,.3)}
+  .industry-streaming-report .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#52e8c4;box-shadow:0 0 8px #52e8c4}
+  .industry-streaming-report .card-hover{transition:transform .2s ease,border-color .2s ease}
+  .industry-streaming-report .card-hover:hover{transform:translateY(-3px);border-color:rgba(124,158,255,.45)}
+  .industry-streaming-report .ref{font-size:13px;color:var(--mute)}
+  .industry-streaming-report .ref a{word-break:break-all}
+  @media (max-width:900px){
+    .industry-streaming-report .layout{grid-template-columns:1fr!important}
+    .industry-streaming-report .sidebar{position:static!important;max-height:none!important}
+    .industry-streaming-report h1{font-size:30px}
+  }
+
+@media (max-width: 768px) {
+  .industry-streaming-report .container, .industry-streaming-report .layout, .industry-streaming-report .wrap {
+    padding: 14px !important;
+  }
+  .industry-streaming-report h1 { font-size: 24px !important; line-height: 1.35 !important; }
+  .industry-streaming-report h2 { font-size: 20px !important; line-height: 1.4 !important; }
+  .industry-streaming-report h3 { font-size: 17px !important; }
+  .industry-streaming-report p { line-height: 1.75 !important; }
+  .industry-streaming-report table { font-size: 12.5px !important; }
+  .industry-streaming-report th, .industry-streaming-report td { padding: 8px 10px !important; }
+  .industry-streaming-report [class*="grid"], .industry-streaming-report [class*="cards"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .industry-streaming-report [class*="stat-grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* === sidebar TOC：默认收起，点击按钮展开 === */
+.industry-streaming-report .layout { display: block !important; max-width: 100% !important; }
+.industry-streaming-report .main, .industry-streaming-report main { max-width: 100% !important; margin: 0 !important; grid-template-columns: 1fr !important; }
+.industry-streaming-report aside.sidebar, .industry-streaming-report .toc {
+  position: fixed !important;
+  right: 20px !important;
+  top: 84px !important;
+  width: 280px !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100vh - 110px) !important;
+  overflow-y: auto !important;
+  z-index: 950 !important;
+  background: var(--surface, #fff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(29,78,216,.10), 0 4px 12px rgba(15,23,42,.06) !important;
+  padding: 18px 16px 20px !important;
+  transform: translateX(calc(100% + 40px)) !important;
+  transition: transform .3s ease !important;
+}
+.industry-streaming-report aside.sidebar.open, .industry-streaming-report .toc.open {
+  transform: translateX(0) !important;
+}
+.industry-streaming-report #tocToggle {
+  display: flex !important;
+  position: fixed !important;
+  top: 84px !important;
+  right: 20px !important;
+  z-index: 960 !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: var(--surface, #fff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  box-shadow: 0 6px 18px rgba(15,23,42,.08) !important;
+  border-radius: 10px !important;
+  padding: 9px 15px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--primary-dark, #1D4ED8) !important;
+  cursor: pointer !important;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.industry-streaming-report aside.sidebar.open ~ #tocToggle,
+.industry-streaming-report .toc.open ~ #tocToggle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(60px) !important;
+}
+@media (max-width: 1080px) {
+  .industry-streaming-report aside.sidebar, .industry-streaming-report .toc {
+    right: 0 !important; left: 0 !important; top: 0 !important;
+    width: 100% !important; max-width: 100% !important;
+    max-height: 78vh !important; border-radius: 0 0 16px 16px !important;
+    transform: translateY(-104%) !important;
+    transition: transform .3s ease !important;
+  }
+  .industry-streaming-report aside.sidebar.open, .industry-streaming-report .toc.open { transform: translateY(0) !important; }
+  .industry-streaming-report #tocToggle { top: 14px !important; right: 14px !important; }
+}
+
+</style>
+
+<div class="industry-streaming-report">
+<button id="tocToggle" type="button" aria-label="展开/收起目录">☰ 目录</button>
+
+
+<!-- ====================== HERO ====================== -->
+<header class="hero px-8 md:px-16 pt-14 pb-16">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-10">
+      <div class="text-sm text-slate-400">Deep Research · 推荐系统工程</div>
+      <div class="flex gap-2 items-center">
+        <span class="chip">v1.0</span>
+        <span class="chip chip-green">2026-08-13</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 mb-5 flex-wrap">
+      <span class="pill">Deep Research</span>
+      <span class="chip chip-blue">流式训练</span>
+      <span class="chip chip-blue">在线学习</span>
+      <span class="chip chip-amber">参数服务器</span>
+      <span class="chip chip-amber">模型部署</span>
+      <span class="chip chip-pink">生成式推荐</span>
+    </div>
+    <h1 class="mb-4">业界推荐模型<span class="grad-text">流式训练与部署平台</span><br/>方案深度调研</h1>
+    <p class="max-w-3xl text-slate-400">系统梳理国内外 10+ 主流公司与开源生态在推荐模型在线学习、增量更新、参数同步与在线部署上的工程方案，覆盖字节 Monolith、阿里 PAI-ODL、腾讯太极/无量、快手 OneRec、小红书 LarC、Meta GRs、NVIDIA Merlin 等，给出横向对比、架构范式归纳与趋势展望。</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+      <div class="glass card-hover"><div class="kpi">10+</div><div class="label mt-1">公司 / 平台方案</div></div>
+      <div class="glass card-hover"><div class="kpi">分钟级</div><div class="label mt-1">行业标配参数同步延迟</div></div>
+      <div class="glass card-hover"><div class="kpi">10TB+</div><div class="label mt-1">头部平台模型规模</div></div>
+      <div class="glass card-hover"><div class="kpi">5 种</div><div class="label mt-1">主流架构范式归纳</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== BODY ====================== -->
+<div class="max-w-7xl mx-auto px-8 md:px-16 pb-24 layout grid" style="grid-template-columns:240px 1fr;gap:40px">
+
+  <!-- Sidebar -->
+  <aside class="sidebar sticky top-8 self-start max-h-[85vh] overflow-auto pr-2">
+    <div class="label mb-3">目录</div>
+    <nav class="nav flex flex-col gap-1" id="toc">
+      <a href="#summary">01 · 摘要与关键结论</a>
+      <a href="#overview">02 · 业界总览对比</a>
+      <a href="#companies">03 · 各公司方案详述</a>
+      <a href="#comp-bytedance" style="padding-left:22px">字节跳动 Monolith</a>
+      <a href="#comp-alibaba" style="padding-left:22px">阿里 XDL / PAI-ODL</a>
+      <a href="#comp-tencent" style="padding-left:22px">腾讯 太极 / 无量</a>
+      <a href="#comp-kuaishou" style="padding-left:22px">快手 Persia / OneRec</a>
+      <a href="#comp-others-cn" style="padding-left:22px">美团 / 小红书 / 京东</a>
+      <a href="#comp-overseas" style="padding-left:22px">Meta / Google / 海外</a>
+      <a href="#opensource">04 · 开源组件生态</a>
+      <a href="#comparison">05 · 技术维度横向对比</a>
+      <a href="#paradigms">06 · 架构范式归纳</a>
+      <a href="#trends">07 · 趋势展望</a>
+      <a href="#takeaways">08 · 对本项目的启示</a>
+      <a href="#references">09 · 参考资料</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="min-w-0">
+
+    <!-- ========== 01 SUMMARY ========== -->
+    <section id="summary" class="anchor">
+      <h2>01 · 摘要与关键结论</h2>
+      <p>本次调研覆盖国内外头部互联网公司（字节、阿里、腾讯、快手、美团、小红书、京东、Meta、Google、Netflix/Pinterest）与开源生态（NVIDIA Merlin、TorchRec、Persia、Angel、XDL 等）在<strong>推荐模型流式训练（在线学习 / 近线增量）与在线部署（参数同步 / 热更新 / 模型管理）</strong>两个核心环节的公开方案。核心结论如下：</p>
+
+      <div class="callout callout-ok">
+        <strong>结论一：「分钟级参数同步」已成为行业事实标准。</strong>
+        字节 Monolith 稀疏参数分钟级增量同步（dense 天级）、小红书 LarC 分钟级闭环、阿里 PAI-ODL 5 分钟粒度增量 checkpoint、腾讯太极分钟级模型发布——头部公司的在线学习系统全部收敛到「分钟级」这一档。Monolith 在 Criteo 数据集上证明：同步间隔从 5h → 30min，在线 AUC 从 79.66 提升至 79.80；生产 A/B 中在线训练相比批训练 AUC 提升 14%~18%。
+      </div>
+      <div class="callout callout-ok">
+        <strong>结论二：「Kafka 双流 + Flink 实时样本拼接」是样本链路的事实标准架构。</strong>
+        字节（特征流 + 行为流两条 Kafka，Flink Online Joiner 按 request key 配对）、阿里（Flink 特征预处理 / Feature Generation / Sample Generation）、小红书（Flink 实时拼接样本）均采用同构设计；延迟转化用「内存缓存 + 落盘 KV」二级结构承接，负采样配合 log-odds 校正保证样本无偏。
+      </div>
+      <div class="callout callout-ok">
+        <strong>结论三：「无冲突动态 Embedding 表 + ID 生命周期管理」是稀疏参数工程的关键分水岭。</strong>
+        Monolith 用 Cuckoo HashMap 取代 hash trick（实验证明碰撞显著损伤 AUC），配合频次过滤（低频 ID 拒绝入场）与 TTL 过期（不活跃 ID 驱逐）控制内存；阿里 EmbeddingVariable、腾讯无量 tl_hash_map、NVIDIA HKV（LRU/LFU 驱逐）均为同思路实现。
+      </div>
+      <div class="callout">
+        <strong>结论四：部署侧形成「训练-推理分离 + 增量推送 / 版本化拉取」两大类机制。</strong>
+        推送派：Monolith 维护 touched-keys 集合，分钟级把增量稀疏参数从训练 PS 推到在线 Serving PS；拉取派：无量/PAI-ODL 走「导出 → 注册模型版本（complete/patch）→ Serving 定期查询并拉取」的模型管理路线，天然支持灰度与回滚。
+      </div>
+      <div class="callout callout-warn">
+        <strong>结论五：生成式推荐（GR）正在重构「训练 + 部署」的整体范式。</strong>
+        Meta GRs/HSTU（1.5T 参数，线上 A/B +12.4%）与快手 OneRec（单模型替代召回→粗排→精排→重排级联，服务成本降至 1/10，已全量上线）证明：推荐系统正从「碎片级联 + 在线学习」走向「端到端大模型 + 奖励系统」，流式训练的样本形态（SID token 化）与部署形态（生成式推理）都将随之改变。
+      </div>
+      <div class="callout">
+        <strong>结论六：可靠性可以拿来换实时性。</strong>
+        Monolith 生产实践：PS 天级快照 + 0.01%/天故障率下，丢失单日单分片更新对模型质量几乎无损（等效损失 0.01% DAU 一天的反馈），从而把快照开销省下来支撑更高频的参数同步。这是流式系统工程化中极具启发性的 trade-off。
+      </div>
+    </section>
+
+    <!-- ========== 02 OVERVIEW ========== -->
+    <section id="overview" class="anchor">
+      <h2>02 · 业界总览对比</h2>
+      <p>下表汇总各家公司平台的核心定位、训练模式与部署机制（基于公开论文、官方技术博客与开源资料整理）：</p>
+      <div class="glass p-5 overflow-x-auto">
+      <table>
+        <thead>
+          <tr><th>公司</th><th>平台 / 系统</th><th>训练模式</th><th>部署与参数同步机制</th><th>公开规模指标</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="whitespace-nowrap"><strong>字节跳动</strong></td>
+            <td>Monolith（已开源 / BytePlus Recommend）</td>
+            <td><span class="tag tag-g">流式在线学习</span>Kafka+Flink 实时样本，在线训练持续消费</td>
+            <td>touched-keys 增量推送：稀疏分钟级、dense 天级；训练 PS → Serving PS 热更新</td>
+            <td>模型数 TB；~10 万 ID/分钟增量 ≈ 400MB；在线 A/B AUC +14%~18%</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>阿里</strong></td>
+            <td>XDL（开源）/ PAI-ODL</td>
+            <td><span class="tag tag-g">双轨制</span>天级全量校正 + 实时流式增量</td>
+            <td>5min 增量 checkpoint（兆级~百兆）→ ModelCenter 校验 → Serving 拉取；dense 进本地内存，sparse 进 EmbeddingStore</td>
+            <td>支撑淘宝/阿里妈妈核心场景；模型几十 GB~TB 级</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>腾讯</strong></td>
+            <td>太极平台 + AngelPS + 无量</td>
+            <td><span class="tag tag-a">平台化批训 + 在线能力</span>无量：百亿样本/百亿参数小时级</td>
+            <td>模型版本管理（complete/patch）→ 注册 → Serving 定期查询拉取，支持自动上线；分钟级模型发布</td>
+            <td>AngelPS 承载 10TB 级模型训练、TB 级推理；无量 Serving 支持 TB 级模型高并发预测</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>快手</strong></td>
+            <td>Persia（开源）/ OneRec</td>
+            <td><span class="tag tag-g">流式训练</span> + <span class="tag" style="background:rgba(255,107,138,.12);color:#ffaec0">生成式端到端</span></td>
+            <td>OneRec：Tokenizer(SID) + Encoder-Decoder → Lazy Decoder Only，单模型覆盖全链路全量上线</td>
+            <td>Persia 支持 100 万亿参数；OneRec 服务成本降至 1/10，模型 0.5B→8B</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>美团</strong></td>
+            <td>图灵一站式机器学习平台</td>
+            <td><span class="tag tag-a">分布式批训优化</span>TF 分布式训练深度优化（被 Monolith 论文引用）</td>
+            <td>模型管理平台统一格式，支持分区模型与超大模型；GPU CTR 推理服务</td>
+            <td>覆盖外卖/到店等核心推荐广告场景</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>小红书</strong></td>
+            <td>LarC 机器学习平台</td>
+            <td><span class="tag tag-g">流式在线学习</span>Flink 实时拼接样本，分钟级闭环</td>
+            <td>短窗口累积样本 Online Training，参数立刻发布线上；超大规模无冲突 PS</td>
+            <td>2 亿 MAU；日几百亿行为样本；2019 启动、2022 平台化</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>京东</strong></td>
+            <td>广告在线模型系统</td>
+            <td><span class="tag tag-a">分布式异构训练</span>架构统一演进</td>
+            <td>在线模型系统分布式异构计算（CPU+GPU 混合推理）</td>
+            <td>广告全场景；公开细节有限</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>Meta</strong></td>
+            <td>DLRM 体系 / TorchRec / GRs(HSTU)</td>
+            <td><span class="tag tag-a">大规模批训</span> + <span class="tag" style="background:rgba(255,107,138,.12);color:#ffaec0">生成式推荐</span></td>
+            <td>GRs：1.5T 参数 HSTU 部署于数十亿用户平台多场景；训练-推理全链路 GPU 化</td>
+            <td>线上 A/B 核心指标 +12.4%；HSTU 比 FlashAttention2 快 5.3~15.2×</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>Google</strong></td>
+            <td>TFX + TF Serving</td>
+            <td><span class="tag tag-a">持续训练流水线</span>（批式为主，工程标准化）</td>
+            <td>TFX Pipeline 持续训练 → 模型验证 → TF Serving 热加载版本管理</td>
+            <td>YouTube 推荐 10^11 级历史样本训练（离线）</td>
+          </tr>
+          <tr>
+            <td class="whitespace-nowrap"><strong>Netflix / Pinterest</strong></td>
+            <td>三级计算架构 / Pixie、TransAct</td>
+            <td><span class="tag tag-a">离线+近线+在线分层</span></td>
+            <td>Pinterest Pixie：预计算 + 实时 random walk 图推荐；TransAct 实时行为序列建模</td>
+            <td>Pixie：30 亿 item、2 亿用户实时推荐</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="ref">注：美团、京东等公司公开资料以平台工程与训练优化为主，在线学习细节披露较少；表中标注「公开细节有限」的部分基于可获得的公开信息归纳。</p>
+    </section>
+
+    <!-- ========== 03 COMPANIES ========== -->
+    <section id="companies" class="anchor">
+      <h2>03 · 各公司方案详述</h2>
+
+      <!-- ===== 字节 ===== -->
+      <h3 id="comp-bytedance" class="anchor">3.1 字节跳动 · Monolith：为在线训练而生的推荐系统</h3>
+      <p><span class="tag">arXiv 2209.07663</span><span class="tag">RecSys'22 ORSUM</span><span class="tag tag-g">已开源</span><span class="tag tag-a">BytePlus Recommend 落地</span></p>
+      <p>Monolith 是字节跳动针对「稀疏动态特征 + 概念漂移（Concept Drift）」两大推荐系统本质挑战设计的在线训练系统，论文与生产数据披露最充分，是流式训练领域的标杆方案。</p>
+
+      <h4>核心设计一：无冲突 Embedding 表（Collisionless HashTable）</h4>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li>基于 <strong>Cuckoo HashMap</strong> 实现稀疏参数存储，替代 TensorFlow 定长 Variable + hash trick，从根上消除 ID 碰撞（实验证明 7.7% 碰撞率即显著拉低 AUC，且随概念漂移持续恶化）；</li>
+        <li><strong>频次过滤</strong>：低频 ID（长尾、欠拟合）入场前拦截，阈值可调，另配概率过滤器进一步压缩内存；</li>
+        <li><strong>过期驱逐（Expirable Embeddings）</strong>：ID 按不活跃时长 TTL 过期，不同 embedding 表可配不同敏感度；</li>
+        <li>HashTable 实现为 TF 原生 resource op，lookup/update 与 Variable 同构，兼顾易用性与跨平台性。</li>
+      </ul>
+
+      <h4>核心设计二：流式引擎与在线样本链路</h4>
+      <div class="mermaid">
+flowchart LR
+  A["用户行为流<br/>(Kafka)"] --> C["Flink Online Joiner<br/>按 request key 配对"]
+  B["特征流<br/>(Kafka)"] --> C
+  C --> D["样本队列<br/>(Kafka)"]
+  D --> E["在线训练 Worker"]
+  D --> F["Dump 至 HDFS<br/>→ 批训练"]
+  E --> G["训练 PS"]
+  G -- "分钟级增量同步<br/>(touched keys)" --> H["在线 Serving PS"]
+  G -- "dense 天级同步<br/>(低峰期)" --> H
+      </div>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>延迟转化承接</strong>：内存缓存 + 落盘 KV 二级结构，用户几天后的转化行为仍能正确配对特征；</li>
+        <li><strong>负采样 + log-odds 校正</strong>：采样改变分布后，serving 侧做 log odds correction，保证在线模型是原始分布的无偏估计；</li>
+        <li>批训与在线训练消费同一条样本 Kafka 队列，实现无缝切换（改结构重训历史数据 → 切回在线）。</li>
+      </ul>
+
+      <h4>核心设计三：增量在途参数同步</h4>
+      <div class="callout">
+        利用三个观察：<strong>① 稀疏参数占模型体积绝对大头；② 短时间窗内只有小部分 ID 被训练到；③ dense 变量在动量优化器下移动远慢于稀疏 embedding</strong>。Monolith 维护 touched-keys 哈希集合，分钟级把增量稀疏参数从训练 PS 推到在线 Serving PS（约 10 万 ID/分钟 × 1024 维 ≈ 400MB/分钟），dense 参数天级在低峰期同步。不需要双倍内存、不中断服务。
+      </div>
+
+      <h4>核心设计四：容错换实时</h4>
+      <p>训练 PS 仅<strong>天级快照</strong>。按 0.01%/天的 PS 故障率、1000 分片测算：每 10 天丢失 1 个分片 1 天的更新，等效损失 0.01% DAU 一天的反馈——对模型质量几乎无损。由此省下的快照开销全部投向更高频的参数同步。</p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div class="glass card-hover"><div class="kpi">79.80</div><div class="label mt-1">Criteo 30min 同步在线 AUC（vs 5h 的 79.66）</div></div>
+        <div class="glass card-hover"><div class="kpi">+14~18%</div><div class="label mt-1">生产 A/B：在线训练 vs 批训练 AUC 提升</div></div>
+        <div class="glass card-hover"><div class="kpi">数 TB</div><div class="label mt-1">生产模型体积</div></div>
+        <div class="glass card-hover"><div class="kpi">分钟级</div><div class="label mt-1">稀疏参数同步延迟</div></div>
+      </div>
+
+      <!-- ===== 阿里 ===== -->
+      <h3 id="comp-alibaba" class="anchor">3.2 阿里 · XDL / PAI-ODL：双轨制实时深度学习</h3>
+      <p><span class="tag">XDL 2019 开源（阿里妈妈）</span><span class="tag">PAI-ODL（DataFun 分享）</span><span class="tag tag-g">双轨校正</span></p>
+      <p>阿里的方案分两层：面向高维稀疏数据的训练框架 <strong>XDL</strong>（2019 年开源，核心贡献包括 EmbeddingVariable——基于 HashMap 的可伸缩 embedding，int64 key 避免特征冲突），以及构建在 PAI 之上的实时深度学习体系 <strong>ODL</strong>。</p>
+
+      <h4>ODL Pipeline：四大模块 + 双轨校正</h4>
+      <div class="mermaid">
+flowchart TB
+  subgraph 数据层
+    A["流式数据 Kafka"] --> B["Flink：特征预处理 / Feature Generation / Sample Generation"]
+    B --> C1["实时样本流"]
+    B --> C2["Dump 至 MaxCompute 数仓"]
+    B --- FS["Feature Store<br/>(离在线特征一致性)"]
+  end
+  subgraph 在线链路
+    C1 --> D["PAI-DLC 在线训练"]
+    D --> E["模型 Validation<br/>(不达标 → Sample Replay / 回退)"]
+  end
+  subgraph 离线链路
+    C2 --> F["天级全量训练 + Batch Eval"]
+  end
+  E --> M["ModelCenter"]
+  F -- "全量 base 模型校正" --> D
+  F --> M
+  M --> S["Serving 拉取最新合法模型"]
+      </div>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>双轨制精髓</strong>：在线流式数据难免有脏数据（重复样本、label 回流延迟），离线天级全量模型作为「较准确的 base」每日下发给实时训练做增量起点，实现误差校正——这是与字节「纯在线」路线的关键差异；</li>
+        <li><strong>秒级模型更新的关键：增量 checkpoint</strong>。全量模型几十 GB~TB 无法秒级加载，增量 checkpoint 只记录一段时间窗内的 key/value 变化（5 分钟粒度，体积仅兆级~上百兆），restore 时 dense 权重直接更新到模型本地内存，稀疏参数更新到在线 <strong>EmbeddingStore</strong>；</li>
+        <li>增量模型同时加速离线 failover 恢复（59 分钟挂掉只回退 5 分钟，而非从头再来）。</li>
+      </ul>
+
+      <h4>EmbeddingStore：超大规模稀疏预测的三种 serving 方案</h4>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass card-hover"><h4 class="mt-0">① 分布式存储</h4><p class="text-sm">PS / Redis 式分布式 KV，通用但有网络开销。</p></div>
+        <div class="glass card-hover"><h4 class="mt-0">② 业务分片优化</h4><p class="text-sm">user embedding 按 ID 哈希 shard 到不同实例；小稀疏参数每实例全量备份，请求本地命中，显著降低 E2E 延迟。</p></div>
+        <div class="glass card-hover"><h4 class="mt-0">③ 多层混合存储</h4><p class="text-sm">单机内：热特征 DRAM（百纳秒）、温特征 PMEM（微秒）、冷特征 SSD；大部分请求命中 DRAM，实测优于跨网络分布式存储。</p></div>
+      </div>
+      <p class="mt-3">Serving 侧另有 <strong>Session Group</strong> 优化：单机包装 N 个独立 session（线程池隔离、绑核、NUMA 感知），底层共享同一套只读 variable（无锁），在保证 latency 的前提下提升整机 QPS。</p>
+
+      <!-- ===== 腾讯 ===== -->
+      <h3 id="comp-tencent" class="anchor">3.3 腾讯 · 太极 + AngelPS + 无量：平台化与参数服务器双轮</h3>
+      <p><span class="tag">太极一站式平台</span><span class="tag">AngelPS（Angel 开源）</span><span class="tag">无量（PCG）</span><span class="tag tag-a">内部资料 + 公开报道</span></p>
+
+      <h4>太极机器学习平台</h4>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li>一站式覆盖<strong>特征管理 → 样本生产 → 模型训练 → 模型服务</strong>，广告场景全流程配置化、产品化；</li>
+        <li>自研参数服务器 <strong>AngelPS</strong>：承载 <strong>10TB 级模型训练、TB 级模型推理</strong>，支持多维特征融合与复杂模型结构；</li>
+        <li><strong>分钟级模型发布上线</strong>；推理侧同时支持 CPU 与 GPU 加速，按在线推理的存储/计算特征做定制；</li>
+        <li>Light 训练加速框架（曾两刷 ImageNet 训练速度世界纪录）服务于广告粗排等场景。</li>
+      </ul>
+
+      <h4>无量：PS 架构的分布式机器学习框架（训练 → 模型管理 → Serving 闭环）</h4>
+      <div class="mermaid">
+flowchart LR
+  A["Python 定义计算图<br/>(类 TF API)"] --> B["Venus 提交任务<br/>至 bore 平台分布式训练"]
+  B --> C["模型导出至 S3<br/>(complete / patch)"]
+  C --> D["模型管理服务<br/>注册版本"]
+  D --> E["无量预测服务<br/>定期查询新版本"]
+  E -- "自动上线 / 指定版本" --> F["从 S3 拉取模型<br/>在线预测"]
+      </div>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>规模能力</strong>：百亿样本 / 百亿参数模型的小时级训练；主要面向 sparse embedding 参数较大的推荐模型；</li>
+        <li><strong>内存工程</strong>：自研 tl_hash_map 针对稀疏参数做内存优化，开销仅比模型数据大 ~20%（std unordered_map 超 100%）；128GB 机器可加载 ~100GB LR 模型；</li>
+        <li><strong>版本化模型管理</strong>：模型命名含名称/分片/版本/类型（complete 全量 / patch 增量）/格式，训练导出 → 注册 → Serving 定期查询 → 拉取，支持「自动上线」与「指定版本」两种模式，天然具备灰度与回滚抓手；</li>
+        <li><strong>高并发推理优化</strong>：定制特征编解码格式压缩 RPC 传输；分布式模型预测服务针对「200 篇文章 × 500 特征 ≈ 10 万特征 / 请求、30ms 内返回」的排序场景优化，支持 TB 级模型高并发预测。</li>
+      </ul>
+      <div class="callout">
+        <strong>腾讯方案的特点</strong>：相比字节「框架级创新」，腾讯更偏「平台级闭环」——以模型版本管理为中心打通训练与部署，用工程手段（hash_map 内存优化、编解码优化、分片预测）支撑超大模型在线服务。对内部业务（广告、内容推荐）的适配度高。
+      </div>
+
+      <!-- ===== 快手 ===== -->
+      <h3 id="comp-kuaishou" class="anchor">3.4 快手 · Persia / OneRec：从百亿参数 PS 到生成式端到端</h3>
+      <p><span class="tag">Persia 开源（arXiv 2111.05897）</span><span class="tag" style="background:rgba(255,107,138,.12);color:#ffaec0">OneRec 生成式推荐</span><span class="tag tag-g">已全量上线</span></p>
+
+      <h4>Persia： hybrid 架构撑到 100 万亿参数</h4>
+      <p>快手早期开源的大规模推荐训练系统，支持 100 万亿参数级别，是 Monolith 论文的重要相关工作之一，代表快手在「流式训练 + 超大稀疏模型」阶段的技术积累。</p>
+
+      <h4>OneRec：端到端生成式推荐（2025，已全量生产化）</h4>
+      <div class="mermaid">
+flowchart LR
+  A["多模态内容<br/>视频帧+文本"] --> B["Tokenizer<br/>VLM + Q-Former"]
+  B --> C["Semantic ID<br/>(SID) 序列"]
+  D["用户行为序列"] --> E["Behavior Transformer<br/>(轻量投影)"]
+  E --> F["Decoder<br/>(主要算力集中于此)"]
+  C --> F
+  F --> G["生成 SID Token"]
+  G --> H["反解为真实 item"]
+  I["Reward System<br/>兴趣/业务/Format"] -.-> F
+      </div>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>单模型替代级联</strong>：一个模型覆盖召回、粗排、精排、重排，在全量候选空间深层求解；直指级联架构「反馈不闭环 + 算力碎片化（广义 MFU 或仅 1%）」的痛点；</li>
+        <li><strong>Lazy Decoder Only（V2）</strong>：发现约 90% 算力耗在无直接 Loss 监督的 Encoder 上，几乎移除用户历史编码计算、算力集中到 Decoder——<strong>节省约 94% 训练资源</strong>，等量资源下模型从 0.5B 扩至 8B，损失随规模平滑下降（符合 Scaling Law 拟合）；</li>
+        <li><strong>Reward System 三类奖励</strong>：兴趣偏好（多目标统一为 Logic 监督）、业务偏好（生态约束直接定义为 Reward，天级响应，样本量约传统 1/1000）、Format Reward（保证生成可解码为真实视频）；</li>
+        <li><strong>成本账</strong>：服务成本降至原系统 1/10 且效果更优（全量 QPS 对比胜出）；按 CPM 20 元、80% 计算毛利、H20 MFU 40% 折算，单次曝光可支撑约 7.6B 参数模型在线服务；在线激活参数约 250M，仍有 scale-up 空间；</li>
+        <li><strong>部署现状</strong>：短视频主场景、电商货架、本地生活全量上线；场景迁移周期约 1.5 个月；Tokenizer 仅靠内容训练，数月不更新也能编码新视频。</li>
+      </ul>
+
+      <!-- ===== 美团/小红书/京东 ===== -->
+      <h3 id="comp-others-cn" class="anchor">3.5 美团 / 小红书 / 京东</h3>
+
+      <h4>美团 · 图灵一站式平台</h4>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li>围绕数据构建闭环：离线训练、模型管理（统一模型格式，支持分区模型与超大模型）、特征平台（线下统一口径 + 线上稳定获取）、AB 实验平台；</li>
+        <li>TensorFlow 分布式训练优化实践（tech.meituan.com，2021）被 Monolith 论文列为相关工作：基于 TF 的 key-value hash table 方案支持在线更新与特征驱逐；</li>
+        <li>推理侧与 NVIDIA 合作将 CTR 模型部署到 GPU，CPU+GPU 异构并行计算优化。</li>
+      </ul>
+
+      <h4>小红书 · LarC：分钟级实时推荐</h4>
+      <div class="callout callout-ok">
+        闭环流程：<strong>用户行为实时捕捉 → Flink 实时拼接生成样本 → 样本实时送 Serving 预估，同时短窗口累积样本做 Online Training → 更新参数立刻发布线上</strong>。全链路保持分钟级。底层为「超大规模无冲突参数服务器」，模型为多任务深度模型（点击/停留时长/点赞/收藏）。规模：2 亿 MAU，日用户行为样本几百亿级；2019 年启动，2020-2021 覆盖搜索/推荐/广告，2022 平台化。
+      </div>
+
+      <h4>京东 · 广告在线模型系统</h4>
+      <p>公开资料以「在线模型系统分布式异构计算演变」为主：从缺乏统一架构的早期阶段，演进到架构统一、迭代效率提升的分布式异构（CPU+GPU）在线模型服务体系。在线学习细节披露有限。</p>
+
+      <!-- ===== 海外 ===== -->
+      <h3 id="comp-overseas" class="anchor">3.6 Meta / Google / Netflix / Pinterest</h3>
+
+      <h4>Meta：从 DLRM 到生成式推荐 GRs</h4>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>DLRM 体系</strong>（2019-2020）：开源 DLRM 与 TorchRec（PyTorch 推荐领域库），HPCA'20 论文系统分析了 Facebook 推荐负载的架构特征（embedding 主导访存）；</li>
+        <li><strong>GRs / HSTU</strong>（ICML'24，arXiv 2402.17152）：把推荐重构为生成式建模框架下的序列转导任务，HSTU 结构面向高基数、非平稳流式推荐数据设计：</li>
+      </ul>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+        <div class="glass card-hover"><div class="kpi">1.5T</div><div class="label mt-1">GRs 模型参数量</div></div>
+        <div class="glass card-hover"><div class="kpi">+12.4%</div><div class="label mt-1">线上 A/B 核心指标提升</div></div>
+        <div class="glass card-hover"><div class="kpi">5.3~15.2×</div><div class="label mt-1">HSTU vs FlashAttention2（8192 序列）</div></div>
+        <div class="glass card-hover"><div class="kpi">3 个数量级</div><div class="label mt-1">训练算力幂律 Scaling 区间</div></div>
+      </div>
+      <p>已部署于数十亿用户平台的多个场景；代码开源（meta-recsys/generative-recommenders）。模型质量随训练算力呈幂律增长、可达 GPT-3/LLaMa-2 规模，为推荐基础模型铺路。</p>
+
+      <h4>Google：TFX 持续训练流水线</h4>
+      <p>Google 的路线偏「工程标准化」：TFX 提供从数据验证（TFDV）→ 训练 → 模型验证 → TF Serving 推送的持续训练流水线，TF Serving 原生支持模型版本管理与热加载。YouTube 推荐（2016 经典 DNN 方案）用 10^11 级历史样本离线训练 + hash trick 表示 ID 特征——也正是 Monolith 等新一代系统针对的改进对象。</p>
+
+      <h4>Netflix / Pinterest</h4>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>Netflix</strong> 经典三级计算架构：离线（大数据训练）/ 近线（增量计算、对用户行为秒~分钟级响应但不严格要求实时）/ 在线（低延迟服务），「近线层」是流式思想在推荐系统的早期工业形态；</li>
+        <li><strong>Pinterest Pixie</strong>（WWW'18）：30 亿 item、2 亿用户的实时图推荐——预计算 + 服务时实时 random walk，代表「重资产预计算 + 轻量实时」的部署范式；<strong>TransAct</strong>（KDD'23）用 Transformer 建模实时用户行为序列，把实时性推进到序列特征层面。</li>
+      </ul>
+    </section>
+
+    <!-- ========== 04 OPENSOURCE ========== -->
+    <section id="opensource" class="anchor">
+      <h2>04 · 开源组件生态</h2>
+      <p>流式训练与部署的关键环节均有成熟开源组件可用，头部方案多为「自研框架 + 开源底座」的组合：</p>
+
+      <h3>NVIDIA Merlin：GPU 全链路推荐框架</h3>
+      <div class="mermaid">
+flowchart LR
+  A["NVTabular<br/>GPU 特征工程"] --> B["训练侧<br/>HugeCTR / SOK"]
+  B --- B1["HKV 动态表<br/>HBM + DRAM 分层<br/>LRU/LFU 驱逐"]
+  B --- B2["Fused Embedding<br/>Lookup Kernel"]
+  B -- "sok.incremental_model_dump<br/>(UTC 阈值增量导出)" --> C["HPS 分级参数服务器<br/>GPU Cache / DRAM / SSD"]
+  C --> D["Triton Inference Server"]
+      </div>
+      <ul class="list-disc pl-6 text-[#c9d3e8] space-y-1">
+        <li><strong>SOK（Sparse Operation Kit）</strong>：TF 插件封装 HugeCTR，embedding 模型并行 + dense 数据并行；<code>sok.DynamicVariable</code> 基于 HKV（HierarchicalKV），显存+主机内存分层、支持 LRU/LFU 及自定义驱逐策略；</li>
+        <li><strong>增量导出</strong>：<code>sok.incremental_model_dump</code> 按 UTC 时间阈值导出其后更新的 key/value，专为持续训练/在线训练的「训练→推理」增量推送设计；</li>
+        <li><strong>HPS（Hierarchical Parameter Server）</strong>：推理侧分级参数服务器，GPU cache / DRAM / SSD 三级分层承载超大 embedding；</li>
+        <li><strong>实测收益</strong>：某手机行业推荐场景，SOK 替代 CPU+PS 端到端耗时 -60%，embedding 部分耗时 -67%；NVTabular 加载 Parquet 较原生 TF 提速 400%。</li>
+      </ul>
+
+      <h3>关键开源项目一览</h3>
+      <div class="glass p-5 overflow-x-auto">
+      <table>
+        <thead><tr><th>环节</th><th>项目</th><th>出品方</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>流式训练框架</td><td>Monolith</td><td>字节跳动</td><td>TF 生态，无冲突 embedding + 在线训练，BytePlus 产品化</td></tr>
+          <tr><td>流式训练框架</td><td>XDL (x-deeplearning)</td><td>阿里妈妈</td><td>面向高维稀疏数据，EmbeddingVariable</td></tr>
+          <tr><td>流式训练框架</td><td>Persia</td><td>快手</td><td>hybrid 架构，100 万亿参数级</td></tr>
+          <tr><td>参数服务器</td><td>Angel (AngelPS)</td><td>腾讯</td><td>10TB 级模型训练/推理支撑</td></tr>
+          <tr><td>GPU 训练/推理</td><td>Merlin HugeCTR / SOK / HPS</td><td>NVIDIA</td><td>GPU 全链路，分层存储 + 增量导出</td></tr>
+          <tr><td>训练库</td><td>TorchRec</td><td>Meta</td><td>PyTorch 推荐领域库，分片 embedding</td></tr>
+          <tr><td>生成式推荐</td><td>generative-recommenders</td><td>Meta</td><td>HSTU/GRs 官方实现</td></tr>
+          <tr><td>实时样本链路</td><td>Kafka + Flink</td><td>Apache</td><td>行业事实标准（字节/阿里/小红书同款）</td></tr>
+          <tr><td>特征平台</td><td>Feast 等</td><td>开源社区</td><td>离在线特征一致性（Feature Store）</td></tr>
+          <tr><td>推理服务</td><td>TF Serving / Triton</td><td>Google / NVIDIA</td><td>版本管理、热加载、GPU 推理</td></tr>
+          <tr><td>持续学习研究</td><td>Kraken (SC'20)、AIBox (CIKM'19)</td><td>字节合作 / 百度</td><td>内存高效持续学习、单机 CTR 训练</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- ========== 05 COMPARISON ========== -->
+    <section id="comparison" class="anchor">
+      <h2>05 · 技术维度横向对比</h2>
+      <div class="glass p-5 overflow-x-auto">
+      <table>
+        <thead>
+          <tr><th>维度</th><th>字节 Monolith</th><th>阿里 PAI-ODL</th><th>腾讯 无量/太极</th><th>小红书 LarC</th><th>NVIDIA Merlin</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>样本实时性</strong></td>
+            <td>Kafka+Flink 实时拼接，秒级入训</td>
+            <td>Flink 实时样本 + 天级全量双轨</td>
+            <td>小时级批训为主（平台化）</td>
+            <td>Flink 实时拼接，分钟级闭环</td>
+            <td>依赖外部数据流（组件定位）</td>
+          </tr>
+          <tr>
+            <td><strong>Embedding 管理</strong></td>
+            <td>Cuckoo 无冲突表 + 频次过滤 + TTL 过期</td>
+            <td>EmbeddingVariable 可伸缩 HashMap</td>
+            <td>tl_hash_map（内存 +20% 开销）</td>
+            <td>超大规模无冲突 PS</td>
+            <td>HKV：HBM+DRAM 分层，LRU/LFU 驱逐</td>
+          </tr>
+          <tr>
+            <td><strong>参数同步粒度</strong></td>
+            <td>touched-keys 增量；稀疏分钟级 / dense 天级</td>
+            <td>5min 增量 checkpoint（兆级~百兆）</td>
+            <td>complete/patch 版本化模型；分钟级发布</td>
+            <td>分钟级参数发布</td>
+            <td>UTC 阈值增量导出 → HPS</td>
+          </tr>
+          <tr>
+            <td><strong>训练-推理一致性</strong></td>
+            <td>同图同参数，PS→PS 热更新</td>
+            <td>Feature Store + 天级 base 校正</td>
+            <td>模型注册中心统一版本</td>
+            <td>训练/推理一体化样本流</td>
+            <td>SOK 权重直转 HPS 格式</td>
+          </tr>
+          <tr>
+            <td><strong>容错策略</strong></td>
+            <td>天级快照（可靠性换实时）</td>
+            <td>增量 checkpoint 加速 failover；校验回放/回退</td>
+            <td>版本化模型天然支持回滚</td>
+            <td>公开细节有限</td>
+            <td>全量 dump/load + 增量互补</td>
+          </tr>
+          <tr>
+            <td><strong>开源情况</strong></td>
+            <td>✅ GitHub 开源</td>
+            <td>XDL 开源，ODL 为 PAI 云产品</td>
+            <td>Angel 开源，无量内部</td>
+            <td>未开源</td>
+            <td>✅ 全栈开源</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout">
+        <strong>对比小结</strong>：流式训练的核心差异点不在「是否在线学习」（头部公司都已做到），而在 <strong>① 稀疏参数的生命周期管理（入场过滤 + 驱逐）、② 增量同步的粒度与成本控制、③ 脏数据校正机制（双轨 vs 纯在线）、④ 模型版本管理与灰度回滚的工程化程度</strong>。
+      </div>
+    </section>
+
+    <!-- ========== 06 PARADIGMS ========== -->
+    <section id="paradigms" class="anchor">
+      <h2>06 · 架构范式归纳</h2>
+      <p>业界方案可归纳为五种典型架构范式，实际系统常为多种范式的组合：</p>
+
+      <div class="space-y-4">
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">范式 A · 流式闭环在线学习<span class="tag tag-g">代表：字节 Monolith、小红书 LarC</span></h4>
+          <p class="text-sm mb-0">Kafka 双流 + Flink Joiner 实时产出样本，在线训练持续消费并更新训练 PS，touched-keys 增量分钟级推送 Serving PS。优势： freshest 模型、AUC 收益显著（+14~18%）；代价：样本链路复杂（延迟转化、负采样校正）、PS 需承载双份参数写入压力。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">范式 B · 双轨制：天级全量校正 + 实时增量<span class="tag tag-g">代表：阿里 PAI-ODL</span></h4>
+          <p class="text-sm mb-0">在线流式训练追实时性，离线天级全量训练产出「干净 base」每日校正在线模型，增量 checkpoint（5min）解决大模型秒级上线问题。优势：抗脏数据、效果可兜底；代价：两套训练链路维护成本高。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">范式 C · 平台化模型版本管理<span class="tag tag-g">代表：腾讯无量/太极、美团图灵</span></h4>
+          <p class="text-sm mb-0">以「训练 → 导出（complete/patch）→ 注册 → Serving 查询拉取」的模型管理闭环为中心，自动上线 + 指定版本双模式，天然支持灰度与回滚。优势：工程稳健、多业务复用；代价：实时性取决于导出/注册/拉取链路节拍。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">范式 D · GPU 训推一体分层参数服务器<span class="tag tag-g">代表：NVIDIA Merlin（SOK+HPS）</span></h4>
+          <p class="text-sm mb-0">训练侧 HKV 把 embedding 分层放在 HBM+DRAM 并用 GPU 模型并行训练，推理侧 HPS 用 GPU Cache/DRAM/SSD 三级分层服务超大 embedding，UTC 阈值增量导出衔接两侧。优势：硬件利用率与成本最优；代价：GPU 资源投入大、生态绑定 NVIDIA。</p>
+        </div>
+        <div class="glass card-hover p-5" style="border-color:rgba(255,107,138,.35)">
+          <h4 class="mt-0">范式 E · 生成式端到端（演进中）<span class="tag" style="background:rgba(255,107,138,.12);color:#ffaec0">代表：快手 OneRec、Meta GRs</span></h4>
+          <p class="text-sm mb-0">内容经 Tokenizer 化为 Semantic ID，推荐重构为序列生成任务，单模型替代级联全链路，Reward System 替代多目标拼接。部署从「PS + 打分服务」转向「生成式推理服务」。优势：链路一致性强、可 Scaling、成本反而下降（OneRec 1/10）；代价：范式颠覆、组织与基建均需重构。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 07 TRENDS ========== -->
+    <section id="trends" class="anchor">
+      <h2>07 · 趋势展望</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">1. 实时性：分钟级 → 秒级</h4>
+          <p class="text-sm mb-0">参数同步间隔持续压缩（Monolith 已证明越短越好），瓶颈在网络与内存双写成本；增量同步 + 稀疏/稠密分级节拍是当前最优解，下一步是秒级稀疏推送与流式 dense 更新。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">2. 生成式推荐重构训练与部署</h4>
+          <p class="text-sm mb-0">Meta GRs（1.5T、+12.4%）与快手 OneRec（成本 1/10、全量上线）验证了范式可行性。样本形态从「ID 特征 + label」转向「SID token 序列 + Reward」，训练基建向 LLM 式大模型训练靠拢。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">3. 训推全链路 GPU 化</h4>
+          <p class="text-sm mb-0">Merlin 生态（HKV/SOK/HPS）打通 GPU 训练到 GPU 推理的增量链路；快手用「广义 MFU」衡量推荐算力效率（级联架构或仅 1%），GPU 化与端到端化是提升 MFU 的两条主线。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">4. 特征平台标准化</h4>
+          <p class="text-sm mb-0">Feature Store 成为离在线一致性的标准答案（阿里 PAI-ODL、美团特征平台、开源 Feast）；特征口径统一是流式训练不出错的前置条件。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">5. 大模型与推荐深度融合</h4>
+          <p class="text-sm mb-0">OneRec-Think 等探索把文本/语义 ID/图像 token 统一训练，指向「生成-理解」一体化全模态推荐基座；交互式推荐（用户显式表达意图）成为新交互形态。</p>
+        </div>
+        <div class="glass card-hover p-5">
+          <h4 class="mt-0">6. 可靠性工程：从保守快照到量化 trade-off</h4>
+          <p class="text-sm mb-0">Monolith 的「天级快照 + 故障损失量化测算」方法论将被更多系统采用——用数据证明模型对参数丢失的鲁棒性，把省下的资源投向实时性。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 08 TAKEAWAYS ========== -->
+    <section id="takeaways" class="anchor">
+      <h2>08 · 对本项目（pc4 流式训练/服务）的启示</h2>
+      <p>结合业界方案与本项目现状（流式训练 + 在线服务的轻量级实现），按优先级给出可落地的建议：</p>
+      <div class="glass p-5">
+      <table>
+        <thead><tr><th>优先级</th><th>建议</th><th>业界依据</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="chip chip-pink">P0</span></td>
+            <td><strong>引入 touched-keys 增量参数同步</strong>：训练侧维护本周期内更新过的 embedding key 集合，只推送增量；稀疏高频（分钟级）、dense 低频（小时/天级）分级节拍</td>
+            <td>Monolith：~400MB/min 即可支撑分钟级同步；dense 延迟无感</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-pink">P0</span></td>
+            <td><strong>Embedding 生命周期管理</strong>：低频 ID 入场过滤（频次阈值 + 概率过滤器）+ 不活跃 ID TTL 过期，控制内存增长</td>
+            <td>Monolith / 阿里 EmbeddingVariable / NVIDIA HKV 同款设计</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-amber">P1</span></td>
+            <td><strong>样本链路规范化</strong>：特征流/行为流双 Kafka + Flink Joiner（request key 配对）；延迟转化用内存缓存 + 落盘 KV 二级承接；负采样必须配 log-odds 校正</td>
+            <td>Monolith 流式引擎；小红书 LarC 分钟级闭环</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-amber">P1</span></td>
+            <td><strong>双轨校正机制</strong>：保留天级全量训练作为干净 base，在线增量在其上续训，防止流式脏数据污染累积</td>
+            <td>阿里 PAI-ODL 双轨制</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-amber">P1</span></td>
+            <td><strong>模型版本管理与灰度回滚</strong>：导出 complete/patch 两种版本，注册中心 + Serving 定期拉取，支持自动上线与指定版本回退</td>
+            <td>腾讯无量模型管理闭环</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-blue">P2</span></td>
+            <td><strong>容错降本</strong>：快照降频至天级，按「分片数 × 故障率 × DAU 占比」量化损失后再决策，把开销让位给同步频率</td>
+            <td>Monolith 容错换实时方法论</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-blue">P2</span></td>
+            <td><strong>关注生成式范式，预留扩展点</strong>：短期不必跟进，但样本与特征层建议抽象出可支持 SID/token 化的接口，避免范式切换时推倒重来</td>
+            <td>快手 OneRec / Meta GRs 趋势判断</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- ========== 09 REFERENCES ========== -->
+    <section id="references" class="anchor">
+      <h2>09 · 参考资料</h2>
+      <ol class="list-decimal pl-6 space-y-2 ref">
+        <li>Monolith: Real Time Recommendation System With Collisionless Embedding Table（字节跳动，arXiv:2209.07663）— <a href="https://arxiv.org/abs/2209.07663">https://arxiv.org/abs/2209.07663</a></li>
+        <li>Monolith 官方文档（BytePlus）— <a href="https://content.volccdn.com/obj/volc-content/volc/byteair/platform/monolith/html/index.html">content.volccdn.com/.../monolith/html/index.html</a></li>
+        <li>实时深度学习训练 PAI-ODL（阿里 PAI，DataFun 分享）— <a href="https://www.sohu.com/a/706126970_121124371">https://www.sohu.com/a/706126970_121124371</a></li>
+        <li>X-Deep Learning 开源项目（阿里妈妈）— <a href="https://github.com/alibaba/x-deeplearning">https://github.com/alibaba/x-deeplearning</a></li>
+        <li>XDL: an industrial deep learning framework for high-dimensional sparse data（KDD'19 Workshop，Monolith 相关工作引用）</li>
+        <li>「太极」助力腾讯广告降本增效（AngelPS、10TB 级训练、分钟级发布）— <a href="https://baijiahao.baidu.com/s?id=1736231083722417325">baijiahao.baidu.com/s?id=1736231083722417325</a></li>
+        <li>腾讯大规模分布式机器学习系统无量技术选型（InfoQ）— <a href="https://www.infoq.cn/article/tencent-distribited-machine-learning">https://www.infoq.cn/article/tencent-distribited-machine-learning</a></li>
+        <li>无量平台（PCG）产品文档（内部资料：百亿样本/百亿参数、tl_hash_map、complete/patch 版本管理、自动上线）</li>
+        <li>太极机器学习平台帮助中心（内部资料：一站式特征/样本/训练/服务闭环）</li>
+        <li>快手 OneRec：抛弃级联架构，用大模型重构推荐系统（AICon 演讲实录，InfoQ/腾讯云社区）— <a href="https://cloud.tencent.com/developer/article/2594097">https://cloud.tencent.com/developer/article/2594097</a></li>
+        <li>OneRec Technical Report 解读 — <a href="https://zhuanlan.zhihu.com/p/1919424655221061567">https://zhuanlan.zhihu.com/p/1919424655221061567</a></li>
+        <li>Persia: An Open, Hybrid System Scaling Deep Learning-based Recommenders up to 100 Trillion Parameters（快手，arXiv:2111.05897）</li>
+        <li>Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations（Meta，ICML'24，arXiv:2402.17152）— <a href="https://arxiv.org/abs/2402.17152">https://arxiv.org/abs/2402.17152</a></li>
+        <li>Meta Generative Recommenders 开源实现 — <a href="https://github.com/meta-recsys/generative-recommenders">https://github.com/meta-recsys/generative-recommenders</a></li>
+        <li>TorchRec（PyTorch 推荐领域库）— <a href="https://github.com/pytorch/torchrec">https://github.com/pytorch/torchrec</a></li>
+        <li>借助 NVIDIA Merlin TensorFlow 插件实现大规模 Embedding 扩展（SOK v2.0）— <a href="https://developer.nvidia.cn/blog/merlin-tensorflow-plugin-embedding-extension/">developer.nvidia.cn/blog/merlin-tensorflow-plugin-embedding-extension/</a></li>
+        <li>Merlin HugeCTR 分级参数服务器（HPS）简介 — <a href="https://zhuanlan.zhihu.com/p/453502358">https://zhuanlan.zhihu.com/p/453502358</a></li>
+        <li>NVIDIA Merlin 开源组织 — <a href="https://github.com/NVIDIA-Merlin/">https://github.com/NVIDIA-Merlin/</a></li>
+        <li>小红书 LarC：应用大规模深度学习的分钟级实时推荐系统（REDtech 沙龙分享）— <a href="https://community.aijishu.com/a/1060000000367901">https://community.aijishu.com/a/1060000000367901</a></li>
+        <li>美团图灵机器学习平台 — <a href="https://tech.meituan.com/2022/11/10/Meituan-AI-Turing-Platform-Spark-Operator-Optimization-01.html">tech.meituan.com</a>；美团 TensorFlow 分布式训练优化（2021，Monolith 相关工作引用）</li>
+        <li>美团机器学习平台 GPU CTR 预测服务（NVIDIA 案例）— <a href="https://developer.nvidia.com/zh-cn/blog/nvidia-gpu-accelerates-meituan-machine-learning/">developer.nvidia.com/zh-cn/blog/nvidia-gpu-accelerates-meituan-machine-learning/</a></li>
+        <li>京东广告算法架构体系：在线模型系统分布式异构计算演变 — <a href="https://www.modb.pro/db/1750770002118660096">https://www.modb.pro/db/1750770002118660096</a></li>
+        <li>Pixie: A System for Recommending 3+ Billion Items to 200+ Million Users in Real-Time（Pinterest，WWW'18）— <a href="https://cs.stanford.edu/~jure/pubs/pixie-www18.pdf">cs.stanford.edu/~jure/pubs/pixie-www18.pdf</a></li>
+        <li>TFX 官方文档（持续训练流水线）— <a href="https://tensorflow.google.cn/tfx/">https://tensorflow.google.cn/tfx/</a></li>
+        <li>Kraken: Memory-Efficient Continual Learning for Large-Scale Real-Time Recommendations（SC'20）；AIBox: CTR Prediction Model Training on a Single Node（百度，CIKM'19）</li>
+      </ol>
+      <div class="callout mt-6">
+        <strong>说明</strong>：本报告基于 2026 年 8 月前可获得的公开论文、官方技术博客、开源项目文档及腾讯内部平台文档整理；部分公司（美团、京东、小红书）流式训练细节公开披露有限，相关内容已标注。报告中所有量化指标均来自上述来源，未做外推。
+      </div>
+    </section>
+
+    <footer class="mt-16 pt-8 border-t border-[rgba(120,140,200,.18)] text-sm text-slate-500">
+      <p>业界推荐模型流式训练与部署平台 · 深度调研报告 · v1.0 · 2026-08-13 · Deep Research 生成</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({startOnLoad:true, theme:'dark', themeVariables:{
+    darkMode:true, background:'#0b1121', primaryColor:'#1b2547', primaryTextColor:'#e6ecf6',
+    primaryBorderColor:'#7c9eff', lineColor:'#5b6b9c', secondaryColor:'#12303a', tertiaryColor:'#141a2e',
+    fontFamily:'inherit'
+  }, flowchart:{curve:'basis', htmlLabels:true}});
+
+  // Scroll spy
+  const links = document.querySelectorAll('#toc a');
+  const secs = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const spy = () => {
+    let cur = secs[0];
+    for (const s of secs) { if (s.getBoundingClientRect().top <= 120) cur = s; }
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur.id));
+  };
+  document.addEventListener('scroll', spy, {passive:true});
+  spy();
+</script>
+
+</div>

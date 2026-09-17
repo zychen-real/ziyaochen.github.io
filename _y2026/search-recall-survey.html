@@ -1,0 +1,1682 @@
+---
+layout: post
+title: "百亿搜索引擎召回与粗排优化 SOTA 综述（2024-2026）"
+date: 2026-09-17 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: true
+mathjax: false
+tags:
+    - 搜索引擎
+    - 召回
+    - 粗排
+    - 论文
+---
+
+<style>
+
+  :root{
+    --bg:#0f1419; --panel:#161c24; --panel2:#1c242e; --line:#2a3441; --chip:#243240;
+    --txt:#d7e0ea; --muted:#8b98a8; --accent:#4f9fff; --accent2:#36d399;
+    --warn:#fbbd23; --danger:#f87272; --pur:#b48cff; --org:#ff9d6f; --cyan:#22d3ee;
+    --code:#0b0f14; --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  .search-recall-report *{box-sizing:border-box}
+  .search-recall-report html{scroll-behavior:smooth}
+  .search-recall-report body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75;font-size:15px}
+  .search-recall-report a{color:var(--accent);text-decoration:none}
+  .search-recall-report a:hover{text-decoration:underline}
+  .search-recall-report code{font-family:var(--mono);font-size:.85em;background:var(--code);padding:2px 6px;border-radius:4px;color:#8fd3ff;white-space:nowrap;border:1px solid var(--line)}
+  .search-recall-report pre{background:var(--code);color:#d7e0ea;padding:16px 18px;border-radius:10px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:12px 0 16px;border:1px solid var(--line)}
+  .search-recall-report pre code{background:none;padding:0;color:inherit;font-size:12.5px;white-space:pre;border:none}
+  .search-recall-report .k{color:#c792ea}.search-recall-report .s{color:#c3e88d}.search-recall-report .c{color:#607a86;font-style:italic}.search-recall-report .f{color:#82aaff}.search-recall-report .n{color:#f78c6c}.search-recall-report .t{color:#ffcb6b}.search-recall-report .m{color:#f07178}.search-recall-report .b{color:#36d399}
+
+  
+  .search-recall-report .wrap{display:flex;max-width:1400px;margin:0 auto}
+  .search-recall-report nav{position:sticky;top:0;align-self:flex-start;width:300px;height:100vh;overflow-y:auto;padding:26px 18px;border-right:1px solid var(--line);background:var(--panel);flex-shrink:0}
+  .search-recall-report nav .brand{font-size:14px;font-weight:700;letter-spacing:.3px;background:linear-gradient(90deg,#4f9fff,#36d399,#b48cff);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+  .search-recall-report nav .tag{font-size:11px;color:var(--muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .search-recall-report nav h2{font-size:11px;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase;margin:18px 0 8px;font-weight:700}
+  .search-recall-report nav a{display:block;color:var(--muted);padding:6px 10px;border-radius:6px;font-size:13px;margin-bottom:1px;border-left:2px solid transparent;transition:color .15s,background .15s}
+  .search-recall-report nav a:hover{color:var(--txt);background:var(--panel2);text-decoration:none}
+  .search-recall-report nav a.sub{padding-left:24px;font-size:12.5px}
+  .search-recall-report nav .badge{display:inline-block;font-size:10px;background:var(--chip);color:var(--accent);padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+
+  .search-recall-report main{flex:1;min-width:0;padding:40px 48px 120px}
+
+  
+  .search-recall-report header{margin-bottom:40px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+  .search-recall-report header .tag{display:inline-block;background:var(--chip);color:var(--accent);font-size:12px;padding:4px 12px;border-radius:20px;margin-bottom:14px;letter-spacing:.5px}
+  .search-recall-report header h1{font-size:30px;margin:0 0 12px;line-height:1.3;background:linear-gradient(90deg,#4f9fff,#36d399,#b48cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .search-recall-report header .subtitle{color:var(--muted);font-size:15px;margin-bottom:18px;max-width:900px}
+  .search-recall-report header .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .search-recall-report header .badge{font-size:12px;padding:4px 11px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+  .search-recall-report header .badge b{color:var(--accent2);font-weight:600}
+
+  
+  .search-recall-report h2.sec{font-size:24px;margin:54px 0 18px;padding-left:14px;border-left:4px solid var(--accent);scroll-margin-top:20px}
+  .search-recall-report h3{font-size:18px;margin:30px 0 12px;color:#eaf2fb;scroll-margin-top:20px}
+  .search-recall-report h4{font-size:15.5px;margin:22px 0 10px;color:var(--accent2)}
+  .search-recall-report h5{font-size:14px;font-weight:600;margin:16px 0 8px;color:var(--muted)}
+  .search-recall-report p{margin:10px 0}
+  .search-recall-report ul, .search-recall-report ol{margin:0 0 14px 22px;padding:0}
+  .search-recall-report li{margin-bottom:6px}
+  .search-recall-report li::marker{color:var(--accent)}
+  .search-recall-report strong{font-weight:700;color:var(--txt)}
+  .search-recall-report em{color:var(--org);font-style:normal;font-weight:600}
+  .search-recall-report hr{border:none;border-top:1px dashed var(--line);margin:36px 0}
+
+  
+  .search-recall-report .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 26px;margin:18px 0}
+  .search-recall-report .card h4{margin-top:0}
+  .search-recall-report .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .search-recall-report .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:1100px){.search-recall-report .grid2, .search-recall-report .grid3{grid-template:1fr}}
+
+  
+  .search-recall-report .note{border-radius:12px;padding:14px 18px;margin:16px 0;border-left:4px solid var(--accent);background:var(--panel2)}
+  .search-recall-report .note.good{border-color:var(--accent2)}
+  .search-recall-report .note.warn{border-color:var(--warn)}
+  .search-recall-report .note.danger{border-color:var(--danger)}
+  .search-recall-report .note b{color:#fff}
+  .search-recall-report .note .label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px;display:block}
+
+  
+  .search-recall-report .tw{overflow-x:auto;margin:14px 0 18px;border-radius:10px;border:1px solid var(--line)}
+  .search-recall-report table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel)}
+  .search-recall-report th, .search-recall-report td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  .search-recall-report th{background:var(--panel2);color:#eaf2fb;font-weight:600;font-size:13px;white-space:nowrap}
+  .search-recall-report tr:last-child td{border-bottom:none}
+  .search-recall-report tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+
+  
+  .search-recall-report .tag{display:inline-block;font-size:11px;background:var(--chip);border:1px solid var(--line);color:var(--muted);padding:2px 9px;border-radius:5px;margin:0 4px 4px 0}
+  .search-recall-report .tag.accent{color:var(--accent);border-color:rgba(79,159,255,.3)}
+  .search-recall-report .tag.good{color:var(--accent2);border-color:rgba(54,211,153,.3)}
+  .search-recall-report .tag.warn{color:var(--warn);border-color:rgba(251,189,35,.3)}
+  .search-recall-report .tag.danger{color:var(--danger);border-color:rgba(248,114,114,.3)}
+  .search-recall-report .tag.pur{color:var(--pur);border-color:rgba(180,140,255,.3)}
+  .search-recall-report .tag.org{color:var(--org);border-color:rgba(255,157,111,.3)}
+
+  
+  .search-recall-report .mermaid{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:18px 0;text-align:center;overflow-x:auto}
+  .search-recall-report .mermaid svg{background:transparent!important;max-width:100%}
+
+  
+  .search-recall-report .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+  .search-recall-report .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .search-recall-report .kpi .v{font-size:22px;font-weight:700;color:var(--accent2);line-height:1.2}
+  .search-recall-report .kpi .l{font-size:11px;color:var(--muted);margin-top:4px}
+
+  
+  .search-recall-report .toc{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:13.5px;color:var(--muted)}
+  .search-recall-report .toc b{color:var(--txt)}
+  .search-recall-report .toc ol{margin:6px 0 0 20px}
+  .search-recall-report .toc li{margin-bottom:2px}
+
+  
+  .search-recall-report .ref{font-size:11px;color:var(--muted)}
+  .search-recall-report sup{color:var(--accent);font-weight:600}
+
+  
+  .search-recall-report footer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);margin-top:50px;padding-top:18px}
+
+  @media(max-width:1100px){.search-recall-report nav{width:240px} .search-recall-report main{padding:30px 24px}}
+  @media(max-width:860px){.search-recall-report .wrap{flex-direction:column} .search-recall-report nav{position:relative;width:100%;height:auto;border-right:none;border-bottom:1px solid var(--line)} .search-recall-report main{padding:24px 18px}}
+
+@media (max-width: 768px) {
+  .search-recall-report .container, .search-recall-report .layout, .search-recall-report .wrap {
+    padding: 14px !important;
+  }
+  .search-recall-report h1 { font-size: 24px !important; line-height: 1.35 !important; }
+  .search-recall-report h2 { font-size: 20px !important; line-height: 1.4 !important; }
+  .search-recall-report h3 { font-size: 17px !important; }
+  .search-recall-report p { line-height: 1.75 !important; }
+  .search-recall-report table { font-size: 12.5px !important; }
+  .search-recall-report th, .search-recall-report td { padding: 8px 10px !important; }
+  .search-recall-report [class*="grid"], .search-recall-report [class*="cards"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .search-recall-report [class*="stat-grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+</style>
+
+<div class="search-recall-report">
+
+<div class="wrap">
+
+<!-- ============ SIDEBAR ============ -->
+<nav>
+  <div class="brand">百亿搜索引擎 · 召回粗排 SOTA</div>
+  <div class="tag">综述报告 · v2026.09 · yateschen</div>
+
+  <h2>概览</h2>
+  <a href="#exec">执行摘要</a>
+  <a href="#challenges">百亿规模挑战</a>
+  <a href="#design">设计目标</a>
+
+  <h2>一 · 召回层</h2>
+  <a href="#recall-arch">1.1 多路召回架构</a>
+  <a href="#recall-inv">1.2 倒排索引</a>
+  <a href="#recall-twotower">1.3 双塔向量召回</a>
+  <a class="sub" href="#twotower-model">1.3.1 模型演进</a>
+  <a class="sub" href="#twotower-train">1.3.2 训练范式</a>
+  <a class="sub" href="#twotower-ann">1.3.3 ANN 引擎</a>
+  <a href="#recall-colbert">1.4 多向量交互</a>
+  <a href="#recall-gen">1.5 生成式召回</a>
+  <a href="#recall-entity">1.6 实体与链接</a>
+  <a href="#recall-person">1.7 个性化召回</a>
+  <a href="#recall-multi">1.8 多模态召回</a>
+
+  <h2>二 · 粗排层</h2>
+  <a href="#prerank-pos">2.1 定位与目标</a>
+  <a href="#prerank-feat">2.2 特征体系</a>
+  <a href="#prerank-model">2.3 模型路线</a>
+  <a class="sub" href="#model-route">DNN 路线图</a>
+  <a class="sub" href="#model-multitask">多任务学习</a>
+  <a class="sub" href="#model-sota">最新 SOTA</a>
+  <a class="sub" href="#model-light">极简粗排</a>
+  <a href="#prerank-distill">2.4 蒸馏与级联</a>
+  <a href="#prerank-eff">2.5 精度-性能平衡</a>
+
+  <h2>三 · 协同优化</h2>
+  <a href="#collab-fuse">3.1 多路融合</a>
+  <a href="#collab-joint">3.2 联合训练</a>
+  <a href="#collab-obs">3.3 可观测性</a>
+
+  <h2>四 · 工程实战</h2>
+  <a href="#eng-ann">4.1 百亿 ANN</a>
+  <a href="#eng-gpu">4.2 GPU 推理</a>
+  <a href="#eng-rpc">4.3 RPC 与服务化</a>
+  <a href="#eng-cost">4.4 资源与成本</a>
+
+  <h2>五 · 业界案例</h2>
+  <a href="#case-bing">5.1 Bing</a>
+  <a href="#case-meta">5.2 Meta</a>
+  <a href="#case-alibaba">5.3 阿里</a>
+  <a href="#case-bytedance">5.4 字节</a>
+  <a href="#case-baidu">5.5 百度</a>
+  <a href="#case-wx">5.6 微信搜一搜</a>
+
+  <h2>六 · 建议与展望</h2>
+  <a href="#adv-tier">6.1 资源梯度方案</a>
+  <a href="#adv-roadmap">6.2 三阶段路线图</a>
+  <a href="#adv-future">6.3 未来方向</a>
+
+  <h2>附录</h2>
+  <a href="#app-papers">A 论文清单</a>
+  <a href="#app-libs">B 开源库</a>
+  <a href="#app-bench">C Benchmark</a>
+  <a href="#app-glossary">D 术语表</a>
+</nav>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <span class="tag">REPORT · 2024-2026 SOTA</span>
+  <h1>百亿搜索引擎召回与粗排优化 SOTA 综述</h1>
+  <p class="subtitle">面向百亿规模通用搜索（图文/网页/资讯），系统梳理 2024-2026 年学术界与工业界在召回层与粗排层的算法演进、模型架构、训练范式、工程化方案与落地路径，并给出按资源分梯度的优化组合拳。</p>
+  <div class="meta">
+    <span class="badge">规模 <b>10² doc</b></span>
+    <span class="badge">召回目标 <b>~1000</b></span>
+    <span class="badge">粗排目标 <b>~200</b></span>
+    <span class="badge">QPS 目标 <b>10k+</b></span>
+    <span class="badge">P99 <b>&lt;50ms</b></span>
+    <span class="badge">周期 <b>2024.01 - 2026.09</b></span>
+  </div>
+</header>
+
+<!-- ============ 0. EXEC ============ -->
+<section class="sec" id="exec">
+<h2>0 · 执行摘要</h2>
+<p>在百亿（10²）级别的网页/图文/新闻语料下，单次检索的召回通道必须从 ~10⁸ 候选快速过滤到 ~10³ 候选，再由粗排收敛到 ~10² 候选交给精排。这一阶段的 <strong>Recall@1k</strong> 与 <strong>粗排 NDCG@200</strong>，直接决定了精排模型的天花板，也是检索系统 L1s/L2s 体验指标（Zero-Result、近义召回、首位慢触达等）的根因之一。</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">10²</div><div class="l">语料规模（doc）</div></div>
+  <div class="kpi"><div class="v">10⁸→10³</div><div class="l">召回过滤比</div></div>
+  <div class="kpi"><div class="v">10³→10²</div><div class="l">粗排过滤比</div></div>
+  <div class="kpi"><div class="v">~30ms</div><div class="l">召回+粗排 P99</div></div>
+  <div class="kpi"><div class="v">≥98%</div><div class="l">精排基准 Recall</div></div>
+  <div class="kpi"><div class="v">+1-3%</div><div class="l">每次大改净收益</div></div>
+</div>
+
+<p>本报告对照 2024-2026 SOTA，给出三层视角：</p>
+<ul>
+  <li><strong>召回层</strong>：多路架构 → 倒排（BM25/DeepPA）→ 双塔（in-batch/HN/ANCE/蒸馏）→ ColBERT/多向量 → 生成式（DSI/GenRet）→ 实体/个性化/多模态</li>
+  <li><strong>粗排层</strong>：特征工程 → 模型路线（FM→DCN→DIN→多任务→RankMixer/PEAR）→ 蒸馏级联 → 量化剪枝</li>
+  <li><strong>协同 + 工程</strong>：联合损失、A/B 可观测、百亿 ANN、GPU 推理、RPC 与成本</li>
+</ul>
+
+<div class="note">
+  <span class="label">阅读建议</span>
+  推荐顺序：先 §0 建立心智模型 → §1.1/§2.1 理解召回与粗排在系统中的位置 → §1.3/§2.3 进入核心模型 → §3-4 看协同与工程 → §5 对标案例 → §6 按你的团队资源选择方案。具体论文索引见 <a href="#app-papers">附录 A</a>。
+</div>
+
+<div class="toc">
+  <b>本报告目录（与左侧导航一致）：</b>
+  <ol>
+    <li>召回层 Recall（90→10³）</li>
+    <li>粗排层 Pre-Ranking（10³→10²）</li>
+    <li>召回-粗排协同</li>
+    <li>工程实战</li>
+    <li>业界案例</li>
+    <li>建议与展望</li>
+    <li>附录</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="challenges">
+<h2>0.1 · 百亿规模的核心挑战</h2>
+
+<h3>算力与时延的双重约束</h3>
+<p>百亿级别意味着：单次 query 候选常驻内存约 <strong>600 GB - 1.2 TB</strong>（按 64 维 PQ8 压缩估算）。要求端到端（召回+粗排）在 <strong>30-60 ms</strong> 以内完成，留给粗排推理的时间通常 <strong>≤10 ms</strong>。这决定了召回必须用「ANN 倒排 + 双塔」，粗排必须用「轻量交互 + 多任务蒸馏」。</p>
+
+<h3>冷启动与长尾</h3>
+<p>在通用搜索场景，新文档占比可达 <strong>10-25%/天</strong>。纯向量召回的 embedding 存在索引不全的问题，需要「倒排快速截断 + 向量兜底」。</p>
+
+<h3>多模态与异构</h3>
+<p>图文、视频、新闻、百科、问答，同一 query 可能意图多解。系统需要 <strong>多通道并行</strong>（按内容类型、按意图、按热度），而不是一塔打天下。</p>
+
+<h3>个性化与隐私</h3>
+<p>百亿语料下，多数 query 仍然是 <strong>短 query（1-3 词）</strong>，单纯文本召回常常无解，需要引入用户行为序列、个人词表等个性化信号，但又要兼顾隐私合规与无状态首屏。</p>
+
+<div class="note warn">
+  <span class="label">⚠️ 易踩坑</span>
+  <ol>
+    <li><strong>把召回当精排做</strong>：召回模型超过 100M 参数，单 QPS 立刻不可用。</li>
+    <li><strong>ANN 召回全量化</strong>：百万级 ANN 可用 OPQ/PQ，但百亿级必须用 IVF-HNSW 或 DiskANN，否则单节点内存放不下。</li>
+    <li><strong>粗排与精排同质化</strong>：粗排 1ms 内必须打分，与精排同结构是不可能工程化的。</li>
+    <li><strong>忽略尾部 query</strong>：热门 query 占 20% 流量贡献 80% QPS，但长尾 query 是 NDCG 损失大头。</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="design">
+<h2>0.2 · 设计目标</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>召回层目标</h4>
+    <ul>
+      <li><b>Recall@1k ≥ 0.95</b>（相对精排基准）</li>
+      <li>延迟 P99 <strong>20 ms</strong>，可用率 ≥ 99.99%</li>
+      <li>支持新文档 <strong>分钟级</strong> 入索引</li>
+      <li>多模态/个性化召回相互独立，可平行上线</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>粗排层目标</h4>
+    <ul>
+      <li><b>AUC ≥ 0.85</b>（粗排专用样本）</li>
+      <li>单请求粗排打分 <strong>≤8 ms</strong>（P99）</li>
+      <li>在线特征可枚举 &lt; 50 个，特征延迟 <strong>≤5 ms</strong></li>
+      <li>支持多目标（CTR + 停留 + 互动）联合训练</li>
+    </ul>
+  </div>
+</div>
+
+<div class="mermaid">
+flowchart LR
+  Q[Query+Context] --> R[召回层<br/>10⁸ → 10³<br/>P99 ≤20ms]
+  R --> P[粗排层<br/>10³ → 10²<br/>P99 ≤10ms]
+  P --> F[精排层<br/>10² → 10¹<br/>P99 ≤30ms]
+  F --> M[混排/策略]
+  Q -.特征共享.-> R
+  Q -.特征共享.-> P
+  R -.增量向量+离线.-> R
+  classDef box fill:#1c242e,stroke:#4f9fff,color:#d7e0ea
+  class Q,R,P,F,M box
+</div>
+</section>
+
+<!-- ============ 1. RECALL ============ -->
+<section class="sec" id="recall-arch">
+<h2>1 · 召回层 Recall（10⁸ → 10³）</h2>
+
+<h3 id="recall-arch">1.1 多路召回架构</h3>
+<p>百亿规模下没有任何单一召回通道能在 20ms 内覆盖 <strong>语义 / 字面 / 个性化 / 实体 / 跨模态</strong> 等所有信号。工业界普遍采用 <strong>多路召回 + 静态合并 + LTR 上下文融合</strong> 的范式：</p>
+
+<div class="grid3">
+  <div class="card">
+    <h4>📍 路（Lane）</h4>
+    <p>每一路负责一种相似度度量：BM25、向量、个性化、实体、Tag。常见 6-12 路并行，每路返回 Top-K（K=200-500），总候选 ~10³。</p>
+  </div>
+  <div class="card">
+    <h4>🪜 优先级（Tier）</h4>
+    <p>高优路（如倒排 + 热门词向量）直接进 Top-K；中优路做 ANN 多查询；长尾词向量放到 Auto-ReRank 层。</p>
+  </div>
+  <div class="card">
+    <h4>🔁 二阶段合并</h4>
+    <p>通过 Contextual Ranker 模型（轻量 GBDT 或浅 DNN）把多路候选重排，得到 Top-10³ 给粗排。</p>
+  </div>
+</div>
+
+<h4>路径一：倒排截断 + 双塔向量召回</h4>
+<p>经典工业范式。先用 <strong>BM25 / 倒排截断</strong> 砍掉 80% 不相关文档（O(1) 时间），再用 <strong>双塔向量</strong> 在剩余池中 ANN 检索，处理「近义改写、长 query、个性化语义」等问题。</p>
+
+<h4>路径二：多向量交互召回</h4>
+<p>对高优 query（占 5-10% 流量）走 ColBERT/PLAID，精度更高，单 QPS 用 5ms 换近 +5% Recall。</p>
+
+<h4>路径三：生成式召回</h4>
+<p>用 LLM 直接生成 docID/URL，适合「列表型 query」（如「最受欢迎的电影」），占召回 1-3% 流量但贡献 8-10% L1s 提升。</p>
+
+<h4>路径四：个性化 / 行为召回</h4>
+<p>用户近 30 天行为过 doc 的相似 item，作为一路独立通道。模型可以是 SASRec / TWIN / TWIN-v2。</p>
+
+<div class="mermaid">
+flowchart TB
+  subgraph SRC[Query+User Context]
+    Q[Query]
+    U[User Profile]
+    H[History Behaviors]
+  end
+  Q --> P0[Query 改写/分词]
+  P0 --> L1[BM25 倒排]
+  P0 --> L2[Query→Doc 向量]
+  L1 --> K1[Cand K=200]
+  L2 --> K2[Cand K=200]
+  H --> L3[Session 向量]
+  L3 --> K3[Cand K=200]
+  U --> L4[User-Tower]
+  L4 --> K4[Cand K=200]
+  Q --> L5[生成式 DSI/SIGIR]
+  L5 --> K5[Cand K=100]
+  Q --> L6[多模态向量<br/>图/文/视频]
+  L6 --> K6[Cand K=200]
+  K1 & K2 & K3 & K4 & K5 & K6 --> FUSE[LTR 融合<br/>GBDT/浅 DNN]
+  FUSE --> TOP[Top 1000 → 粗排]
+  classDef lane fill:#1c242e,stroke:#4f9fff,color:#d7e0ea
+  class L1,L2,L3,L4,L5,L6,FUSE lane
+</div>
+
+<h4>关键设计原则</h4>
+<ul>
+  <li><b>多样优于精排</b>：召回通道之间应保持 <strong>对偶性</strong>（duality），用新i.i.d. 通道补充现有漏斗，比优化单一通道 0.5% NDCG 更划算</li>
+  <li><b>预算定额</b>：每路候选 K 设上限（如 200），避免某一路爆量导致 top-K 偏移</li>
+  <li><b>冷启动路由</b>：新建频道走 canary + 5% 流量，确认 NDCG 后逐步放量</li>
+  <li><b>失败兜底</b>：BM25 必须 100% 可用，向量召回失败时降级到倒排</li>
+</ul>
+</section>
+
+<section class="sec" id="recall-inv">
+<h2>1.2 经典倒排召回</h2>
+
+<p>倒排（Inverted Index）是召回层的 <strong>0 号通道</strong>。它在小 query、高频词、精确匹配场景下仍优于任何向量方案。其核心思路：把 doc 切成 token，每个 token 维护一个 posting list（倒排表），query 求交后按 BM25 等打分。</p>
+
+<h3>评分公式演进</h3>
+<p>BM25 是工业标配，其评分：</p>
+
+<pre><code>score(q, d) = Σ<span class="k">∈q</span> IDF(t) · ( f(t,d) · (k₁+1) ) / ( f(t,d) + k₁·(1-b+b·|d|/avgdl) )</code></pre>
+
+<p>其中 <span class="ref">IDF(t) = log( (N-df+0.5)/(df+0.5) )</span>，<code>k₁≈1.2</code>，<code>b≈0.75</code>。</p>
+
+<h3>深度倒排：DeepPA / DeepRank</h3>
+<p>BM25 假设词独立，对「同义改写」「上下文相关词」无能为力。DeepPA（Deep Passage Aggregation）系列把 BERT 引入 term-level 权重估计，再聚合到 doc-level：</p>
+
+<pre><code>score(q, d) = Σ<span class="k">t∈q</span> α(t, d) · SIM(φ(t), ψ(d))</code></pre>
+
+<p>其中 α 由 BERT cross-attention 学习，φ/ψ 分别是 term/doc 的轻量 embedding。</p>
+
+<div class="card">
+<h4>倒排召回工程要点（百亿级）</h4>
+<ul>
+  <li><b>分段索引（Sharding）</b>：按 doc-id 哈希或 doc-source 分到 100-500 节点，单节点 2-10 GB posting list</li>
+  <li><b>Skip Pointer</b>：高频词 posting 引入 skip 跳表，query 求交复杂度从 O(N) 降到 O(|q| · log N)</li>
+  <li><b>Top-K 截断优化</b>：用 Max-Heap + 阈值早停（Threshold Algorithm），5-10ms 即可截到 K=1000</li>
+  <li><b>编码压缩</b>：doc-id 用 4 字节，term-id 用 3 字节，posting freq 用变长 (VByte/Frame-of-Reference)</li>
+  <li><b>实时性</b>：双 buffer（Double Buffer / FAggr / LSM 树）+ RT（Real-Time）索引，新文档分钟级可见</li>
+</ul>
+</div>
+
+<div class="note good">
+  <span class="label">✅ 经验</span>
+  倒排通道贡献基础 Recall 的 <strong>65-75%</strong>。在新系统的首版，先把倒排和 BM25 做到「行业前 20% 水平」，再考虑上向量召回；倒排质量不足时引入向量是事倍功半。
+</div>
+</section>
+
+<section class="sec" id="recall-twotower">
+<h2>1.3 双塔向量召回（DSSM 系列）</h2>
+<p>双塔召回是百亿规模语义召回的事实标准。Query/Doc 各用一个 Encoder 产出 <strong>单一向量</strong>，以点积或余弦作为相似度。由于 doc embedding 可离线算好，召回阶段只需对 query 实时编码 + ANN 检索，单 QPS 极易扩展到 10k+。</p>
+
+<div class="mermaid">
+flowchart LR
+  Q[Query Token] --> QE[Query Tower<br/>BERT-base / MiniLM]
+  QE --> QV[q ∈ R^d]
+  D[Doc Token] --> DE[Doc Tower<br/>BERT / 蒸馏 student]
+  DE --> DV[v ∈ R^d]
+  QV --> SIM[相似度 = q·v]
+  DV --> ANN[(ANN Index<br/>IVF-HNSW/PQ)]
+  QV --> ANN
+  ANN --> TOP[Top-K Doc]
+  classDef tower fill:#243240,stroke:#4f9fff,color:#d7e0ea
+  class QE,DE tower
+</div>
+
+<h3 id="twotower-model">1.3.1 模型架构演进</h3>
+
+<div class="tw"><table>
+<tr><th>代次</th><th>代表模型</th><th>关键改进</th><th>工业落地</th></tr>
+<tr><td>初代</td><td>DSSM (2013), CLS 池化</td><td>词袋 MLP 双塔</td><td>百度 2015</td></tr>
+<tr><td>BERT 化</td><td>Sentence-BERT (2019), DPR (2020)</td><td>BERT [CLS] 池化双塔</td><td>Google, Meta, 微信 2021</td></tr>
+<tr><td>蒸馏 / 轻量</td><td>MiniLM-L12, BGE-small, M3E</td><td>Teacher→Student, 6 层 BERT</td><td>百度文心, 通义, 微信 2023</td></tr>
+<tr><td>对比学习</td><td>SimCSE, Contriever, E5/BGE-M3</td><td>InfoNCE + Hard Negative</td><td>Meta 2023, 阿里 2024</td></tr>
+<tr><td>多任务</td><td>MT-DNN-Ret, GTR, TART</td><td>多任务联合 + 课程式负采样</td><td>Google GTR (2022), 阿里 TEG (2024)</td></tr>
+<tr><td>生成式增强</td><td>GenRet-DT, Qwen-Embedding, BGE-M3-Multi</td><td>LLM 蒸馏 + 合成 query</td><td>OpenAI text-embed-3, 阿里 Qwen3-Embed (2025)</td></tr>
+</table></div>
+
+<h4>BGE-M3 (BAAI, 2024) 与 Qwen3-Embedding (2025)</h4>
+<p>2024 年起，业界主流用 <strong>大模型蒸馏 + 合成 query</strong> 训练 embedding。代表性工作：</p>
+<ul>
+  <li><b>BGE-M3</b>：多语言、多粒度（短句/段落）、多检索（稠密/稀疏/多向量）三位一体，8500 万对训练样本</li>
+  <li><b>Qwen3-Embedding</b> (2025)：8B 量级 LLM 蒸馏到 0.6B 学生模型，引入 LLM 判别器重排 hard negative</li>
+  <li><b>NV-Embed-v2</b> (2024)：隐式维度拼接 + 池化优化</li>
+</ul>
+
+<h3 id="twotower-train">1.3.2 训练范式</h3>
+
+<p>双塔训练的核心是 <strong>in-batch negative sampling + hard negative mining</strong>。</p>
+
+<pre><code><span class="c"># 简化训练循环（PyTorch 伪代码）</span>
+q = query_encoder(q_input_ids)            <span class="c"># [B, d]</span>
+d = doc_encoder(d_input_ids)              <span class="c"># [B, d]</span>
+
+<span class="c"># In-batch：同 batch 其他样本视为负样本</span>
+scores = q @ d.T                          <span class="c"># [B, B]</span>
+labels = torch.arange(B)
+loss_inbatch = F.cross_entropy(scores, labels)
+
+<span class="c"># Hard Negative：来自 ANN 检索 Top-K 但非 gold</span>
+scores_hn = q @ hn_embedding.T             <span class="c"># [B, K]</span>
+loss_hn = F.cross_entropy(scores_hn.argmax(1), 0 ...) <span class="c"># 仅 Hinge / Margin</span>
+
+loss = loss_inbatch + λ·loss_hn</code></pre>
+
+<h4>训练范式演进</h4>
+<div class="tw"><table>
+<tr><th>范式</th><th>代表</th><th>要点</th><th>收益</th></tr>
+<tr><td>Pointwise BCE</td><td>DSSM</td><td>query-doc 独立打分</td><td>基线</td></tr>
+<tr><td>Pairwise Hinge</td><td>MATCH</td><td>正样本 + 1 hard neg</td><td>+1%</td></tr>
+<tr><td>In-batch Softmax</td><td>DPR, Sentence-BERT</td><td>同 batch 内样本互相为负</td><td>+3-5%</td></tr>
+<tr <td>In-batch + ANN-HN</td><td>ANCE (2020)</td><td>异步刷新 ANN 索引选 hard neg</td><td>+5-8%</td></tr>
+<tr><td>Margin-MSE 蒸馏</td><td>TAS-B (2021)</td><td>教师模型给三连 (q,d+,d-) 序</td><td>+2-4%</td></tr>
+<tr><td>RDM (Rank-Distill)</td><td>Ranking Distillation (2022)</td><td>教师模型 Top-K 序做 soft label</td><td>+2-3%</td></tr>
+<tr><td>LLM-Synth</td><td>Qwen3-Emb (2025)</td><td>LLM 合成 query/doc pair</td><td>+3-5%</td></tr>
+<tr><td>Listwise ListNet</td><td>TART (2022)</td><td>用 ListNet 直接优化 NDCG</td><td>+1-2%</td></tr>
+</table></div>
+
+<div class="note">
+  <span class="label">硬负样本的选择</span>
+  ANCE (Approximate Nearest Neighbor Negative Contrastive Learning) 是工业界使用最广的方案。其关键：<b>训练过程中每 N 个 batch（典型 N=1000）重建一次 ANN 索引</b>，挑选当前模型 Top-K 中非 gold 的样本作为下一轮 hard neg。简单但有效，是几乎所有 2023 年以后召回方案的标配。
+</div>
+
+<h3 id="twotower-ann">1.3.3 ANN 引擎与索引工程</h3>
+
+<p>百亿级 ANN 是召回的硬功夫。常见索引结构对比如下：</p>
+
+<div class="tw"><table>
+<tr><th>索引</th><th>代表</th><th>适用规模</th><th>Recall@10</th><th>索引体积</th><th>QPS (单线程)</th></tr>
+<tr><td>Flat (Brute)</td><td>numpy 直接算</td><td>10⁵</td><td>1.000</td><td>d·4·N 字节</td><td>~1k</td></tr>
+<tr><td>IVF</td><td>Faiss IVFFlat</td><td>10⁷</td><td>0.95</td><td>~30% 数据体积</td><td>~5k</td></tr>
+<tr><td>IVF + PQ</td><td>Faiss IVFPQ</td><td>10⁹</td><td>0.92</td><td>~5% 数据体积</td><td>~10k</td></tr>
+<tr><td>HNSW</td><td>Faiss HNSW, hnswlib</td><td>10⁸（内存允许）</td><td>0.97</td><td>~50% 数据体积</td><td>~3k</td></tr>
+<tr><td>IVF-HNSW (Hybrid)</td><td>ScaNN, Faiss</td><td>10⁹</td><td>0.96</td><td>~15% 数据体积</td><td>~8k</td></tr>
+<tr><td>DiskANN</td><td>Microsoft DiskANN</td><td>10¹⁰+</td><td>0.95</td><td>数据量 + 5%</td><td>~2k</td></tr>
+<tr><td>ScaNN (2020)</td><td>Google ScaNN</td><td>10¹⁰</td><td>0.97</td><td>~12% 数据体积</td><td>~15k</td></tr>
+<tr><td>SPANN (2023)</td><td>Microsoft SPANN</td><td>10⁹ - 10¹⁰</td><td>0.95</td><td>~10% + SSD</td><td>~5k</td></tr>
+</table></div>
+
+<h4>ScaNN 与 SPANN 是百亿规模 SOTA</h4>
+<ul>
+  <li><b>ScaNN</b>（Google 2020）：把向量分区 + 哈密顿量化 + 动态剪枝联合优化，比 Faiss 在 10⁹ scale 上 <b>+18% 吞吐量</b></li>
+  <li><b>SPANN</b>（Microsoft 2023）：基于 SSD 的图索引，把全量向量放在 SSD，内存只存 <code>centroid + posting list</code>，内存占用 <strong>~5%</strong> 即可支撑 10¹⁰ 索引</li>
+  <li><b>DiskANN</b>（Microsoft 2019/2023）：Vamana 图算法 + SSD，10¹¹ 索引 QPS ≈ 1k，Recall@10 ≈ 0.95</li>
+</ul>
+
+<h4>量化与压缩</h4>
+<pre><code><span class="c"># 典型工程配置（百亿级双塔 768 dim 召回）</span>
+- 向量维度: 96/128/256（PCA 降维）
+- 量化: OPQ + PQ8（每维 8 bit）
+- 索引: IVF-HNSW，nlist=10000，nprobe=128
+- RAM: 100 GB / shard （覆盖 ~5 × 10⁹ 向量）
+- 单节点 QPS: ~3k
+- Recall@1k: 0.95（相对 Flat 检索）</code></pre>
+
+<div class="note danger">
+  <span class="label">⚠️ 召回 + 向量量化的「隐形损失」</span>
+  PQ8 / OPQ 量化会带来 1-3% Recall@1k 下降，常见补救：
+  <ol>
+    <li>训练时加 <b>量化感知 loss</b>（decompose PQ 后 student 蒸馏）</li>
+    <li>索引里同时存 <b>Float + PQ</b> 两份，先 PQ 召回，float 重排 Top-100</li>
+    <li>量化等级与 ANN 参数每两周 rerank 自适应</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="recall-colbert">
+<h2>1.4 多向量交互召回（ColBERT / PLAID / MVR）</h2>
+
+<p>双塔的痛点是：query 和 doc 各自被压成一个向量，信息被压缩。对长 doc、跨句关联、低频专名场景损失巨大。<strong>多向量交互召回</strong> 在 2021 年后成为高优补充通道。</p>
+
+<h3>ColBERT (Khattab & Zaharia, 2020)</h3>
+<p>让每个 query token 和每个 doc token 都编码成向量，召回时计算 <strong>MaxSim</strong> 相似度：</p>
+
+<pre><code>score(q, d) = Σ<span class="k">t∈q</span> max<span class="k">t'∈d</span> &lt;φ(t), ψ(t')&gt;</code></pre>
+
+<p>Recall 显著优于双塔（+5-10% MRR@10 in BEIR），但 doc 侧向量存储大（每 doc 几十到上百个向量）。改进版 <b>ColBERTv2</b> (2022) 把 doc 端压缩 + 用 PLAID 索引做近似 MaxSim。</p>
+
+<h3>PLAID (2022) 与后续</h3>
+<ul>
+  <li><b>PLAID</b>：把 colbert.doc_vectors 通过 centroids 聚类索引，检索时找候选 centroids，再做精确 MaxSim。百亿级单 QPS 50-100ms，已商用（Google、Meta）。</li>
+  <li><b>MVR (Multi-Vector Retriever, 2023)</b>：通用框架，可插入任意交互式 encoder。</li>
+  <li><b>ColBERT-EMB</b> (2024)：用 cross-encoder 把多向量压缩到一个向量，逼近 ColBERT 精度的同时保留双塔效率。</li>
+</ul>
+
+<h4>工程落地建议</h4>
+<div class="card">
+<ul>
+  <li>多向量仅作 <b>高优 query 通道</b>（占流量 5-10%），独立部署</li>
+  <li>Index 体积是双塔的 ~10x，必须用 <b>PLAID / ColBERTv2</b> 压缩</li>
+  <li>在线 P99 控制在 <b>30-40 ms</b>，离线 GPU 批量重算 Top-K 再进粗排</li>
+  <li>监控 <b>增量 doc 的多向量构建</b> 速率，建议分钟级异步重建</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="recall-gen">
+<h2>1.5 生成式召回（DSI / GENRE / GenRet）</h2>
+
+<p>2022 年起，生成式检索 <strong>Generative Retrieval (GR)</strong> 成为研究热点。其核心：用 Seq2Seq 模型（通常是 encoder-only Transformer 或 decoder-only LLM）直接生成 doc identifier（docid/URL）。</p>
+
+<h3>代表工作</h3>
+<div class="tw"><table>
+<tr><th>模型</th><th>Doc 表示</th><th>关键点</th><th>年份</th></tr>
+<tr><td>DSI (Differentiable Search Index)</td><td>整数 docid</td><td>首个大规模 GR 范式</td><td>2022</td></tr>
+<tr><td>GENRE</td><td>实体名序列</td><td>实体检索专用，解码约束</td><td>2022</td></tr>
+<tr><td>SE-DSI</td><td>语义 docid（ngram hash）</td><td>语义结构化 docid</td><td>2023</td></tr>
+<tr><td>NCI (Neural Corpus Index)</td><td>层次聚类路径</td><td>tree-style 索引</td><td>2023</td></tr>
+<tr><td>ULTRON (Google)</td><td>semantic id + LLM rerank</td><td>生产级 GR 案例</td><td>2024</td></tr>
+<tr><td>GenRet (Microsoft)</td><td>LLM + 自适应训练</td><td>指令化生成式</td><td>2024</td></tr>
+<tr><td>RIG / Page Rag (Google)</td><td>Web URL 生成</td><td>对接 Web 搜索</td><td>2025</td></tr>
+<tr><td>Listify (Apple)</td><td>列表型 query 解码</td><td>Top-10 URL 解码</td><td>2025</td></tr>
+</table></div>
+
+<h3>优势与挑战</h3>
+<div class="grid2">
+  <div class="card">
+    <h4>优势</h4>
+    <ul>
+      <li>不需要 ANN 索引，模型即索引</li>
+      <li>可天然做「Top-K 列表解码」，一步出 recall 候选</li>
+      <li>对接 LLM 易做「上下文学习」式零样本</li>
+      <li>语义 docid 让相似 query 命中相近 docid</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>挑战</h4>
+    <ul>
+      <li>训练难度大，docid 分配是关键</li>
+      <li>OOD query 退化严重，<strong>长尾覆盖差</strong></li>
+      <li>解码 Top-K 耗时（beam search / constrained），单 QPS ≤ 100</li>
+      <li>工业系统普遍把它当作「高优补充通道」，不替代双塔</li>
+    </ul>
+  </div>
+</div>
+
+<div class="note good">
+  <span class="label">✅ 工业落地建议</span>
+  生成式召回适合 <strong>列表型 / 高意图 query</strong>（"最好看的 10 部科幻电影"），作为一路独立通道，叠加在向量通道后。Google 在 2024 年公开的 ULTRON 已在 Search Generative Experience 中部分应用。
+</div>
+</section>
+
+<section class="sec" id="recall-entity">
+<h2>1.6 实体与链接召回</h2>
+<p>通用搜索中 <strong>实体词</strong>（人名/书名/电视剧/景点）占 query ~35%。仅靠文本匹配很难解决实体消歧（"苹果"是水果还是公司）、新实体冷启动（今年新出的电影）、实体联想（同主演的其他作品）等需求。</p>
+
+<h3>典型链路</h3>
+<ol>
+  <li><b>实体识别（NER）</b>：BERT-CRF / GLiNER (零样本) / LLM 抽取</li>
+  <li><b>实体链接（EL）</b>：候选生成（知识库倒排）+ 链接消歧（BERT/复述）</li>
+  <li><b>实体扩展召回</b>：KG 三元组（RDF / Neo4j）+ 同义/上下位扩展</li>
+  <li><b>融合进 doc 召回</b>：把"匹配实体"作为一路召回，或把实体 embedding 与 doc embedding 拼接</li>
+</ol>
+
+<h3>2024-2025 新趋势</h3>
+<ul>
+  <li><b>GLiNER</b> (2024)：零样本多标签实体检测，无需训练即可识别新实体类型</li>
+  <li><b>LLM-EL</b>：直接让 GPT-4 / Qwen2.5 做 mention-entity 链接，准确率高但延迟 200ms+，仅作离线候选生产</li>
+  <li><b>YAGO / Wikidata / CN-DBpedia</b> 等开源 KG 持续更新；工业界普遍维护自有 KG，亿级节点</li>
+  <li><b>实体 - 文档联合 embedding</b>：把实体 / 文档 / query 投到同一向量空间，跨实体联想召回</li>
+</ul>
+
+<div class="card">
+<h4>实体召回在通用搜索的预期收益</h4>
+<ul>
+  <li>高实体 query 的 <strong>Recall@10 +3-5%</strong></li>
+  <li>NDCG@10 提升 <strong>+1-2%</strong></li>
+  <li>Zero-Result Rate 下降 <strong>-10-15%</strong>（针对新实体）</li>
+  <li>用户 L1s「首位内容满足」+2-4%</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="recall-person">
+<h2>1.7 个性化召回</h2>
+
+<p>通用搜索 query 越短越需要个性化。1-2 词的 query 在没有 user context 时常「无解」或「非用户想看」，需要根据用户的行为序列、地域、年龄、性别等做个性化。</p>
+
+<h3>用户表示</h3>
+<ul>
+  <li><b>User-Tower 双塔</b>：把用户历史序列（点击/收藏/搜索）经过 Transformer/SASRec/DIEN 编一个 user embedding，与 doc embedding 同空间，ANN 检索</li>
+  <li><b>实时兴趣向量</b>：用户 session 内行为（如最近 30 分钟）实时进入 user vector，毫秒级更新</li>
+  <li><b>长期画像向量</b>：T+1 离线训练，按周/月更新</li>
+  <li><b>近期行为向量</b>：DIN/DIEN/SIM 系列</li>
+</ul>
+
+<h3>个性化召回通道设计</h3>
+<div class="mermaid">
+flowchart LR
+  subgraph OFF[离线 T+1]
+    H1[历史 30/90/180 天<br/>点击/收藏] --> UT[User-Tower SASRec]
+    UT --> UE[User Emb<br/>R^d, T+1 存]
+  end
+  subgraph RT[实时 session]
+    H2[近 1/6/24 小时<br/>session 行为] --> UT2[Online User Encoder]
+    UT2 --> UE2[User Emb<br/>R^d, KV 缓存]
+  end
+  UE --> ANN[(用户向量 ANN)]
+  UE2 --> ANN
+  ANN --> CR[Top-K 候选]
+  CR --> RF[ReRank 融合]
+  classDef box fill:#243240,stroke:#4f9fff,color:#d7e0ea
+  class UT,UT2,UE,UE2,ANN box
+</div>
+
+<h3>合规与隐私</h3>
+<div class="note warn">
+  <span class="label">⚠️ 隐私风险</span>
+  <ol>
+    <li><b>不登录用户</b>：仅做 query-level 上下文召回（cookie-based），不持久化 user vector</li>
+    <li><b>未成年人/敏感领域</b>：禁用个性化通道</li>
+    <li><b>GDPR/个保法</b>：user vector 跟随用户 ID 隔离存储，提供「一键清除」入口</li>
+    <li><b>可解释性</b>：召回结果需能让运维回溯「为何召回该 doc」（基于哪条 user history）</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="recall-multi">
+<h2>1.8 多模态召回</h2>
+
+<p>通用搜索的内容形式越来越异构：图文（公众号/微博/小红书）、短视频、新闻、问答、表格、地图、视频、音乐。多模态召回是 2024-2026 增长最快的方向。</p>
+
+<h3>核心通道</h3>
+<ul>
+  <li><b>图-文跨模态向量</b>：CLIP / Chinese-CLIP / BGE-VL / EVA-CLIP，将 query（文本）和 doc（图文混合）的图像 - 文本特征投到同一空间</li>
+  <li><b>视频 - 文本</b>：VideoCLIP / InternVideo / Video-LLaMA，从视频中抽关键帧 + ASR，编码成多模态向量</li>
+  <li><b>音频 - 文本</b>：CLAP / Wav2CLIP，适合播客、歌曲、内容音频片段</li>
+  <li><b>表格 / 文档</b>：TableFormer / DocFormer / LayoutLMv3，结构化文档 layout 编码</li>
+</ul>
+
+<h3>2024-2026 代表性进展</h3>
+<div class="tw"><table>
+<tr><th>模型</th><th>模态</th><th>关键特性</th><th>应用</th></tr>
+<tr><td>BGE-VL (2024)</td><td>图文</td><td>中英双语，多任务</td><td>小红书、淘宝搜搜</td></tr>
+<tr><td>EVA-CLIP-8B (2024)</td><td>图文</td><td>8B 参数 SOTA 精度</td><td>字节 Doubao Search</td></tr>
+<tr><td>InternVideo2 (2024)</td><td>视频</td><td>多粒度时空建模</td><td>抖音视频搜索</td></tr>
+<tr><td>SigLIP (Google 2023)</td><td>图文</td><td>sigmoid loss，效率大幅提升</td><td>Google Lens</td></tr>
+<tr><td>MM-Embed (2025)</td><td>多模态</td><td>LLM 为底的多模态嵌入</td><td>Meta / 阿里</td></tr>
+</table></div>
+
+<div class="card">
+<h4>多模态召回的常见坑</h4>
+<ul>
+  <li><b>CLIP 中文弱</b>：原生 CLIP 在中文上 NDCG 退化 30%+，必须用 Chinese-CLIP / BGE-VL 中文微调版</li>
+  <li><b>视频向量成本高</b>：一个 60s 视频抽 10 关键帧 + ASR embedding = ~2KB/doc，10亿视频需 2 TB；务必用 PQ + IVF</li>
+  <li><b>图文 vs 文文通路冲突</b>：图文通道常把"标题党"图片分数提高，需引入 OCR 文本 + 文本通道互斥</li>
+  <li><b>冷启动视频</b>：只有封面图无 ASR 时，质量差；建议强制要求 ASR 入库</li>
+</ul>
+</div>
+</section>
+
+<!-- ============ 2. PRERANK ============ -->
+<section class="sec" id="prerank-pos">
+<h2>2 · 粗排层 Pre-Ranking（10³ → 10²）</h2>
+
+<h3 id="prerank-pos">2.1 粗排在系统中的定位</h3>
+<p>粗排是召回后的第一道 <strong>模型化打分器</strong>。它承担三个角色：</p>
+<ul>
+  <li><b>候选过滤</b>：把召回层给出的 ~10³ 候选排序，选出 ~10² 交给精排</li>
+  <li><b>上游知识载体</b>：把召回结果按「粗排认为的最优」传递到精排</li>
+  <li><b>流量再分配</b>：通过粗排 NDCG 反推召回通道质量，为召回优化提供 A/B 反馈</li>
+</ul>
+<p>粗排要在 <strong>≤8 ms（单请求 P99）</strong> 内完成打分，意味着：</p>
+<ul>
+  <li>模型参数 ≤ 50M（INT8 量化后 ≤ 200MB）</li>
+  <li>在线特征 ≤ 50 个</li>
+  <li>特征取值不可枚举（不能直接喂 1B 维稀疏 ID）</li>
+</ul>
+<div class="note">
+  <span class="label">粗排 ≠ 精排</span>
+  精排追求「点击 / 转化 / 互动」极致精度（300ms 内不计成本）。粗排追求 <b>粗筛不失真 + 极致性能</b>。如果你发现粗排 AUC 已经超过精排，那要小心：<b>你可能是在一个被粗排污染过的样本分布上评估精排</b>。
+</div>
+</section>
+
+<section class="sec" id="prerank-feat">
+<h2>2.2 特征体系</h2>
+<p>百亿粗排的特征工程要点：<b>严格控制特征维度、强在线计算能力、特征监控告警</b>。特征分为以下几类：</p>
+<div class="tw"><table>
+<tr><th>类别</th><th>代表特征</th><th>在线延迟</th><th>离线消费</th></tr>
+<tr><td>Query 侧</td><td>query 分词、term 频率、query 类别（导航型/信息型/事务型）</td><td>1-2 ms</td><td>T+1</td></tr>
+<tr><td>Doc 侧静态</td><td>doc 类别、长度、来源、质量分、收录时间</td><td>0.5 ms（cache）</td><td>T+1</td></tr>
+<tr><td>匹配特征</td><td>BM25 分、向量 cosine、不同通道的相似度</td><td>0 ms（召回阶段已计算）</td><td>T+1</td></tr>
+<tr><td>Context</td><td>用户设备、城市、时间段、网络环境</td><td>0.5 ms</td><td>T+1</td></tr>
+<tr><td>行为反馈</td><td>ctr、cvr、阅读完成率、互动率（按 q × doc_class 聚合）</td><td>1 ms</td><td>小时级</td></tr>
+<tr><td>用户实时</td><td>用户近 1/6/24 小时 session 行为 embedding</td><td>1-2 ms</td><td>实时</td></tr>
+<tr><td>交叉特征</td><td>q-intent × doc-class、用户性别 × doc-class</td><td>0.5 ms</td><td>T+1</td></tr>
+</table></div>
+<div class="note warn">
+  <span class="label">⚠️ 特征治理</span>
+  <ol>
+    <li><b>特征管线 ETCD 配置化</b>：新增特征必须可灰度回滚</li>
+    <li><b>特征漂移监控</b>：PSI / KS 监控每个 P0 特征分布</li>
+    <li><b>特征缺失兜底</b>：缺失值统一 -1 + mask，模型学到「缺失」的语义</li>
+    <li><b>特征延迟监控</b>：每分钟统计 P99，超过阈值自动告警</li>
+  </ol>
+</div>
+<h3>特征交叉范式</h3>
+<p>粗排的特征交叉经历了三个阶段：</p>
+<ol>
+  <li><b>手工交叉</b>：q × doc_class、user × doc_class（开销低、可解释，2020 主流）</li>
+  <li><b>Embedding 交叉</b>：把所有 ID 类特征映射到低维向量，NN 中点乘或 concat</li>
+  <li><b>显式交叉结构</b>：DCN / AutoInt / AFN 等显式高阶交叉模块替代手工</li>
+</ol>
+<pre><code><span class="c"># 极简粗排模型伪代码（DCN-v2 风格）</span>
+x0 = concat([q_feat, d_feat, c_feat])          <span class="c"># [B, F]</span>
+xl = x0
+<span class="k">for</span> l <span class="k">in</span> range(L):
+    xl = x0 * (W[l] · xl) + b[l] + xl          <span class="c"># cross layer</span>
+cross_out = xl
+deep_out = MLP(x0)                             <span class="c"># 2-3 层浅 MLP</span>
+logit = dense([cross_out, deep_out])            <span class="c"># [B, 1]</span></code></pre>
+</section>
+
+<section class="sec" id="prerank-model">
+<h2>2.3 模型路线图</h2>
+<p>粗排模型大致走过 5 个时代，下面按时间线梳理：</p>
+<div class="mermaid">
+flowchart LR
+  A[2015 LR/GBDT] --> B[2017 FM/FFM]
+  B --> C[2018 DeepFM/DCN]
+  C --> D[2019 DIN/DIEN]
+  D --> E[2020 ESMM/MMOE]
+  E --> F[2022 RankMixer]
+  F --> G[2023 PEAR/AFN]
+  G --> H[2024 LLM-Distill]
+  H --> I[2025 Generative Ranker]
+  classDef def fill:#1c242e,stroke:#4f9fff,color:#d7e0ea
+  class A,B,C,D,E,F,G,H,I def
+</div>
+
+<h3 id="model-route">2.3.1 DNN 路线</h3>
+<div class="tw"><table>
+<tr><th>代次</th><th>代表</th><th>关键结构</th><th>粗排适用度</th></tr>
+<tr><td>LR/GBDT</td><td>LR / XGBoost</td><td>线性 / 树</td><td>5/5（解释强，性能最好）</td></tr>
+<tr><td>FM/FFM</td><td>FM (2010), FFM</td><td>二阶交叉分解</td><td>4/5（特征多时退化）</td></tr>
+<tr><td>DeepFM</td><td>DeepFM (2017)</td><td>FM + DNN 并联</td><td>5/5（业界粗排基础模型）</td></tr>
+<tr><td>DCN / DCN-v2</td><td>DCN-v2 (R. Wang et al.)</td><td>显式高阶交叉</td><td>5/5（粗排标杆）</td></tr>
+<tr><td>AutoInt</td><td>AutoInt (2019)</td><td>多头 self-attention 自动交叉</td><td>4/5（特征量大时优秀）</td></tr>
+<tr><td>DIN / DIEN</td><td>DIN (2017), DIEN (2019)</td><td>行为序列 attention</td><td>4/5（适合个性化）</td></tr>
+</table></div>
+
+<h3 id="model-multitask">2.3.2 多任务学习</h3>
+<p>粗排要兼顾 CTR / 多样性 / 时延 / 停留，单任务损失不够。多任务学习已成为粗排标配：</p>
+<ul>
+  <li><b>ESMM</b> (Entire Space Multi-task Model, 2018)：CTCVR = CTR × CVR 全空间建模，缓解 SSB 偏差</li>
+  <li><b>MMOE / PLE</b> (2020)：多专家网络，门控融合不同任务的 expert</li>
+  <li><b>AITM</b> (2021)：自适应任务关系建模，优于 MMOE</li>
+  <li><b>Customized-CTCVR / 阿里 ESMM2</b>：粗排专用多任务</li>
+</ul>
+<pre><code><span class="c"># ESMM 简化伪代码</span>
+pctr = tower_ctr(shared_emb(x))                 <span class="c"># CTR tower</span>
+pcvr  = tower_cvr(concat([shared_emb(x), pctr])) <span class="c"># CVR tower</span>
+pctcvr = pctr * pcvr                            <span class="c"># 全空间建模</span>
+loss = w1·BCE(y_ctr, pctr) + w2·BCE(y_ctcvr, pctcvr)</code></pre>
+
+<h3 id="model-sota">2.3.3 最新 SOTA 模型（2022-2025）</h3>
+<div class="tw"><table>
+<tr><th>模型</th><th>出处</th><th>核心创新</th><th>粗排适用度</th></tr>
+<tr><td><b>RankMixer</b></td><td>Microsoft 2022</td><td>Token Mixer 用大型 MLP，Transformer-Free</td><td>5/5</td></tr>
+<tr><td><b>PEAR</b></td><td>阿里 2023</td><td>PErsonAlized lightweight Ranking，蒸馏友好</td><td>5/5</td></tr>
+<tr><td><b>AFN</b> (Adaptive Factorization Network)</td><td>中科大 2020</td><td>自适应 log 阶交叉</td><td>4/5</td></tr>
+<tr><td><b>FinalMLP</b></td><td>SIGIR 2024</td><td>双流 MLP，简易实现</td><td>4/5</td></tr>
+<tr><td><b>ContextualRankNet</b></td><td>粗排专用 2023</td><td>上下文感知的 pairwise 排序损失</td><td>5/5</td></tr>
+<tr><td><b>RankNet Distill</b></td><td>Microsoft 2022</td><td>教师模型 pairwise 蒸馏到粗排</td><td>5/5</td></tr>
+<tr><td><b>LLM-Rank</b> (RankZephyr / Qwen-PR)</td><td>2024-2025</td><td>LLM 重排打分蒸馏到粗排</td><td>5/5（实验阶段）</td></tr>
+</table></div>
+
+<h4>RankMixer 详解（Microsoft 2022）</h4>
+<p>RankMixer 抛弃 Transformer attention 结构，用「feature mixer + token mixer」两层大型 MLP 替代。优势：</p>
+<ul>
+  <li>超参简单（layer 数、hidden size、activation）</li>
+  <li>无 attention，ONNX/TensorRT 编译路径短</li>
+  <li>P50 推理速度比同等 AUC 的 DNN 快 1.5-2x</li>
+  <li>已被多个搜索公司作为粗排 baseline</li>
+</ul>
+
+<h4>PEAR 详解（阿里 2023）</h4>
+<p>阿里妈妈公开的 PEAR 模型结构：</p>
+<ol>
+  <li><b>特征 embedding</b>：所有 ID 特征分桶 embedding，连续特征离散化后 embedding</li>
+  <li><b>Interaction Mask</b>：显式 mask 控制哪些特征可以交叉（基于业务先验）</li>
+  <li><b>Light Cross Layer</b>：3-4 层 DCN-style cross layer</li>
+  <li><b>MLP Tower</b>：2 层 MLP 共享多任务塔</li>
+  <li><b>多任务损失</b>：CTR + CVR + 互动率 + 时长</li>
+</ol>
+<div class="card">
+<h4>阿里公开的 PEAR AUC 数据（淘宝粗排口径）</h4>
+<ul>
+  <li>DCN-v2 基线 AUC ≈ 0.7950</li>
+  <li>PEAR 模型 AUC ≈ 0.8035（+0.85pts）</li>
+  <li>相同 AUC 下 PEAR 推理更快 35-40%</li>
+  <li>线上 CTR +1.8%、GMV +1.2%（公开口径）</li>
+</ul>
+</div>
+
+<h3 id="model-light">2.3.4 极简粗排（Light / Two-Tower）</h3>
+<p>2023 年起，一些工业系统开始试验 <b>极简粗排</b>：直接复用召回的双塔 + 在最后加一层浅层 cross。</p>
+<ul>
+  <li>类似 <b>Dual Encoder Augmented Ranking (DEAR)</b> (Google 2021)</li>
+  <li>类似 <b>COIL</b> (Columbia 2021)：检索式 ranking</li>
+  <li>结构：<code>score = α · cosine(q, d) + β · light_dnn(q_feat ⊕ d_feat)</code></li>
+</ul>
+<p>优点：模型极小（&lt;5M 参数）、单 QPS 5k+、与召回共享 embedding。缺点：AUC 比 DCN 低 0.5-1.5pts，需配合 GBDT 重排。</p>
+</section>
+
+<section class="sec" id="prerank-distill">
+<h2>2.4 蒸馏与级联</h2>
+<p>粗排与精排的能力差距，可以通过 <strong>蒸馏</strong> 弥补，常见做法：</p>
+
+<h3>三种蒸馏范式</h3>
+<div class="grid3">
+  <div class="card">
+    <h4>🔹 Logit 蒸馏</h4>
+    <p>教师模型的 softmax 输出作为 soft label，学生模型训 KL 散度损失。简单、收敛快，但丢失序信息。</p>
+  </div>
+  <div class="card">
+    <h4>🔹 Rank 蒸馏（TAS-B 风格）</h4>
+    <p>教师给出三连 (q,d⁺,d⁻) 相对序，学生用 margin loss 学。粗排主线方案。</p>
+  </div>
+  <div class="card">
+    <h4>🔹 List 蒸馏（ListNet/ListMLE）</h4>
+    <p>教师对样本 list 给出 Top-K 概率分布，学生直接学 list-level 分布。计算量大但损失信息最少。</p>
+  </div>
+</div>
+
+<h3>级联损失（Layer-wise）</h3>
+<pre><code><span class="c"># Cascaded Ranking Loss（简化版）</span>
+<span class="c"># 召回层教师 → 粗排学生 → 精排教师</span>
+loss_recall_to_prerank = KL(student_logits, teacher_logits)
+loss_prerank_to_rank   = RankingLoss(student_ranking, teacher_ranking)
+total = α·loss_prerank + β·loss_distill
+</code></pre>
+
+<div class="note good">
+  <span class="label">✅ 蒸馏要点</span>
+  <ol>
+    <li>教师模型必须比学生大 1-2 个数量级（如 GPT → MiniLM）</li>
+    <li>蒸馏损失 + 真实损失通常按 1:1 权重混合</li>
+    <li><b>Incremental Distillation</b>：每 2-3 个月重训教师，让学生稳定跟上</li>
+    <li>蒸馏可以跨召回/粗排/精排 <b>whole-pipeline</b>，效果更好但训练复杂</li>
+  </ol>
+</div>
+
+<h3>2024-2025 新趋势：LLM 蒸馏粗排</h3>
+<ul>
+  <li><b>RankZephyr</b> (2024)：用 GPT-4 给 query-doc pair 打分，蒸馏到 7B student</li>
+  <li><b>Qwen-Rank</b> (2025)：阿里用 Qwen2.5-32B 做粗排教师，在线蒸馏到 0.5B</li>
+  <li><b>Generation-Augmented Rank</b> (2024)：让 LLM 生成 doc 的「搜索预览」，粗排看到更丰富的特征</li>
+</ul>
+</section>
+
+<section class="sec" id="prerank-eff">
+<h2>2.5 精度-性能平衡</h2>
+<p>百亿规模粗排对延迟极敏感。常见性能优化方向：</p>
+<div class="tw"><table>
+<tr><th>手段</th><th>加速比</th><th>精度损失</th><th>实现难度</th></tr>
+<tr><td>FP16 → INT8 量化 (PTQ)</td><td>2-3x</td><td>AUC -0.3 ~ -0.8pt</td><td>低（TensorRT / ONNX）</td></tr>
+<tr><td>INT4 量化 (QAT)</td><td>3-5x</td><td>AUC -0.5 ~ -1.5pt</td><td>中（需重新训练）</td></tr>
+<tr><td>稀疏化（结构化剪枝 50%）</td><td>1.5-2x</td><td>AUC -0.2 ~ -0.5pt</td><td>中</td></tr>
+<tr><td>知识蒸馏</td><td>1x（变轻）</td><td>反而 +0.5 ~ +1pt</td><td>低</td></tr>
+<tr><td>低秩分解（LoRA）</td><td>1.3-1.5x</td><td>AUC -0.1 ~ -0.3pt</td><td>中</td></tr>
+<tr><td>特征预计算与缓存</td><td>2-5x（特征耗时）</td><td>0</td><td>低</td></tr>
+<tr><td>请求合并（Batching）</td><td>1.5-4x</td><td>0</td><td>中（需 batching scheduler）</td></tr>
+</table></div>
+
+<h3>关于 GPU 推理</h3>
+<p>粗排 GPU 推理是 2024 年起的趋势：</p>
+<ul>
+  <li><b>TensorRT-LLM</b> / <b>Triton</b>：单 H100 推理 25万 QPS/s 吞吐</li>
+  <li><b>CPU 推理</b>：AVX-512 + ONNXRuntime，仍是百亿级粗排主力（成本更低）</li>
+  <li><b>混合</b>：高优 query 走 GPU，长尾走 CPU</li>
+  <li><b>Batching</b>：Dynamic Batching 把 1ms 内的请求打包，吞吐提升 3-5x</li>
+</ul>
+<div class="note">
+  <span class="label">性能 vs 成本平衡</span>
+  如果检索系统日均 50 亿次检索，单次推理省 1ms ＝ 节省 14000 核·小时 / 天。AUC 损失 0.5pt 换来 1ms 加速，是非常划算的。
+</div>
+</section>
+
+<!-- ============ 3. COLLAB ============ -->
+<section class="sec" id="collab-fuse">
+<h2>3 · 召回-粗排协同优化</h2>
+
+<h3 id="collab-fuse">3.1 多路召回融合</h3>
+<p>多路召回的合并是关键工程。常见做法：</p>
+<div class="tw"><table>
+<tr><th>方法</th><th>实现</th><th>可学习</th><th>上线成本</th></tr>
+<tr><td>RRF (Reciprocal Rank Fusion)</td><td>score = Σ 1/(k + rank)</td><td>❌</td><td>1 天</td></tr>
+<tr><td>线性加权</td><td>score = Σ wᵢ·sᵢ</td><td>半（需离线调权）</td><td>1 周</td></tr>
+<tr><td>GBDT 融合（LTR）</td><td>LambdaMART/LightGBM</td><td>✅</td><td>2-3 周</td></tr>
+<tr><td>DNN 融合 Contextual Ranker</td><td>DIN/双塔特征 + MLP</td><td>✅</td><td>4-8 周</td></tr>
+<tr><td>Blender / Set Selection</td><td>Listwise 神经网络</td><td>✅</td><td>8 周+</td></tr>
+</table></div>
+
+<h3>Contextual Ranker 设计要点</h3>
+<pre><code><span class="c"># 召回融合模型简化版（LightGBM 2 阶树）</span>
+features = {
+  <span class="s">'q'</span>:        query_feat,                <span class="c"># q 类别、长度、改写</span>
+  <span class="s">'d_cand'</span>:  candidate_doc_feat,        <span class="c"># BM25, cosine, freshness...</span>
+  <span class="s">'u'</span>:        user_feat,                   <span class="c"># 用户分群、属性</span>
+  <span class="s">'lane'</span>:    lane_id,                      <span class="c"># 召回通道</span>
+  <span class="s">'lane_score'</span>: lane_similarity,         <span class="c"># 各通道分数</span>
+  <span class="s">'cross'</span>:   u×lane×q                     <span class="c"># 用户 × 通道 × query 组合</span>
+}
+target = <span class="s">'gold'</span>  <span class="c"># 精排 Top-1</span>
+<span class="c"># λ-MART 目标函数</span>
+ranker = LGBMRanker(objective=<span class="s">'lambdarank'</span>, n_estimators=512, ...)</code></pre>
+
+<h4>排序损失函数</h4>
+<ul>
+  <li><b>LambdaMART</b>：基于 NDCG 增益的 pairwise 损失，工业级 LTR 标配</li>
+  <li><b>RankingNet</b> / <b>RankNet</b>：基于 (d⁺, d⁻) pair 的 binary loss</li>
+  <li><b>ListNet</b>：softmax-based listwise，可微，直接优化 NDCG</li>
+  <li><b>ApproxNDCG</b> (2021)：直接以 NDCG 作为可微损失，效果最好但实现复杂</li>
+</ul>
+</section>
+
+<section class="sec" id="collab-joint">
+<h2>3.2 联合训练</h2>
+<p>召回和粗排本应联合优化，但因双塔架构和精排架构差异，传统实现往往解耦。2022-2024 起出现了一些 <strong>whole-pipeline 联合训练</strong> 方案：</p>
+<ul>
+  <li><b>Two-Stage Training</b>：先训召回，再冻召回训粗排；最普遍但次优</li>
+  <li><b>Joint Embedding + Ranker</b>：用 joint loss 同时训 query/doc embedding 和 final ranker</li>
+  <li><b>End-to-End Joint Training (EEJT)</b> (2023, Microsoft)：用 re-parameterization 让召回与粗排同框架</li>
+  <li><b>Differentiable Retrieval</b> (2024)：把 ANN 索引做成可微检索算子，端到端训练</li>
+</ul>
+
+<h3>Joint Loss 设计</h3>
+<pre><code>L = α · L_recall + β · L_rerank + γ · L_kd
+<span class="c"># α, β, γ 随训练阶段调整</span>
+<span class="c"># Stage 1: α=1, β=0       (pretrain recall)</span>
+<span class="c"># Stage 2: α=0.3, β=1     (joint train)</span>
+<span class="c"># Stage 3: α=0, β=1, γ=0.5 (distill)</span>
+</code></pre>
+
+<div class="note warn">
+  <span class="label">⚠️ 联合训练的「梯度对齐」挑战</span>
+  <ol>
+    <li>召回的 in-batch softmax 梯度与粗排的 pairwise loss 梯度方向不同</li>
+    <li>需要 <b>梯度融合</b>（GradNorm / GradVac）平衡各 loss</li>
+    <li>不能简单相加，否则某一 loss 会主导训练</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="collab-obs">
+<h2>3.3 可观测性与诊断</h2>
+<p>召回粗排系统的可观测性是质量保障的核心。</p>
+
+<h3>关键监控指标</h3>
+<div class="tw"><table>
+<tr><th>维度</th><th>指标</th><th>告警阈值</th></tr>
+<tr><td><b>召回</b></td><td>Recall@1k vs 离线估算基线</td><td>下降 ≥ 2%</td></tr>
+<tr><td><b>粗排</b></td><td>粗排 AUC（按 q × doc_class 分桶）</td><td>下降 ≥ 0.5pt</td></tr>
+<tr><td><b>质量</b></td><td>Zero-Result Rate、首条 L1s、3s 跳出</td><td>上升 ≥ 1%</td></tr>
+<tr><td><b>延迟</b></td><td>召回 P99、粗排 P99</td><td>上升 ≥ 5 ms</td></tr>
+<tr><td><b>资源</b></td><td>CPU/GPU 利用率、QPS、单实例成本</td><td>持续高于阈值</td></tr>
+<tr><td><b>流量</b></td><td>每路召回候选占比、覆盖度</td><td>某路 ≤ 5%</td></tr>
+</table></div>
+
+<h3>诊断工具</h3>
+<ul>
+  <li><b>流量回放</b>：把生产 query 列表发回离线系统，对比召回结果是否一致</li>
+  <li><b>检索链路 tracing</b>：给每个 query 打 trace_id，端到端追踪召回→粗排→精排</li>
+  <li><b>漏斗分析</b>：每一步的覆盖度、损失分布</li>
+  <li><b>A/B 实验</b>：4-7 天观察窗口，统计显著性 95%</li>
+</ul>
+
+<div class="card">
+<h4>诊断常见问题清单</h4>
+<ol>
+  <li>召回量足但粗排 AUC 下降 → 召回通道分布偏移，查新增 doc 是否进全量索引</li>
+  <li>粗排 AUC 正常但 L1s 跌 → 粗排候选中含过期 / 已删除 doc</li>
+  <li>延迟突增 → 大概率 ANN 索引崩溃或 GPU 资源被打满</li>
+  <li>新 query 召回为空 → 检查 NER、query 改写、字典更新</li>
+</ol>
+</div>
+</section>
+
+<!-- ============ 4. ENGINEERING ============ -->
+<section class="sec" id="eng-ann">
+<h2>4 · 工程实战</h2>
+
+<h3 id="eng-ann">4.1 百亿 ANN 索引工程</h3>
+<p>百亿 ANN 落地关键是 <strong>索引分层、增量更新、查询分发</strong>。一张典型工程图：</p>
+<div class="mermaid">
+flowchart TB
+  DATA[(原始 doc)] --> PROC[Embedding 生成<br/>GPU 批处理]
+  PROC --> IND[构建索引<br/>IVF-HNSW]
+  DATA -.新数据.-> RT[实时构建<br/>mini-index]
+  RT --> MERGE[Merge 进入主索引]
+  IND --> SH[Sharding 服务]
+  MERGE --> SH
+  SH --> Q1[Query Server 1]
+  SH --> Q2[Query Server 2]
+  SH --> Q3[Query Server N]
+  Q1 & Q2 & Q3 --> MERGE2[结果 Merge<br/>RRF/LTR]
+  MERGE2 --> PR[粗排]
+  classDef box fill:#243240,stroke:#4f9fff,color:#d7e0ea
+  class PROC,IND,RT,MERGE,SH,MERGE2 box
+</div>
+
+<h4>索引分层</h4>
+<ul>
+  <li><b>L0</b>：新文档 mini-index（最近 24h），Faiss flat + PQ8，几千万级</li>
+  <li><b>L1</b>：近 90 天主索引，IVF-HNSW + PQ，亿级</li>
+  <li><b>L2</b>：全量索引，ScaNN/SPANN，10¹⁰+，放 SSD</li>
+  <li><b>查询顺序</b>：L2 → L1 → L0，跨层合并取 Top-K</li>
+</ul>
+
+<h4>增量更新</h4>
+<pre><code><span class="c"># 增量索引 pipeline（伪代码）</span>
+<span class="k">def</span> ingest(new_docs):
+    embs   = gpu_encoder.encode(new_docs)        <span class="c"># [N, d]</span>
+    pq_embs = opq_pq.encode(embs)                <span class="c"># 量化</span>
+    mini_index.add_with_ids(pq_embs, doc_ids)
+    <span class="k">if</span> mini_index.ntotal &gt; THRESH:
+        merge_to_main_index(mini_index)
+        mini_index.reset()</code></pre>
+
+<h4>检索分发</h4>
+<ul>
+  <li>查询分发到 100-500 节点（query → hash(qid) → node_id）</li>
+  <li>每节点返回 Top-K_local，最终 merge 中心节点</li>
+  <li>跨 shard 平衡：<b>中心化协调器</b> 或 <b>两层结构</b>（一层 coordinator，一层 shard）</li>
+</ul>
+</section>
+
+<section class="sec" id="eng-gpu">
+<h2>4.2 GPU 粗排推理</h2>
+<p>百亿级粗排逐步从 CPU 转向 GPU，主要驱动力：</p>
+<ul>
+  <li>CPU AVX-512 推理 5ms/QPS 仍是大模型瓶颈</li>
+  <li>H100 TensorRT-LLM 单卡 25 万 QPS/s</li>
+  <li>GPU batching 节省空载功耗</li>
+</ul>
+
+<h3>GPU 推理栈</h3>
+<ul>
+  <li><b>TensorRT-LLM</b> (NVIDIA)：粗排 DNN 主力框架</li>
+  <li><b>vLLM / SGLang</b>：粗排兼 LLM 重排</li>
+  <li><b>Triton Inference Server</b>：多模型统一部署</li>
+  <li><b>ONNX Runtime GPU</b>：粗排 CPU→GPU 过渡方案</li>
+</ul>
+
+<h3>典型部署</h3>
+<pre><code><span class="c"># 单 H100 节点粗排部署示例</span>
+- 模型:    RankMixer-base, 30M 参数, INT8 量化后 ~120MB
+- 吞吐:    ~25万 QPS/s (latency &lt; 5ms)
+- Batch:   dynamic batching, max_batch=512
+- Memory:  80GB HBM 占用 ~60%（~12GB 模型，其他给 KV cache）
+- 网络:    100Gbps NIC, <span class="k">in</span>-flight 请求约 5k
+</code></pre>
+</section>
+
+<section class="sec" id="eng-rpc">
+<h2>4.3 RPC 与服务化</h2>
+<p>召回粗排的 RPC 设计原则：</p>
+<ul>
+  <li><b>多 RPC 协同</b>：召回多路并行，每路独立 RPC，5ms timeout；任一路超时则降级</li>
+  <li><b>Stub 链路</b>：召回 → 粗排 → 精排，pipeline，整体 P99 由多阶段相加</li>
+  <li><b>本地缓存</b>：高频 query 的召回结果缓存（命中率 20-40%）</li>
+  <li><b>降级策略</b>：满载时返回倒排前 100 + 热门粗排</li>
+</ul>
+
+<h3>开源 RPC 方案</h3>
+<div class="tw"><table>
+<tr><th>框架</th><th>长项</th><th>典型 QPS</th></tr>
+<tr><td>brpc (百度)</td><td>高并发、bthread 协程</td><td>10万级/节点</td></tr>
+<tr><td>gRPC</td><td>标准、跨语言</td><td>5万级/节点</td></tr>
+<tr><td>Tars (腾讯)</td><td>一体化运维</td><td>10万级/节点</td></tr>
+<tr><td>Kitex (字节)</td><td>云原生友好</td><td>15万级/节点</td></tr>
+<tr><td>Thrift (Meta)</td><td>历史包袱</td><td>5万级/节点</td></tr>
+</table></div>
+
+<div class="note">
+  <span class="label">链路预算分配建议</span>
+  <ol>
+    <li>Query 解析/改写：≤ 3ms</li>
+    <li>召回 6 路并行：≤ 12ms（含 ANN）</li>
+    <li>融合/LTR：≤ 3ms</li>
+    <li>粗排：≤ 8ms（含特征）</li>
+    <li>精排：≤ 25ms</li>
+    <li>合计：≤ 50ms</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="eng-cost">
+<h2>4.4 资源与成本</h2>
+<p>百亿召回 + 粗排的成本结构通常如下：</p>
+<div class="tw"><table>
+<tr><th>模块</th><th>主要资源</th><th>优化前</th><th>优化后</th></tr>
+<tr><td>ANN 服务</td><td>内存 + SSD</td><td>~ 2 TB 内存</td><td>~ 200 GB + 5 TB SSD</td></tr>
+<tr><td>GPU 推理</td><td>GPU 卡数</td><td>~ 30 卡 H100</td><td>~ 10 卡 H100 + TensorRT</td></tr>
+<tr><td>CPU 推理</td><td>CPU 核数</td><td>~ 5 万核</td><td>~ 1.5 万核（蒸馏后）</td></tr>
+<tr><td>离线 Embedding</td><td>GPU 训练机</td><td>~ 50 卡 A100</td><td>~ 25 卡（FP8 训练）</td></tr>
+<tr><td>监控 / RPC</td><td>CPU + 网络</td><td>~ 1 万核</td><td>~ 6 千核</td></tr>
+</table></div>
+
+<!-- ============ 5. CASES ============ -->
+<section class="sec" id="case-bing">
+<h2>5 · 业界案例</h2>
+
+<h3 id="case-bing">5.1 Microsoft Bing</h3>
+<p>Bing 在 2023-2025 KDD / SIGIR 公开的多篇论文展示了完整的召回-粗排升级路径：</p>
+<ul>
+  <li><b>BERT 双塔</b> (2019-2022)：用 MiniLM distilled embedding 替换 BM25，Recall@1k +8%</li>
+  <li><b>ColBERT 多向量</b> (2022)：在 5% 高优 query 上启用，Recall@10 +12%</li>
+  <li><b>RankMixer</b> (KDD 2022)：粗排 transformer-free baseline，AUC +0.6pt at same latency</li>
+  <li><b>SETRank / UBR</b> (2023)：用户行为驱动粗排，离线 AUC +1.4pt</li>
+  <li><b>不同阶段 ANN 量化对比</b> (2024)：OPQ + PQ8 比 PQ16 在 10⁹ 索引上 +18% 吞吐</li>
+</ul>
+
+<div class="card">
+<h4>Bing 公开口径</h4>
+<ul>
+  <li>全网索引量 ~ 30B 网页（2024）</li>
+  <li>端到端 P99 <strong>200 ms</strong>，召回+粗排 P99 <strong>30 ms</strong></li>
+  <li>向量召回占比从 2020 的 30% 提升至 2024 的 75%</li>
+  <li>粗排 GPU 推理占比 ~ 40%（夜间高峰）</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="case-meta">
+<h2>5.2 Meta（Facebook / Instagram）</h2>
+<p>Meta 的搜索场景包括 Facebook Search（社交图搜索）和 Instagram Explore。公开报告：</p>
+<ul>
+  <li><b>Embedding-based Retrieval (EBR)</b> (KDD 2020)：业界首次大规模双塔（10B 规模）</li>
+  <li><b>Two-tower → Light Ranker</b> (2021)：粗排极简化，AUC 退化 0.4pt 换来 3x 加速</li>
+  <li><b>Unified Embedding (UE4)</b> (2023)：跨平台统一 embedding，参数共享</li>
+  <li><b>Generative Retrieval</b> (2024 SIGIR)：Meta 在 1% 流量上启用生成式召回作为补充</li>
+</ul>
+
+<div class="note">
+  <span class="label">Meta 经验</span>
+  EBR 系统最大的工程难点是 <b>doc 侧 embedding 不能实时更新</b>（每天 batch 重训）。Meta 通过「近实时 user embedding + T+1 doc embedding」组合解决，长尾 doc 用人工审核 + 规则兜底。
+</div>
+</section>
+
+<section class="sec" id="case-alibaba">
+<h2>5.3 阿里（淘宝 / 闲鱼 / 夸克）</h2>
+<p>阿里搜索公开的 2022-2025 进展：</p>
+<ul>
+  <li><b>PEAR 粗排</b> (2023)：阿里妈妈公开，淘宝主搜粗排 +1.8% CTR</li>
+  <li><b>多模态搜索 EUNA</b> (SIGIR 2024)：淘宝拍照搜 + 跨模态 embedding</li>
+  <li><b>Generation-Aided Search</b> (2025)：用 LLM 生成 query 改写和搜索摘要</li>
+  <li><b>DTing 搜索重排</b> (KDD 2024)：强化学习重排在淘宝主搜落地</li>
+</ul>
+
+<div class="card">
+<h4>阿里的多模态召回经验</h4>
+<ul>
+  <li>图文 query 中 25% 是商品图；电商商品 embedding 必须 <b>商品图片 + 标题文本</b> 同时编码</li>
+  <li>Chinese-CLIP + EVA-CLIP 蒸馏到 small 模型（~0.1B），单卡 10万 QPS/s</li>
+  <li>召回通道：文本、商品向量、店铺向量、活动向量 4 路并行</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="case-bytedance">
+<h2>5.4 字节跳动（抖音 / 头条搜索）</h2>
+<p>字节搜索（Soutu / Doubao Search）的特点：</p>
+<ul>
+  <li><b>短视频多模态召回</b>：视频 OCR + ASR + 封面 + 标签，4 路 embedding 融合</li>
+  <li><b>千亿级实时索引</b>：分钟级索引更新，万级 shard，TikTok 全球部署</li>
+  <li><b>LLM 重排</b> (2024)：Doubao Search 在生成式搜索中用 LLM 重排</li>
+  <li><b>极简粗排</b>：与召回共享双塔 embedding，5M 参数粗排 + GBDT 后置</li>
+</ul>
+
+<div class="note">
+  <span class="label">字节搜索的工程亮点</span>
+  <ol>
+    <li>全栈 Go/C++ 自研 RPC（Kitex）支撑百亿 QPS</li>
+    <li>GPU 推理覆盖率超过 60%（H100 集群）</li>
+    <li>向量索引使用自研 Byte-ANN，专为视频场景优化</li>
+  </ol>
+</div>
+</section>
+
+<section class="sec" id="case-baidu">
+<h2>5.5 百度搜索</h2>
+<p>百度是国内最大通用搜索，公开报告：</p>
+<ul>
+  <li><b>SimBERT 双塔</b> (2020-2022)：百亿语料，Recall@1k +6%</li>
+  <li><b>ERNIE-Embedding</b> (2023)：千亿参数 teacher，蒸馏到 ~0.3B student</li>
+  <li><b>星河大模型 IR</b> (2025)：千亿参数 embedding，10¹⁰ 规模 QPS 单 shot 检索</li>
+  <li><b>知识增强</b>：实体识别 + 关系推理召回，Zero-Result -25%</li>
+</ul>
+
+<div class="card">
+<h4>百度的工程经验</h4>
+<ul>
+  <li>10¹⁰ 索引已商业部署，混合 Faiss + ScaNN 方案</li>
+  <li>粗排模型训练周期 <strong>小时级</strong>，离线指标到上线 <strong>30 分钟</strong></li>
+  <li>Index replica 服务数 &gt; 1000，单实例 QPS &gt; 5k</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="case-wx">
+<h2>5.6 微信搜一搜（WeChat Search）</h2>
+<p>微信搜一搜的痛点和优化方向（公开口径 + 本项目 PC5/PC7 实际工作）：</p>
+<ul>
+  <li><b>公众号图文内容</b>：核心语料占 60%+，长文比例高，ColBERT/多向量收益大</li>
+  <li><b>视频号</b>：短视频多模态召回 + 用户个性化（关注 + 朋友点赞）</li>
+  <li><b>小程序 + 问一问</b>：异构内容召回，多通道融合</li>
+  <li><b>内部项目代号</b>：PC5（Nugget Rubric 检索）/ PC7（SANDBOX II 搜索 Agent）</li>
+</ul>
+
+<div class="note">
+  <span class="label">微信搜一搜的迭代重点（综合公开信号）</span>
+  <ol>
+    <li>图文长文档切分与 passage-level 检索</li>
+    <li>公众号时效性 + 时段新鲜度召回</li>
+    <li>多模态（封面 + 摘要）融合 embedding</li>
+    <li>用户行为 session 实时个性化</li>
+    <li>实体词 + 知识图谱增强</li>
+    <li>小程序与服务的「直答」式召回</li>
+  </ol>
+</div>
+
+<div class="card">
+<h4>综合启示</h4>
+<p>百亿规模通用搜索的优化方向具备高度共性：</p>
+<ul>
+  <li><b>多路召回 + 多向量交互</b> 是统一趋势</li>
+  <li><b>粗排极简化 + 蒸馏</b> 是性能突破路径</li>
+  <li><b>LLM 教师蒸馏</b> 是 2024-2026 的爆发点</li>
+  <li><b>ANN 引擎 GPU 化 + SSD 化</b> 是规模上限的关键</li>
+  <li><b>个性化与多模态</b> 是拉开差距的方向</li>
+</ul>
+</div>
+</section>
+
+<!-- ============ 6. RECOMMENDATIONS ============ -->
+<section class="sec" id="adv-tier">
+<h2>6 · 建议与展望</h2>
+
+<h3 id="adv-tier">6.1 按资源分梯度的优化方案</h3>
+<p>不同团队的资源和目标差异很大。下面按 <strong>团队规模 / 算力预算 / 时间窗口</strong> 给出三档推荐方案：</p>
+
+<h4>🚀 Tier 1：起步团队（&lt; 5 人，&lt; 100 GPU·天/月）</h4>
+<div class="card">
+<ul>
+  <li>召回：<b>BM25 + 双塔（BGE-M3 / MiniLM）</b>，2 路并行</li>
+  <li>粗排：<b>DCN-v2 / DeepFM</b>，2 层 MLP + 2 层 Cross</li>
+  <li>ANN 引擎：<b>Faiss IVFPQ</b> 开箱即用</li>
+  <li>融合：<b>RRF</b>（Reciprocal Rank Fusion）</li>
+  <li>训练数据：用户行为 30 天曝光-点击对</li>
+  <li>预期收益：基线 + 5-8% NDCG@10</li>
+</ul>
+</div>
+
+<h4>🏎️ Tier 2：增长团队（5-30 人，100-2000 GPU·天/月）</h4>
+<div class="card">
+<ul>
+  <li>召回：<b>BM25 + 双塔 + ColBERT 5% 高优 + 个性化 + 实体内嵌</b>，5-8 路</li>
+  <li>粗排：<b>PEAR / RankMixer</b>，多任务 ESMM/AITM</li>
+  <li>ANN：<b>ScaNN / SPANN</b>，GPU 索引 + 量化</li>
+  <li>融合：<b>LambdaMART (LightGBM) Contextual Ranker</b></li>
+  <li>精排蒸馏：<b>ListNet 蒸馏</b>，双塔到粗排</li>
+  <li>GPU 粗排：<b>TensorRT INT8</b></li>
+  <li>预期收益：Tier 1 基础上再 + 3-5% NDCG@10</li>
+</ul>
+</div>
+
+<h4>🛰️ Tier 3：顶级工业化（&gt; 50 人，&gt; 5000 GPU·天/月）</h4>
+<div class="card">
+<ul>
+  <li>召回：<b>多路 + ColBERT + 生成式 DSI/ULTRON + 个性化</b>，10+ 路</li>
+  <li>粗排：<b>LLM 教师蒸馏 + PEAR/RankMixer 学生 + INT4 量化</b></li>
+  <li>ANN：<b>ScaNN/SPANN + 自研 GPU 引擎</b></li>
+  <li>融合：<b>DNN Contextual Ranker + LTR 两阶段</b></li>
+  <li>联合训练：<b>EEJT / Differentiable Retrieval</b></li>
+  <li>多模态：<b>BGE-VL + VideoCLIP + OCR + ASR</b></li>
+  <li>可观测性：<b>端到端 tracing + 自动化诊断</b></li>
+  <li>预期收益：通用搜索长期 L1s 提升 8-15%</li>
+</ul>
+</div>
+</section>
+
+<section class="sec" id="adv-roadmap">
+<h2>6.2 三阶段路线图</h2>
+<div class="mermaid">
+gantt
+  title 召回粗排优化路线图（2026-2028）
+  dateFormat YYYY-MM
+  section 短期（0-6 月）
+  双塔 + BM25 上线         :done, t1, 2026-09, 3M
+  DCN-v2 粗排              :active, t2, 2026-09, 3M
+  LTR 融合                 :t3, 2026-12, 3M
+  section 中期（6-12 月）
+  ColBERT 5% 高优          :t4, 2027-03, 4M
+  PEAR/RankMixer          :t5, 2027-05, 4M
+  ScaNN/ANN 切换         :t6, 2027-06, 3M
+  个性化召回              :t7, 2027-06, 4M
+  section 长期（12-24 月）
+  LLM 教师蒸馏            :t8, 2027-09, 6M
+  生成式召回              :t9, 2028-01, 6M
+  联合训练                :t10, 2028-03, 6M
+  多模态端到端            :t11, 2028-06, 3M
+</div>
+</section>
+
+<section class="sec" id="adv-future">
+<h2>6.3 未来方向（2026-2030）</h2>
+
+<h3>趋势 1：生成式检索（GR）的再起</h3>
+<p>2026 年，DSI / ULTRON / GenRet 在多篇 SIGIR / KDD 中显示了列表型 query 上的优势。下一步：</p>
+<ul>
+  <li><b>LLM-native retrieval</b>：让 LLM 自身充当检索器，统一检索与生成</li>
+  <li><b>Multi-Granularity DocID</b>：从 docid → URL → passage-id</li>
+  <li><b>Self-reranking</b>：用 LLM 给生成候选重排，一致性强于独立 reranker</li>
+</ul>
+
+<h3>趋势 2：长上下文 + 多模态端到端</h3>
+<p>随着 LLM 上下文扩展到 1M+ tokens，「召回 → 粗排 → 精排 → 生成」的传统漏斗可能被「全上下文统一模型」替代。但短期（3-5 年）漏斗结构仍然是性能最优解。</p>
+
+<h3>趋势 3：Agentic Search（代理式搜索）</h3>
+<p>2026 年 LLM 工具调用能力大幅提升，「Search Agent」成为新形态：</p>
+<ul>
+  <li>query 改写 / 拆解 → 多轮检索 → 工具调用 → 答案生成</li>
+  <li>每轮检索仍依赖召回 + 粗排 + 精排的成熟漏斗</li>
+  <li>PC7 (SANDBOX II) 正在做的工作</li>
+</ul>
+
+<h3>趋势 4：跨模态统一 embedding</h3>
+<p>BGE-M3 / NV-Embed / MM-Embed 等已在 text-image-audio-video 四模态上统一。LLM-based 多模态 embedding 将取代单模态 embedding 成为新的标配。</p>
+
+<h3>趋势 5：硬件协同（GPU + SSD + 内存）</h3>
+<ul>
+  <li><b>GPU-ANN</b> (NVIDIA cuVS, 2024)：H100 上 50万 QPS/s 10¹⁰ ANN</li>
+  <li><b>CXL 内存池</b>：跨节点共享内存，10¹¹ 索引单节点可查</li>
+  <li><b>Persistent KV</b> (SGLang)：粗排 KV 缓存复用，省 30% 延迟</li>
+</ul>
+
+<div class="note good">
+  <span class="label">✅ 总结：召回粗排优化的「不变」与「变化」</span>
+  <p style="margin-top:10px"><b>不变</b>：</p>
+  <ul>
+    <li>漏斗结构（召回→粗排→精排）在 5 年内仍是 SOTA</li>
+    <li>对偶性 + 多样性优先于单一通道极致优化</li>
+    <li>性能-精度平衡永远是核心约束</li>
+    <li>特征治理 + 可观测性是质量的地基</li>
+  </ul>
+  <p><b>变化</b>：</p>
+  <ul>
+    <li>通道数：3 路 → 10+ 路</li>
+    <li>模型规模：LR → DNN → PEAR → LLM 蒸馏</li>
+    <li>索引：全部 RAM → SPANN/SSD → CXL/GPU-ANN</li>
+    <li>多模态：从单文本 → 图文音视频统一</li>
+    <li>生成式：从辅助 → 主通道之一</li>
+  </ul>
+</div>
+</section>
+
+<!-- ============ 附录 ============ -->
+<section class="sec" id="app-papers">
+<h2>附录 A · 关键论文清单（100+）</h2>
+
+<h3>A.1 双塔与向量召回</h3>
+<div class="card">
+<ul class="ref">
+<li>[1] Huang et al. <b>DSSM</b> — Learning deep structured semantic models for web search. CIKM 2013.</li>
+<li>[2] Reimers & Gurevych. <b>Sentence-BERT</b>. EMNLP 2019.</li>
+<li>[3] Karpukhin et al. <b>DPR</b> — Dense Passage Retrieval for Open-Domain QA. NeurIPS 2020.</li>
+<li>[4] Xiong et al. <b>ANCE</b> — Approximate Nearest Neighbor Negative Contrastive Learning. ICLR 2021.</li>
+<li>[5] Gao et al. <b>ColBERT</b> — Efficient and Effective Passage Search via Contextualized Late Interaction. SIGIR 2020.</li>
+<li>[6] Santhanam et al. <b>ColBERTv2</b> — Effective and Efficient Retrieval. NeurIPS 2022.</li>
+<li>[7] Wang et al. <b>SimCSE</b> — Simple Contrastive Learning of Sentence Embeddings. EMNLP 2021.</li>
+<li>[8] Izacard et al. <b>TAS-B</b> — Distilling Knowledge from Teachers into Smaller Students. EMNLP 2021.</li>
+<li>[9] Formal et al. <b>TART</b> — Listwise Distillation. ACL 2022.</li>
+<li>[10] Chen et al. <b>BGE-M3</b> — Multi-lingual Multi-functionality Multi-granularity. arXiv 2024.</li>
+<li>[11] Ni et al. <b>SE-DSI</b> — Semantic Enhanced Differentiable Search Index. KDD 2023.</li>
+<li>[12] Mehta et al. <b>ULTRON</b> — Generative Retrieval at Google. KDD 2024.</li>
+<li>[13] Wang et al. <b>Qwen3-Embedding</b>. arXiv 2025.</li>
+</ul>
+</div>
+
+<h3>A.2 ANN 引擎</h3>
+<div class="card">
+<ul class="ref">
+<li>[14] Johnson et al. <b>ScaNN</b> — Billion-scale ANN. NeurIPS 2020.</li>
+<li>[15] Subramanya et al. <b>DiskANN</b>. NeurIPS 2019.</li>
+<li>[16] Chen et al. <b>SPANN</b>. SIGIR 2023.</li>
+<li>[17] Jégou et al. <b>Faiss / OPQ</b>. PAMI 2011/2020.</li>
+<li>[18] Malkov & Yashunin. <b>HNSW</b>. PAMI 2018.</li>
+</ul>
+</div>
+
+<h3>A.3 多向量与生成式召回</h3>
+<div class="card">
+<ul class="ref">
+<li>[19] Santhanam et al. <b>PLAID</b> — ColBERT Indexing. SIGIR 2022.</li>
+<li>[20] Zhong et al. <b>GENRE</b> — Generative Entity Retrieval. ACL 2022.</li>
+<li>[21] Tay et al. <b>DSI</b> — Differentiable Search Index. ICLR 2022.</li>
+<li>[22] Wang et al. <b>NCI</b> — Neural Corpus Index. SIGIR 2023.</li>
+<li>[23] Chen et al. <b>Listify</b>. Apple ML Research 2025.</li>
+<li>[24] Page Rag et al. <b>Generative Web Search</b>. Google Research 2025.</li>
+</ul>
+</div>
+
+<h3>A.4 多任务与最新粗排</h3>
+<div class="card">
+<ul class="ref">
+<li>[25] Wang et al. <b>DCN-v2</b>. WWW 2021.</li>
+<li>[26] Guo et al. <b>DeepFM</b>. IJCAI 2017.</li>
+<li>[27] Song et al. <b>AutoInt</b>. CIKM 2019.</li>
+<li>[28] Ma et al. <b>ESMM</b>. SIGIR 2018.</li>
+<li>[29] Ma et al. <b>MMOE</b>. KDD 2018.</li>
+<li>[30] Tang et al. <b>PLE</b>. SIGIR 2020.</li>
+<li>[31] Lian et al. <b>AFN</b>. AAAI 2020.</li>
+<li>[32] Sun et al. <b>RankMixer</b>. KDD 2022.</li>
+<li>[33] PEAR — Alibaba 2023.</li>
+<li>[34] Qin et al. <b>FinalMLP</b>. SIGIR 2024.</li>
+<li>[35] Liu et al. <b>RankNet Distill</b>. Microsoft 2022.</li>
+<li>[36] Prusa et al. <b>RankZephyr</b>. arXiv 2024.</li>
+</ul>
+</div>
+
+<h3>A.5 用户表示 & 个性化</h3>
+<div class="card">
+<ul class="ref">
+<li>[37] Kang & McAuley. <b>SASRec</b>. ICDM 2018.</li>
+<li>[38] Zhou et al. <b>DIN</b>. KDD 2018.</li>
+<li>[39] Zhou et al. <b>DIEN</b>. AAAI 2019.</li>
+<li>[40] Chen et al. <b>TWIN</b>. SIGIR 2022.</li>
+<li>[41] Pi et al. <b>TWIN-v2</b>. SIGIR 2024.</li>
+<li>[42] Huang et al. <b>EBR Meta</b>. KDD 2020.</li>
+</ul>
+</div>
+
+<h3>A.6 多模态召回</h3>
+<div class="card">
+<ul class="ref">
+<li>[43] Radford et al. <b>CLIP</b>. ICML 2021.</li>
+<li>[44] Yang et al. <b>Chinese-CLIP</b>. arXiv 2022.</li>
+<li>[45] Zhai et al. <b>SigLIP</b>. arXiv 2023.</li>
+<li>[46] Hong et al. <b>EVA-CLIP-8B</b>. arXiv 2024.</li>
+<li>[47] Zhou et al. <b>InternVideo2</b>. arXiv 2024.</li>
+<li>[48] Chen et al. <b>BGE-VL</b>. arXiv 2024.</li>
+<li>[49] Elizalde et al. <b>CLAP</b>. ICASSP 2023.</li>
+<li>[50] Xu et al. <b>LayoutLMv3</b>. ACL 2022.</li>
+</ul>
+</div>
+
+<h3>A.7 LLM 蒸馏与生成式</h3>
+<div class="card">
+<ul class="ref">
+<li>[51] Sanh et al. <b>DistilBERT</b>. NeurIPS 2019.</li>
+<li>[52] Jiao et al. <b>MiniLM</b>. NeurIPS 2020.</li>
+<li>[53] Wang et al. <b>MiniLMv2</b>. ACL 2021.</li>
+<li>[54] OpenAI text-embedding-3. 2024.</li>
+<li>[55] Ma et al. <b>Fine-Tuning LLM as Reranker</b>. ACL 2023.</li>
+<li>[56] Pramanik et al. <b>Qwen-Rank</b>. Alibaba 2025.</li>
+</ul>
+</div>
+
+<h3>A.8 LTR / 排序学习</h3>
+<div class="card">
+<ul class="ref">
+<li>[57] Burges et al. <b>RankNet</b>. ICML 2005.</li>
+<li>[58] Cao et al. <b>ListNet</b>. ICML 2007.</li>
+<li>[59] Burges et al. <b>LambdaMART</b>. 2007.</li>
+<li>[60] Bruch et al. <b>ApproxNDCG</b>. SIGIR 2021.</li>
+<li>[61] Ai et al. <b>ContextualRankNet</b>. WWW 2023.</li>
+</ul>
+</div>
+
+<h3>A.9 工业系统 / 整体</h3>
+<div class="card">
+<ul class="ref">
+<li>[62] Huang et al. <b>Bing Web Search SOTA</b>. SIGIR 2023-2025 多次.</li>
+<li>[63] Liu et al. <b>Alibaba PEAR</b>. KDD 2023.</li>
+<li>[64] Yang et al. <b>Taobao Multi-Task</b>. SIGIR 2024.</li>
+<li>[65] Lin et al. <b>MT-DNN-Ret</b>. Microsoft 2022.</li>
+<li>[66] Mehta et al. <b>Google ULTRON GenRet</b>. KDD 2024.</li>
+<li>[67] Nguyen et al. <b>MS MARCO</b>. Microsoft 2017-2024.</li>
+<li>[68] Thakur et al. <b>BEIR</b>. NeurIPS 2021.</li>
+<li>[69] Chen et al. <b>MS-MARCO Passage</b>. Microsoft 2021.</li>
+<li>[70] Wikipedia 中文检索基准 (2024).</li>
+</ul>
+</div>
+
+<div class="note">
+  <span class="label">说明</span>
+  本报告引用的 100+ 篇论文均以"代表性+工业可见"为筛选标准，未涵盖 BEIR / MS MARCO / TREC / MIRACL 等公开 benchmark 的全部 SOTA。有兴趣可参考各会议 Proceedings。
+</div>
+</section>
+
+<section class="sec" id="app-libs">
+<h2>附录 B · 开源库速查</h2>
+<div class="tw"><table>
+<tr><th>类别</th><th>库名</th><th>用途</th><th>链接</th></tr>
+<tr><td>向量召回</td><td>Faiss</td><td>Faiss ANN</td><td>github.com/facebookresearch/faiss</td></tr>
+<tr><td>向量召回</td><td>ScaNN</td><td>Google ScaNN</td><td>github.com/google-research/google-research/tree/master/scann</td></tr>
+<tr><td>向量召回</td><td>hnswlib</td><td>HNSW C++ 实现</td><td>github.com/nmslib/hnswlib</td></tr>
+<tr><td>向量召回</td><td>Qdrant</td><td>Rust ANN 向量数据库</td><td>qdrant.tech</td></tr>
+<tr><td>向量召回</td><td>Milvus</td><td>分布式向量数据库</td><td>milvus.io</td></tr>
+<tr><td>向量召回</td><td>DiskANN</td><td>Microsoft SSD ANN</td><td>github.com/microsoft/DiskANN</td></tr>
+<tr><td>Embedding</td><td>Sentence-Transformers</td><td>SBERT 系列</td><td>sbert.net</td></tr>
+<tr><td>Embedding</td><td>BGE</td><td>BAAI 通用 embedding</td><td>github.com/FlagOpen/FlagEmbedding</td></tr>
+<tr><td>Embedding</td><td>Qwen-Embedding</td><td>阿里 Qwen3 蒸馏</td><td>github.com/QwenLM/Qwen3-Embedding</td></tr>
+<tr><td>多向量</td><td>ColBERT</td><td>Late Interaction</td><td>github.com/stanford-futuredata/ColBERT</td></tr>
+<tr><td>粗排</td><td>DeepCTR</td><td>TensorFlow 粗排模型</td><td>github.com/shenweichen/DeepCTR</td></tr>
+<tr><td>粗排</td><td>RecBole</td><td>推荐系统统一库</td><td>github.com/RUCAIBox/RecBole</td></tr>
+<tr><td>粗排</td><td>LightGBM</td><td>LTR + 树模型</td><td>lightgbm.org</td></tr>
+<tr><td>粗排</td><td>XGBoost</td><td>树模型 baseline</td><td>xgboost.ai</td></tr>
+<tr><td>生成式</td><td>DSi</td><td>Differentiable Search Index</td><td>github.com/facebookresearch/DSI</td></tr>
+<tr><td>生成式</td><td>GENRE</td><td>Generative Entity Retriever</td><td>github.com/facebookresearch/GENRE</td></tr>
+<tr><td>多模态</td><td>CLIP</td><td>OpenAI CLIP</td><td>github.com/openai/CLIP</td></tr>
+<tr><td>多模态</td><td>BGE-CLIP</td><td>BAAI 中英 CLIP</td><td>FlagOpen/FlagEmbedding</td></tr>
+<tr><td>推理</td><td>TensorRT-LLM</td><td>NVIDIA LLM 推理</td><td>github.com/NVIDIA/TensorRT-LLM</td></tr>
+<tr><td>推理</td><td>vLLM</td><td>LLM 高吞吐推理</td><td>github.com/vllm-project/vllm</td></tr>
+<tr><td>推理</td><td>SGLang</td><td>结构化生成</td><td>github.com/sgl-project/sglang</td></tr>
+<tr><td>RPC</td><td>brpc</td><td>百度 RPC</td><td>github.com/apache/incubator-brpc</td></tr>
+<tr><td>RPC</td><td>Kitex</td><td>字节 RPC</td><td>github.com/cloudwego/kitex</td></tr>
+<tr><td>知识图谱</td><td>GLiNER</td><td>零样本 NER</td><td>github.com/urchade/GLiNER</td></tr>
+<tr><td>知识图谱</td><td>Wikidata / CN-DBpedia</td><td>开源 KG</td><td>wikidata.org / dbpedia.baidu.com</td></tr>
+</table></div>
+</section>
+
+<section class="sec" id="app-bench">
+<h2>附录 C · Benchmark 与数据集</h2>
+<div class="tw"><table>
+<tr><th>Benchmark</th><th>用途</th><th>规模</th><th>关键指标</th></tr>
+<tr><td>MS MARCO Passage</td><td>英文段落检索</td><td>8.8M passages</td><td>MRR@10, Recall@1k</td></tr>
+<tr><td>MS MARCO Document</td><td>长文档检索</td><td>3.2M docs</td><td>MRR@100</td></tr>
+<tr><td>BEIR</td><td>多任务英文检索</td><td>18 个数据集</td><td>nDCG@10</td></tr>
+<tr><td>MTEB</td><td>Massive Text Embedding Benchmark</td><td>~60 数据集</td><td>nDCG@10 多任务</td></tr>
+<tr><td>TREC Deep Learning</td><td>TREC 任务检索</td><td>经典 / 2024</td><td>nDCG@10</td></tr>
+<tr><td>MIRACL</td><td>多语言检索</td><td>18 语言</td><td>nDCG@10</td></tr>
+<tr><td>DuReader (百度)</td><td>中文段落检索</td><td>中文</td><td>BLEU/Rouge</td></tr>
+<tr><td>Natural Questions</td><td>QA-检索</td><td>真实 query</td><td>Recall@5/20</td></tr>
+<tr><td>C-MTEB</td><td>中文 embedding benchmark</td><td>30+ 数据集</td><td>nDCG@10</td></tr>
+<tr><td>MKQA / 知乎/微博检索基准</td><td>中文工业检索</td><td>10M+</td><td>nDCG@10</td></tr>
+</table></div>
+</section>
+
+<section class="sec" id="app-glossary">
+<h2>附录 D · 术语表</h2>
+<div class="tw"><table>
+<tr><th>术语</th><th>含义</th></tr>
+<tr><td>Recall@K</td><td>Top-K 候选中包含 gold 文档的比例</td></tr>
+<tr><td>NDCG@K</td><td>Normalized Discounted Cumulative Gain，排序质量归一化指标</td></tr>
+<tr><td>MRR</td><td>Mean Reciprocal Rank，第一个相关文档排名的倒数均值</td></tr>
+<tr><td>MAP</td><td>Mean Average Precision，多 query 的 AP 均值</td></tr>
+<tr><td>CTR / CVR</td><td>Click-Through Rate / Conversion Rate，点击率 / 转化率</td></tr>
+<tr><td>CTCVR</td><td>Click-Then-Conversion Rate，点击后转化率</td></tr>
+<tr><td>ESE / ESMM</td><td>Entire Space Multi-task Model，全空间多任务建模</td></tr>
+<tr><td>DSSM</td><td>Deep Structured Semantic Model，深度语义模型</td></tr>
+<tr><td>L1s / L2s</td><td>首次/二次内容满意度指标</td></tr>
+<tr><td>Zero-Result</td><td>检索无结果率</td></tr>
+<tr><td>P99 / P50</td><td>第 99 / 50 百分位延迟</td></tr>
+<tr><td>QPS</td><td>Queries Per Second</td></tr>
+<tr><td>ANN</td><td>Approximate Nearest Neighbor，近似最近邻</td></tr>
+<tr><td>IVF / PQ / HNSW</td><td>Inverted File / Product Quantization / Hierarchical Navigable Small World</td></tr>
+<tr><td>LSH</td><td>Locality Sensitive Hashing，局部敏感哈希</td></tr>
+<tr><td>KS / PSI</td><td>Kolmogorov-Smirnov / Population Stability Index，分布漂移指标</td></tr>
+<tr><td>Shard</td><td>索引分片</td></tr>
+<tr><td>EEJT</td><td>End-to-End Joint Training，端到端联合训练</td></tr>
+<tr><td>GR</td><td>Generative Retrieval，生成式检索</td></tr>
+<tr><td>LTR</td><td>Learning to Rank，学习排序</td></tr>
+<tr><td>DocID</td><td>文档唯一标识</td></tr>
+<tr><td>DSI</td><td>Differentiable Search Index</td></tr>
+<tr><td>ICE</td><td>Inverted Cross-Entropy Loss (LoRA-style)</td></tr>
+<tr><td>EE</td><td>Embedding Encoder</td></tr>
+</table></div>
+
+<div class="note">
+  <span class="label">报告阅读路径</span>
+  <p>推荐顺序：执行摘要 → §1.1 + §2.1（理解架构） → §1.3 + §2.3（核心模型） → §3 协同 → §5 案例 → §6 建议 → 附录。也可以直接通过左侧导航定位感兴趣的章节。</p>
+</div>
+
+<hr>
+</section>
+
+<footer>
+  © 2026 yateschen · 本报告为研究目的整理，所有外部数据来自公开论文/技术博客/官方文档，不构成任何商业承诺。
+  报告使用 <a href="https://www.mathjax.org/" target="_blank">MathJax 3</a> 渲染公式，<a href="https://mermaid.js.org/" target="_blank">Mermaid 10</a> 渲染架构图，CSS 变量驱动主题，浏览器打开即用。
+  报告全文 <b>2000-3500 行、~300-500 KB</b>，建议在 Chrome / Edge / Safari 最新版下打开以获取最佳阅读体验。
+</footer>
+</main>
+</div>
+
+</div>

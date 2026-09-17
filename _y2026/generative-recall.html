@@ -59,11 +59,15 @@ tags:
 .generative-recall-report .rh-meta .chip svg{width:15px;height:15px;flex:none;opacity:.85}
 
 
-.generative-recall-report .layout{max-width:100%;margin:0 auto;padding:36px 24px 80px;display:flex;gap:36px;align-items:flex-start}
-.generative-recall-report main{flex:1;min-width:0;max-width:860px;margin:0 auto}
+/* 主区域默认占满整宽（不再与目录分列 flex），让正文阅读区最大化 */
+.generative-recall-report .layout{max-width:100%;margin:0 auto;padding:36px 24px 80px}
+.generative-recall-report main{max-width:100%}
 
 
-.generative-recall-report .toc{width:280px;flex:none;position:sticky;top:28px;max-height:calc(100vh - 56px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 14px 22px;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}
+/* 目录：PC 端默认折叠为右侧浮层（translateX 100%），
+   点击 ☰ 目录按钮后展开。≤1080px 在下方 media 中改写为顶部抽屉。 */
+.generative-recall-report .toc{width:280px;position:fixed;right:20px;top:84px;max-height:calc(100vh - 110px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:20px 14px 22px;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;z-index:950;transform:translateX(calc(100% + 40px));transition:transform .3s ease}
+.generative-recall-report .toc.open{transform:translateX(0)}
 .generative-recall-report .toc::-webkit-scrollbar{width:5px}
 .generative-recall-report .toc::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
 .generative-recall-report .toc-title{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;padding:2px 10px 12px;display:flex;align-items:center;gap:8px}
@@ -74,7 +78,9 @@ tags:
 .generative-recall-report .toc a.active{color:var(--primary-dark);background:var(--primary-bg);border-left-color:var(--primary);font-weight:600}
 .generative-recall-report .toc a .num{flex:none;width:20px;height:20px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text-faint);display:inline-flex;align-items:center;justify-content:center;transition:all .18s}
 .generative-recall-report .toc a.active .num{background:var(--primary);border-color:var(--primary);color:#fff}
-.generative-recall-report #tocToggle{display:none}
+/* 目录切换按钮：始终可见（PC 端浮在右上角） */
+.generative-recall-report #tocToggle{display:flex;position:fixed;top:84px;right:20px;z-index:960;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:700;color:var(--primary-dark);cursor:pointer;transition:opacity .2s ease, transform .2s ease}
+.generative-recall-report .toc.open ~ #tocToggle{opacity:0;pointer-events:none;transform:translateX(60px)}
 
 
 .generative-recall-report .chapter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:40px 44px 36px;margin-bottom:30px;position:relative;overflow:hidden}
@@ -194,10 +200,12 @@ tags:
 
 
 @media (max-width:1080px){
-  .generative-recall-report .layout{flex-direction:column;padding:24px 16px 60px}
-  .generative-recall-report .toc{width:100%;position:fixed;top:0;left:0;right:0;z-index:950;max-height:78vh;border-radius:0 0 16px 16px;transform:translateY(-104%);transition:transform .28s ease;box-shadow:var(--shadow-lg)}
+  .generative-recall-report .layout{padding:24px 16px 60px}
+  /* 目录改成顶部抽屉（translateY），覆盖 PC 端的 translateX 隐藏 */
+  .generative-recall-report .toc{width:100%;top:0;left:0;right:0;max-height:78vh;border-radius:0 0 16px 16px;transform:translateY(-104%);transition:transform .28s ease;box-shadow:var(--shadow-lg)}
   .generative-recall-report .toc.open{transform:translateY(0)}
-  .generative-recall-report #tocToggle{display:flex;position:fixed;top:14px;right:14px;z-index:960;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-md);border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:700;color:var(--primary-dark);cursor:pointer}
+  /* 按钮在 mobile 重新贴顶角，避免与 hero 内容重叠 */
+  .generative-recall-report #tocToggle{top:14px;right:14px}
   .generative-recall-report .chapter{padding:28px 22px 26px}
   .generative-recall-report .ch-lead, .generative-recall-report .ch-tags{padding-left:0}
   .generative-recall-report .report-header{padding:44px 22px 40px}
