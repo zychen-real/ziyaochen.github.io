@@ -1,0 +1,205 @@
+---
+layout: post
+title: "SANDBOX SEARCH AGENT"
+subtitle: "自己决定搜什么、搜几轮，动手前先征得你同意"
+date: 2026-09-17 14:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: false
+mathjax: false
+tags:
+    - Toy
+    - 搜索
+    - Agent
+    - Demo
+---
+
+<style>
+  .toy-demo{ max-width: 1240px; margin: 0 auto; }
+  .toy-demo .video-card{
+    background: #161c24;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  }
+  .toy-demo .video-card video{
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    background: #000;
+  }
+  .toy-demo .meta-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #8b98a8;
+    font-size: 13.5px;
+    margin: 14px 4px 0;
+  }
+  .toy-demo .meta-row b{ color: #d7e0ea; font-weight: 500; }
+  .toy-demo .desc{
+    background: #f6f8fa;
+    border-left: 4px solid #4f9fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .toy-demo .desc b{ color: #1f6feb; }
+  .toy-demo .download{
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #1f6feb;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background .15s;
+  }
+  .toy-demo .download:hover{ background: #0d47a1; color: #fff; text-decoration: none; }
+  .toy-demo .specs{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .toy-demo .specs th, .toy-demo .specs td{
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  .toy-demo .specs th{ background: #f6f8fa; color: #57606a; font-weight: 600; }
+  .toy-demo .changelog li{ margin: 6px 0; }
+  .toy-demo .perm{
+    background: #f2f9f4;
+    border: 1px solid #c8e6d0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14.5px;
+    line-height: 1.9;
+  }
+  .toy-demo .perm .dot{
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .toy-demo .perm .read{ background: #1a7f37; }
+  .toy-demo .perm .write{ background: #d29922; }
+  .toy-demo .perm .destroy{ background: #cf222e; }
+  .toy-demo .perm b{ color: #1f6feb; }
+  .toy-demo .chip{
+    display: inline-block;
+    background: #eaf4ea;
+    color: #1a7f37;
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 12.5px;
+    margin: 2px 4px 2px 0;
+  }
+  .toy-demo .asks{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  @media (max-width: 760px){ .toy-demo .asks{ grid-template-columns: 1fr; } }
+  .toy-demo .asks div{
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #57606a;
+  }
+</style>
+
+<div class="toy-demo">
+
+<p><b>SANDBOX SEARCH AGENT</b> —— 与上一条
+<a href="{{ '/toy/sandbox-search-workflow/' | relative_url }}">SANDBOX WORKFLOW</a>
+的固定编排相对：这个版本<b>自己决定搜什么、搜几轮</b>，并且在动手改数据之前会先征得你的同意。</p>
+
+<div class="video-card">
+  <video controls preload="metadata" poster="{{ '/img/toys/sandbox-search-agent-poster.png' | relative_url }}">
+    <source src="{{ '/img/toys/sandbox-search-agent.mp4' | relative_url }}" type="video/mp4">
+    你的浏览器不支持 HTML5 video 标签。
+  </video>
+  <div class="meta-row">
+    <span><b>时长</b> 00:35</span>
+    <span><b>分辨率</b> 3456×2234 → 1920×1240</span>
+    <span><b>编码</b> H.264（无音轨）</span>
+    <span><b>大小</b> 4.5 MB</span>
+  </div>
+</div>
+
+<div style="text-align:center; margin-top:18px;">
+  <a class="download" href="{{ '/img/toys/sandbox-search-agent.mp4' | relative_url }}" download>下载视频（mp4 · 4.5 MB）</a>
+</div>
+
+<h2 id="about">这是什么</h2>
+
+<div class="desc">
+  界面上的一句话说得最准：<b>「看得见过程的 SANDBOX AGENT」</b>——
+  它会自己决定搜什么、搜几轮，并在动手改动数据之前先征得你的同意。
+  可检索的内容源有 <span class="chip">公众号文章</span><span class="chip">网页</span><span class="chip">视频号</span>。
+</div>
+
+<h2 id="perm">工具鉴权分级</h2>
+
+<p>这是整个设计里最值得说的部分 —— 工具按<b>破坏性</b>分三档，而不是一刀切放开或收紧：</p>
+
+<div class="perm">
+  <div><span class="dot read"></span><b>只读</b>　查询类工具，默认可用</div>
+  <div><span class="dot write"></span><b>写入</b>　需授权，且每次调用都要你确认</div>
+  <div><span class="dot destroy"></span><b>破坏性</b>　不可逆操作，另有参数校验与每日次数上限</div>
+</div>
+
+<p>输入框下方常驻一行提示：<i>「当前仅启用只读工具，如需写入 / 删除请在『工具与权限』中授权」</i>，
+把当前的权限状态一直摆在眼前，而不是藏进设置页。</p>
+
+<h2 id="ui">界面信息</h2>
+
+<table class="specs">
+  <tr><th>位置</th><th>内容</th></tr>
+  <tr><td>左栏</td><td>新建会话 + 会话列表（可重命名 / 删除）</td></tr>
+  <tr><td>顶栏左</td><td>当前模型标识 <code>qwen36_35b_a3b_fp8_rl_2gpu</code> + 在线指示灯</td></tr>
+  <tr><td>顶栏右</td><td>Token 用量 <code>1.2k / 72.0k</code>、<code>工具与权限</code>、<code>审计日志</code>、跳转 <code>SANDBOX WORKFLOW</code></td></tr>
+  <tr><td>输入区</td><td>Enter 发送 / Shift+Enter 换行</td></tr>
+  <tr><td>底部</td><td>「会话即身份，凭据只存在你的浏览器本地」</td></tr>
+</table>
+
+<h2 id="asks">内置示例问题</h2>
+
+<div class="asks">
+  <div>深圳最近有什么适合亲子的活动？</div>
+  <div>高血压患者饮食要注意什么？请给出依据</div>
+  <div>帮我找几个讲 RAG 检索优化的公众号文章</div>
+  <div>用视频号搜一下「露营装备」的实测视频</div>
+</div>
+
+<h2 id="diff">与 WORKFLOW 版的区别</h2>
+
+<table class="specs">
+  <tr><th>维度</th><th>SANDBOX WORKFLOW</th><th>SANDBOX AGENT</th></tr>
+  <tr><td>编排方式</td><td>固定流水线，人工配参数</td><td>自主决定搜什么、搜几轮</td></tr>
+  <tr><td>轮次</td><td>手动设上限</td><td>自行判断何时收敛</td></tr>
+  <tr><td>交互</td><td>表单填写 → 提交 → 看结果</td><td>多轮对话</td></tr>
+  <tr><td>安全</td><td>只读检索</td><td>工具三级鉴权 + 写操作逐次确认</td></tr>
+  <tr><td>适合</td><td>调参、对比、复现</td><td>开放式提问</td></tr>
+</table>
+
+<h2 id="notes">说明</h2>
+
+<ul>
+  <li>原视频是 <code>.mov</code>（Retina 录屏，3456×2234，52 MB，无音轨）。已用
+      <code>ffmpeg</code> 转码为 1920×1240 H.264 mp4（4.5 MB），并截第 3 秒的帧做封面。</li>
+  <li>演示环境跑在内网 IP 上，属于本地沙盒，非公开服务。</li>
+  <li>本文描述取自视频界面的可见信息；模型标识、Token 配额等均为演示环境的当时状态。</li>
+</ul>
+
+</div>

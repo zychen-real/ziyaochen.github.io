@@ -1,0 +1,174 @@
+---
+layout: post
+title: "SANDBOX SEARCH WORKFLOW"
+subtitle: "把搜索链路拆成可配置的流水线，每一步都看得见"
+date: 2026-09-17 13:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: false
+mathjax: false
+tags:
+    - Toy
+    - 搜索
+    - Workflow
+    - Demo
+---
+
+<style>
+  .toy-demo{ max-width: 1240px; margin: 0 auto; }
+  .toy-demo .video-card{
+    background: #161c24;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  }
+  .toy-demo .video-card video{
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    background: #000;
+  }
+  .toy-demo .meta-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #8b98a8;
+    font-size: 13.5px;
+    margin: 14px 4px 0;
+  }
+  .toy-demo .meta-row b{ color: #d7e0ea; font-weight: 500; }
+  .toy-demo .desc{
+    background: #f6f8fa;
+    border-left: 4px solid #4f9fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .toy-demo .desc b{ color: #1f6feb; }
+  .toy-demo .download{
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #1f6feb;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background .15s;
+  }
+  .toy-demo .download:hover{ background: #0d47a1; color: #fff; text-decoration: none; }
+  .toy-demo .specs{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .toy-demo .specs th, .toy-demo .specs td{
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  .toy-demo .specs th{ background: #f6f8fa; color: #57606a; font-weight: 600; }
+  .toy-demo .changelog li{ margin: 6px 0; }
+  .toy-demo .pipeline{
+    background: #0b0f14;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    color: #9fd3ff;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .toy-demo .chip{
+    display: inline-block;
+    background: #eaf4ea;
+    color: #1a7f37;
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 12.5px;
+    margin: 2px 4px 2px 0;
+  }
+  .toy-demo .chip.off{ background: #f0f3f6; color: #8b949e; }
+</style>
+
+<div class="toy-demo">
+
+<p><b>SANDBOX SEARCH WORKFLOW</b> —— 把一次搜索拆成<b>可配置的流水线</b>，左边填参数，右边逐轮跑，每一步的中间结果都摊开来看。</p>
+
+<div class="video-card">
+  <video controls preload="metadata" poster="{{ '/img/toys/sandbox-search-workflow-poster.png' | relative_url }}">
+    <source src="{{ '/img/toys/sandbox-search-workflow.mp4' | relative_url }}" type="video/mp4">
+    你的浏览器不支持 HTML5 video 标签。
+  </video>
+  <div class="meta-row">
+    <span><b>时长</b> 02:17</span>
+    <span><b>分辨率</b> 3456×2234 → 1920×1240</span>
+    <span><b>编码</b> H.264（无音轨）</span>
+    <span><b>大小</b> 23 MB</span>
+  </div>
+</div>
+
+<div style="text-align:center; margin-top:18px;">
+  <a class="download" href="{{ '/img/toys/sandbox-search-workflow.mp4' | relative_url }}" download>下载视频（mp4 · 23 MB）</a>
+</div>
+
+<h2 id="about">这是什么</h2>
+
+<div class="desc">
+  一个搜索链路的<b>沙盒调试台</b>。填入用户查询和画像，系统按固定编排逐轮执行：
+  <b>改写 query → 检索公众号文章 / 网页 → 提取 nugget → 缺口分析</b>，
+  并在收敛后综合出最终答案。和自主 Agent 的区别在于：这里的每一步、每一轮都是
+  <b>预先编排好</b>的，参数明确、过程可复现。
+</div>
+
+<h2 id="pipeline">执行链路</h2>
+
+<div class="pipeline">用户查询 + 用户信息 + 用户上下文 + 搜索时间
+        │
+        ▼
+   ┌─────────────────────────────────────────┐
+   │  改写 query                              │
+   │    ↓                                     │
+   │  检索：公众号搜索 / 网页搜索 / 视频号搜索  │
+   │    ↓                                     │
+   │  提取 nugget                             │
+   │    ↓                                     │
+   │  缺口分析 ──── 未收敛 ──→ 下一轮（最多 N 轮）
+   └─────────────────────────────────────────┘
+        │ 收敛
+        ▼
+    综合生成最终答案</div>
+
+<h2 id="params">可配置项</h2>
+
+<p>视频里左侧面板从上到下依次是：</p>
+
+<table class="specs">
+  <tr><th>分组</th><th>参数</th></tr>
+  <tr><td>输入</td><td>用户查询（必填）、用户信息（地域 / 画像，可选）、用户上下文（历史行为，可选）、搜索时间（默认当前时刻）</td></tr>
+  <tr><td>LLM 调用源</td><td><code>knot 智能体</code> / <code>qwen (xiaocai)</code> —— 整条链路 4 段统一生效</td></tr>
+  <tr><td>检索通道</td><td><span class="chip">公众号搜索</span><span class="chip">网页搜索</span><span class="chip">视频号搜索</span><span class="chip off">脉络卡片</span></td></tr>
+  <tr><td>链路开关</td><td><span class="chip off">首轮仅原 query（第一轮不改写）</span><span class="chip">需求偏移检测</span></td></tr>
+  <tr><td>轮次控制</td><td>单 Sub Query 篇数、最大轮次、每轮 query 数、每轮文档上限</td></tr>
+</table>
+
+<p>顶栏还有 <code>批量任务</code>、<code>历史归档</code> 两个入口，以及跳转到
+<a href="{{ '/toy/sandbox-search-agent/' | relative_url }}">SANDBOX AGENT</a> 的链接。
+右上角的空闲 / 忙碌指示灯用来看当前是否有任务在跑。</p>
+
+<h2 id="notes">说明</h2>
+
+<ul>
+  <li>原视频是 <code>.mov</code>（Retina 录屏，3456×2234，376 MB，无音轨）。已用
+      <code>ffmpeg</code> 转码为 1920×1240 H.264 mp4（23 MB），并截第 5 秒的帧做封面。</li>
+  <li>演示环境跑在内网 IP 上，属于本地沙盒，非公开服务。</li>
+  <li>本文的链路与参数说明取自视频界面的可见信息；具体实现细节未展开。</li>
+</ul>
+
+</div>
