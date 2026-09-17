@@ -1,0 +1,1264 @@
+---
+layout: post
+title: "RankMixer 论文详解 — Scaling Up Ranking Models in Industrial Recommenders"
+subtitle: "工业级推荐系统排序模型的规模化扩展"
+date: 2026-07-23 12:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: true
+mathjax: false
+tags:
+    - 论文
+    - 推荐系统
+    - 深度学习
+    - RankMixer
+---
+
+<style>
+
+  :root{
+    --primary: #1f6feb;
+    --primary-dark: #0d47a1;
+    --accent: #ff6b35;
+    --success: #2ea043;
+    --warning: #d29922;
+    --bg: #f6f8fa;
+    --bg-card: #ffffff;
+    --text: #1f2328;
+    --text-muted: #57606a;
+    --border: #d0d7de;
+    --code-bg: #f0f3f6;
+    --highlight: #fff8c5;
+  }
+  .rank-mixer-report *{ box-sizing: border-box; margin: 0; padding: 0; }
+  .rank-mixer-report body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .rank-mixer-report .container{ max-width: 1180px; margin: 0 auto; padding: 24px; }
+  .rank-mixer-report /* Header */
+  header.hero{
+    background: linear-gradient(135deg, #1f6feb 0%, #6e40c9 50%, #ff6b35 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    box-shadow: 0 8px 32px rgba(31, 111, 235, 0.25);
+  }
+  .rank-mixer-report header.hero .tag{
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-right: 8px;
+    backdrop-filter: blur(4px);
+  }
+  .rank-mixer-report header.hero h1{
+    font-size: 38px;
+    margin: 16px 0 12px;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  .rank-mixer-report header.hero .subtitle{
+    font-size: 18px;
+    opacity: 0.95;
+    margin-bottom: 20px;
+    font-weight: 400;
+  }
+  .rank-mixer-report header.hero .meta-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .rank-mixer-report header.hero .meta-item{
+    background: rgba(255, 255, 255, 0.15);
+    padding: 12px 16px;
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+  }
+  .rank-mixer-report header.hero .meta-item .label{
+    font-size: 12px;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .rank-mixer-report header.hero .meta-item .value{
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .rank-mixer-report /* TOC */
+  .toc{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 32px;
+    position: sticky;
+    top: 12px;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  .rank-mixer-report .toc h3, .rank-mixer-report .toc summary{
+    color: var(--primary);
+    font-size: 15px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  .rank-mixer-report .toc summary::-webkit-details-marker{ display: none; }
+  .rank-mixer-report .toc summary::after{
+    content: "▼";
+    font-size: 11px;
+    color: var(--primary);
+    transition: transform 0.2s;
+    margin-left: auto;
+  }
+  .rank-mixer-report .toc:not([open]) summary{ margin-bottom: 0; }
+  .rank-mixer-report .toc:not([open]) summary::after{ transform: rotate(-90deg); }
+  .rank-mixer-report .toc summary:hover{ color: var(--primary-dark); }
+  .rank-mixer-report .toc ol{
+    list-style: none;
+    columns: 2;
+    column-gap: 24px;
+  }
+  .rank-mixer-report .toc li{
+    padding: 4px 0;
+    break-inside: avoid;
+  }
+  .rank-mixer-report .toc a{
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+  .rank-mixer-report .toc a:hover{ color: var(--primary); }
+  .rank-mixer-report .toc a::before{
+    content: "▸ ";
+    color: var(--primary);
+  }
+  .rank-mixer-report /* Sections */
+  section{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .rank-mixer-report section h2{
+    color: var(--primary-dark);
+    font-size: 26px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rank-mixer-report section h2 .num{
+    background: var(--primary);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .rank-mixer-report section h3{
+    color: var(--primary-dark);
+    font-size: 20px;
+    margin: 24px 0 12px;
+    padding-left: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .rank-mixer-report section h4{
+    color: var(--accent);
+    font-size: 16px;
+    margin: 16px 0 8px;
+    font-weight: 600;
+  }
+  .rank-mixer-report section p, .rank-mixer-report section li{ margin-bottom: 10px; }
+  .rank-mixer-report section ul, .rank-mixer-report section ol{ padding-left: 24px; margin-bottom: 12px; }
+  .rank-mixer-report /* Cards */
+  .cards{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .rank-mixer-report .card{
+    background: linear-gradient(135deg, #f8f9fc 0%, #eef2f7 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .rank-mixer-report .card:hover{ transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); }
+  .rank-mixer-report .card .icon{
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  .rank-mixer-report .card .title{
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .rank-mixer-report .card .desc{
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .rank-mixer-report /* Tables */
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+  .rank-mixer-report th, .rank-mixer-report td{ padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  .rank-mixer-report th{ background: var(--primary); color: white; font-weight: 600; }
+  .rank-mixer-report tr:nth-child(even) td{ background: #f9fafb; }
+  .rank-mixer-report tr:hover td{ background: var(--highlight); }
+  .rank-mixer-report td.num{ text-align: right; font-family: 'SF Mono', Consolas, monospace; }
+  .rank-mixer-report td.highlight{ background: #e7f3ff !important; font-weight: 600; color: var(--primary-dark); }
+  .rank-mixer-report /* Code */
+  code, .rank-mixer-report pre{
+    font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .rank-mixer-report pre{
+    padding: 16px;
+    overflow-x: auto;
+    border-left: 4px solid var(--primary);
+    line-height: 1.5;
+  }
+  .rank-mixer-report /* Quote */
+  blockquote{
+    background: linear-gradient(90deg, #f0f7ff 0%, #e7f3ff 100%);
+    border-left: 4px solid var(--primary);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--text);
+  }
+  .rank-mixer-report blockquote strong{ color: var(--primary-dark); }
+  .rank-mixer-report /* Key insights */
+  .insight{
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-left: 4px solid var(--warning);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .rank-mixer-report .insight .label{
+    color: var(--warning);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .rank-mixer-report /* Stats */
+  .stat-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .rank-mixer-report .stat{
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .rank-mixer-report .stat .num{
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .rank-mixer-report .stat .label{
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .rank-mixer-report .stat.orange{ background: linear-gradient(135deg, #ff6b35 0%, #d43f00 100%); }
+  .rank-mixer-report .stat.green{ background: linear-gradient(135deg, #2ea043 0%, #1a7f37 100%); }
+  .rank-mixer-report .stat.purple{ background: linear-gradient(135deg, #8957e5 0%, #6e40c9 100%); }
+  .rank-mixer-report /* Architecture diagram */
+  .arch-diagram{
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .rank-mixer-report /* Footer */
+  footer{
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .rank-mixer-report /* Print friendly */
+  @media print{
+    .toc, header.hero { position: static; }
+    section { break-inside: avoid; }
+  }
+  .rank-mixer-report /* Math */
+  .math{
+    font-family: 'Cambria Math', 'STIX Two Math', serif;
+    font-style: italic;
+    color: var(--primary-dark);
+  }
+  .rank-mixer-report /* Pills */
+  .pill{
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .rank-mixer-report .pill.blue{ background: #ddf4ff; color: #0969da; }
+  .rank-mixer-report .pill.green{ background: #dafbe1; color: #1a7f37; }
+  .rank-mixer-report .pill.orange{ background: #fff1e5; color: #bc4c00; }
+  .rank-mixer-report .pill.purple{ background: #fbefff; color: #8250df; }
+  .rank-mixer-report .pill.red{ background: #ffebe9; color: #cf222e; }
+  .rank-mixer-report /* Tensor & step */
+  .tensor{
+    display: inline-block;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 2px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+    white-space: pre;
+  }
+  .rank-mixer-report .tensor-grid{
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .rank-mixer-report .id-cell{ background: #ddf4ff; padding: 1px 4px; border-radius: 3px; }
+  .rank-mixer-report .stat-cell{ background: #fff1e5; padding: 1px 4px; border-radius: 3px; }
+  .rank-mixer-report .hl{ background: var(--highlight); padding: 1px 4px; border-radius: 3px; font-weight: 600; }
+  .rank-mixer-report .step{
+    background: linear-gradient(90deg, #f0f7ff 0%, #f9fafb 100%);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 14px 0;
+  }
+  .rank-mixer-report .step .step-title{
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .rank-mixer-report .step .step-desc{
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .rank-mixer-report .two-col{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 12px 0;
+  }
+  @media (max-width: 720px) { .rank-mixer-report .two-col{ grid-template-columns: 1fr; } }
+  .rank-mixer-report .col-card{
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .rank-mixer-report .col-card h4{
+    color: var(--accent);
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .rank-mixer-report .badge{
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .rank-mixer-report .badge.green{ background: #dafbe1; color: #1a7f37; }
+  .rank-mixer-report .badge.orange{ background: #fff1e5; color: #bc4c00; }
+  .rank-mixer-report .badge.blue{ background: #ddf4ff; color: #0969da; }
+
+</style>
+
+<div class="rank-mixer-report">
+
+
+  <header class="hero">
+    <div>
+      <span class="tag">arXiv 2507.15551v3</span>
+      <span class="tag">cs.IR</span>
+      <span class="tag">2025-07-21</span>
+      <span class="tag">ByteDance</span>
+    </div>
+    <h1>RankMixer: Scaling Up Ranking Models in Industrial Recommenders</h1>
+    <div class="subtitle">RankMixer: 工业级推荐系统排序模型的规模化扩展</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="label">作者团队</div>
+        <div class="value">Jie Zhu, Zhifang Fan, Xiaoxie Zhu 等 21 人</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">机构</div>
+        <div class="value">字节跳动 ByteDance</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">DOI</div>
+        <div class="value">10.48550/arXiv.2507.15551</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">页数</div>
+        <div class="value">9 页</div>
+      </div>
+    </div>
+  </header>
+
+  <details class="toc">
+    <summary>目录</summary>
+    <ol>
+      <li><a href="#abstract">摘要 & 核心贡献</a></li>
+      <li><a href="#background">研究背景与动机</a></li>
+      <li><a href="#architecture">整体架构设计</a></li>
+      <li><a href="#token-mixing">Multi-Head Token Mixing</a></li>
+      <li><a href="#pffn">Per-Token FFN</a></li>
+      <li><a href="#moe">Sparse MoE 扩展</a></li>
+      <li><a href="#inference-example">前向推理示例</a></li>
+      <li><a href="#experiments">实验结果</a></li>
+      <li><a href="#scaling-laws">Scaling Laws 研究</a></li>
+      <li><a href="#ablation">消融实验</a></li>
+      <li><a href="#deployment">线上部署与 A/B 测试</a></li>
+      <li><a href="#conclusion">总结与启示</a></li>
+    </ol>
+  </details>
+
+  <section id="abstract">
+    <h2><span class="num">1</span>摘要 & 核心贡献</h2>
+    <p>
+      大语言模型(LLMs)的最新进展激发了人们对扩大推荐系统规模的兴趣。然而在工业界实际部署中，仍面临两大核心障碍：
+    </p>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">⚠️</div>
+        <div class="title">严格的延迟/QPS要求</div>
+        <div class="desc">工业推荐系统必须在严格的延迟限制和高 QPS 下进行训练和服务，模型膨胀会带来巨大成本压力。</div>
+      </div>
+      <div class="card">
+        <div class="icon">🐢</div>
+        <div class="title">CPU 时代遗留架构</div>
+        <div class="desc">现有排序模型中大量人工设计的特征交叉模块继承自 CPU 时代，无法充分利用现代 GPU，导致 MFU 极低（仅 4.5%）。</div>
+      </div>
+    </div>
+
+    <h3>核心贡献</h3>
+    <ul>
+      <li><strong>RankMixer</strong>：一种硬件感知的模型设计，提供统一且可扩展的特征交互架构。</li>
+      <li><strong>Multi-Head Token Mixing</strong>：保留 Transformer 的高并行性，移除二次方复杂度的自注意力。</li>
+      <li><strong>Per-Token FFN</strong>：对不同特征子空间独立建模，并维护跨特征空间的交互。</li>
+      <li><strong>Sparse-MoE 变体</strong>：将模型扩展至 1B 参数级别；配套<strong>ReLU Routing</strong>与<strong>DTSI</strong>策略解决专家不平衡问题。</li>
+    </ul>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="num">10×</div>
+        <div class="label">MFU 提升 (4.5% → 45%)</div>
+      </div>
+      <div class="stat orange">
+        <div class="num">100×</div>
+        <div class="label">参数量扩展 (延迟不变)</div>
+      </div>
+      <div class="stat green">
+        <div class="num">+1.08%</div>
+        <div class="label">APP 使用时长提升</div>
+      </div>
+      <div class="stat purple">
+        <div class="num">1B</div>
+        <div class="label">全流量上线参数</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="background">
+    <h2><span class="num">2</span>研究背景与动机</h2>
+
+    <h3>2.1 推荐系统 Scaling 的现状</h3>
+    <p>
+      自 Kaplan (2020) 和 Hoffmann (2022) 提出 LLM 的 Scaling Laws 以来，研究者一直尝试将"模型规模 → 性能"的规律推广到推荐系统。Ardalani、Chitlangia、Zhang 等人做了初步探索，但工业级应用仍受制于两大瓶颈。
+    </p>
+
+    <h3>2.2 工业推荐的两大约束</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>约束</th>
+          <th>具体表现</th>
+          <th>影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>延迟 & QPS</strong></td>
+          <td>工业推荐需在 10~20ms 内返回结果；峰值 QPS 数百万</td>
+          <td>模型不能无限制膨胀</td>
+        </tr>
+        <tr>
+          <td><strong>MFU 极低</strong></td>
+          <td>历史手工设计模块(DCN, AutoInt, DHEN) 大量使用 element-wise、cross 等操作</td>
+          <td>GPU 算力浪费严重，扩展成本高昂</td>
+        </tr>
+        <tr>
+          <td><strong>异构特征</strong></td>
+          <td>数百维特征分为数值、ID、交叉、序列等不同类型</td>
+          <td>自注意力难以学习跨空间相似度</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.3 关键洞察</h3>
+    <blockquote>
+      <strong>洞察 1</strong>：直接套用 Transformer 中的自注意力并不奏效。推荐特征空间是<em>异构的</em>，在用户 ID 与物品 ID 之间计算相似度内积既困难又昂贵。
+    </blockquote>
+    <blockquote>
+      <strong>洞察 2</strong>：从 LLM Scaling Laws 经验看，<em>模型质量主要与总参数相关</em>，不同扩展方向（深度/宽度/Token 数）性能几乎相同；但从计算效率看，<em>扩大隐藏维度比堆叠更多层更有利于 MFU</em>。
+    </blockquote>
+  </section>
+
+  <section id="architecture">
+    <h2><span class="num">3</span>整体架构设计</h2>
+
+    <h3>3.1 设计哲学</h3>
+    <p>
+      RankMixer 是一种<strong>硬件感知的模型架构</strong>，核心思路是用 GPU 友好的矩阵乘法替代异构、稀疏的交叉模块，实现：
+    </p>
+    <ul>
+      <li>统一的特征交互机制（避免模块碎片化）</li>
+      <li>算力利用率最大化（MFU 提升 10×）</li>
+      <li>沿 4 个正交轴灵活扩展：Token 数 <span class="math">T</span>、宽度 <span class="math">D</span>、层数 <span class="math">L</span>、专家数 <span class="math">E</span></li>
+    </ul>
+
+    <h3>3.2 整体架构图</h3>
+    <div class="arch-diagram">
+   Input Features (300+)                   原始输入特征
+        │
+        ▼
+   ┌─────────────────┐
+   │ Semantic Token  │   语义分词：按领域知识分组拼接，
+   │  Grouping       │   再切分为 T 个 Token
+   └────────┬────────┘
+            │
+            ▼  X₀
+   ╔════════════════════╗
+   ║  RankMixer Block   ║ × L
+   ║  ┌──────────────┐  ║
+   ║  │ LayerNorm    │  ║
+   ║  │ TokenMixing  │  ║   ← 全局交互（无参数）
+   ║  │ + Residual   │  ║
+   ║  └──────┬───────┘  ║
+   ║         ▼          ║
+   ║  ┌──────────────┐  ║
+   ║  │ LayerNorm    │  ║
+   ║  │ PFFN         │  ║   ← Per-Token FFN（独立参数）
+   ║  │ + Residual   │  ║
+   ║  └──────┬───────┘  ║
+   ║         ▼          ║
+   ╚═════════╪══════════╝
+             │
+             ▼  X_L
+   ┌──────────────────┐
+   │   Mean Pooling   │   对最后层表征做均值池化
+   └────────┬─────────┘
+            │
+            ▼
+   ┌──────────────────┐
+   │  Multi-Task Head │   多任务预测 (Finish / Skip / …)
+   └──────────────────┘
+    </div>
+
+    <h3>3.3 逐层计算公式</h3>
+    <p>对于第 <span class="math">n</span> 层：</p>
+    <pre>Ŝ_{n-1} = LN( TokenMixing(X_{n-1}) + X_{n-1} )     # 步骤 1：全局 token 混合
+X_n     = LN( PFFN(Ŝ_{n-1}) + Ŝ_{n-1} )              # 步骤 2：逐 token 前馈</pre>
+    <p>最终输出：<code>o_output = MeanPool( X_L )</code></p>
+
+    <h3>3.4 特征分词（Semantic Token Grouping）</h3>
+    <p>工业推荐模型有 300+ 特征。两种极端方式都有问题：</p>
+    <ul>
+      <li>每个特征 1 个 Token → 参数碎片化，GPU 利用率低</li>
+      <li>全部 1 个 Token → 退化为 DNN，强势特征淹没弱势特征</li>
+    </ul>
+    <p>RankMixer 的解决方案：<strong>利用领域知识将特征按语义分组聚类</strong>，拼接后按固定维度切分为 <span class="math">T</span> 个 token。</p>
+    <pre>x_i = Proj( e_input[ d·(i-1) : d·i ] )</pre>
+
+    <h3>3.5 参数 / FLOPs 估算</h3>
+    <table>
+      <thead>
+        <tr><th>指标</th><th>公式</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Dense 参数量</td><td>≈ 2·k·L·T·D²</td><td><span class="math">k</span> 是 PFFN 扩展因子（通常 4）</td></tr>
+        <tr><td>Dense FLOPs</td><td>≈ 4·k·L·T·D²</td><td>主要是矩阵乘法</td></tr>
+        <tr><td>缩放维度</td><td>T, D, L, E</td><td>四个正交扩展轴</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="token-mixing">
+    <h2><span class="num">4</span>Multi-Head Token Mixing</h2>
+
+    <h3>4.1 设计动机</h3>
+    <p>
+      Transformer 的自注意力机制在推荐系统上<em>并不奏效</em>。原因有三：
+    </p>
+    <ol>
+      <li><strong>异构特征空间</strong>：用户 ID、物品 ID、统计特征处于完全不同的语义空间，计算内积相似度没有意义</li>
+      <li><strong>算力开销巨大</strong>：T 个 token 间两两交互，复杂度 O(T²D)</li>
+      <li><strong>高频特征主导</strong>：自注意力对长尾信号有抑制作用</li>
+    </ol>
+
+    <h3>4.2 实现机制</h3>
+    <p>将每个 token 均匀分为 <span class="math">H</span> 个头，第 <span class="math">h</span> 个头为 <span class="math">x_t^{(h)}</span>，Token Mixing 将同一头位置的向量直接拼接重组：</p>
+    <pre>s^h = Concat( x_1^h, x_2^h, ..., x_T^h )      # 头内拼接</pre>
+    <p>本文设置 <code>H = T</code>，使得残差连接前后 token 数量保持不变。</p>
+
+    <div class="insight">
+      <div class="label">核心优势</div>
+      <p style="margin-top: 6px;">Multi-Head Token Mixing 是<strong>完全无参数</strong>的操作，仅是张量重排（reshape + transpose），比自注意力更高效，且天然适配异构特征交互。</p>
+    </div>
+
+    <h3>4.3 与 Self-Attention 的对比</h3>
+    <table>
+      <thead>
+        <tr><th>维度</th><th>Self-Attention</th><th>Multi-Head Token Mixing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>参数量增量</td><td>+16%</td><td class="highlight">0%</td></tr>
+        <tr><td>FLOPs 增量</td><td>+71.8%</td><td class="highlight">≈ 0%</td></tr>
+        <tr><td>Δ AUC</td><td>-0.03%</td><td class="highlight">基准</td></tr>
+        <tr><td>异构特征适配</td><td>差</td><td class="highlight">好</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="pffn">
+    <h2><span class="num">5</span>Per-Token FFN (PFFN)</h2>
+
+    <h3>5.1 设计动机</h3>
+    <p>
+      在传统 MMoE/DLRM 结构中，所有专家/FFN 共享输入，但推荐特征天然异构（高频 vs 长尾、稠密 vs 稀疏），需要<strong>不同特征子空间独立建模</strong>。
+    </p>
+
+    <h3>5.2 实现机制</h3>
+    <p>每个 token 拥有<strong>独立的 FFN 参数</strong>：</p>
+    <pre>v_t = f_pffn^{t,2}( GELU( f_pffn^{t,1}( s_t ) ) )    # 公式 3.x</pre>
+    <p>对于第 <span class="math">t</span> 个 token <span class="math">s_t</span>，使用专属的升维-激活-降维网络。</p>
+
+    <h3>5.3 与 MMoE / Shared FFN 的关键区别</h3>
+    <table>
+      <thead>
+        <tr><th>特性</th><th>MMoE</th><th>Shared FFN</th><th>Per-Token FFN</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>输入切分</td><td>否（共享输入）</td><td>否</td><td class="highlight">是（不同 token）</td></tr>
+        <tr><td>参数切分</td><td>是（多专家）</td><td>否（共享参数）</td><td class="highlight">是（按 token 独立）</td></tr>
+        <tr><td>特征子空间建模</td><td>弱</td><td>无</td><td class="highlight">强</td></tr>
+        <tr><td>长尾信号保护</td><td>一般</td><td>差</td><td class="highlight">好</td></tr>
+      </tbody>
+    </table>
+
+    <div class="insight">
+      <div class="label">消融实验结论</div>
+      <p style="margin-top: 6px;">将 Per-Token FFN 替换为 Shared FFN，AUC <strong>下降 0.31%</strong>。该组件对性能贡献仅次于 Multi-Head Token Mixing。</p>
+    </div>
+  </section>
+
+  <section id="moe">
+    <h2><span class="num">6</span>Sparse MoE 扩展</h2>
+
+    <h3>6.1 扩展动机</h3>
+    <p>在 Per-Token FFN 基础上引入 MoE 以进一步提升 ROI，但遇到两个经典难题：</p>
+    <ul>
+      <li><strong>专家训练不足</strong>：路由不均衡导致部分专家"饿死"，失去价值</li>
+      <li><strong>路由不平衡</strong>：Top-k 路由倾向于激活少数专家</li>
+    </ul>
+
+    <h3>6.2 ReLU Routing（替代 Top-k + Softmax）</h3>
+    <p>使用 ReLU 门控 + 自适应 ℓ₁ 惩罚：</p>
+    <pre>gate = ReLU( W_gate · s_t )                         # 非负门控
+L_reg = α · ||gate||_1                               # 稀疏正则</pre>
+    <p>高信息量的 token 可激活更多专家，稀疏性由正则项约束。</p>
+
+    <h3>6.3 DTSI-MoE (Dense-Training / Sparse-Inference)</h3>
+    <p>关键创新：训练时使用<strong>两个路由器</strong>（<code>h_train</code> 和 <code>h_infer</code>），推理时仅使用 <code>h_infer</code>。</p>
+    <ul>
+      <li><code>L_reg</code> 仅作用于 <code>h_infer</code></li>
+      <li>两个路由器在训练时均更新</li>
+      <li>保证所有专家在训练时获得充分梯度，防止"专家饥饿/死亡"</li>
+    </ul>
+
+    <div class="insight">
+      <div class="label">关键效果</div>
+      <p style="margin-top: 6px;">结合 DTSI + ReLU 路由的 SMoE，在稀疏激活率降至 1/8 时，仍能<strong>几乎保留 1B Dense 模型的全部精度</strong>，并带来 <strong>+50% 吞吐量提升</strong>。</p>
+    </div>
+
+    <h3>6.4 Scaling 维度</h3>
+    <p>参数和算力可沿 4 个正交轴扩展：</p>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🧩</div>
+        <div class="title">Token 数 T</div>
+        <div class="desc">更多特征分片，捕获更细粒度子空间</div>
+      </div>
+      <div class="card">
+        <div class="icon">📏</div>
+        <div class="title">宽度 D</div>
+        <div class="desc">每个 token 维度，利于提高 MFU</div>
+      </div>
+      <div class="card">
+        <div class="icon">🏗️</div>
+        <div class="title">层数 L</div>
+        <div class="desc">增加网络深度，捕获高阶交互</div>
+      </div>
+      <div class="card">
+        <div class="icon">👥</div>
+        <div class="title">专家数 E</div>
+        <div class="desc">MoE 扩展，稀疏激活提升 ROI</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="inference-example">
+    <h2><span class="num">7</span>前向推理示例：用具体数值走一遍全流程</h2>
+
+    <p>前三节从公式层面描述了 RankMixer 的设计，但纯数学描述对工程同学来说不够直观。本节用<strong>一个极简 toy 例子</strong>（T=2, D=4, L=1, B=1）把整个前向过程手算一遍，每一步都给出张量形状与具体数值。理解了这个例子，工业级（D=1536, T=32, L=2）模型的推理过程就完全相同。</p>
+
+    <h3>7.0 场景设定</h3>
+    <table>
+      <tr><th>特征名</th><th>类型</th><th>原始 embedding 维度</th></tr>
+      <tr><td>user_id</td><td>ID 类</td><td>64</td></tr>
+      <tr><td>item_id</td><td>ID 类</td><td>64</td></tr>
+      <tr><td>age</td><td>数值</td><td>4</td></tr>
+      <tr><td>time_of_day</td><td>数值</td><td>4</td></tr>
+    </table>
+    <p>RankMixer 关键超参：<code>T=2</code> 个 token，<code>D=4</code> 维，<code>L=1</code> 层，batch size = 1。PFFN 扩展因子 k=2。</p>
+
+    <h3>7.1 Step 1 — 特征嵌入 & 语义分词</h3>
+    <p>每个特征先经过各自的 Embedding / 归一化：</p>
+    <div class="tensor-grid">
+<span class="tensor-label">原始 embedding（举例值）：</span>
+e_user_id      = [0.12, 0.45, 0.78, 0.33, ...]      <span style="color:#888">// 64 维</span>
+e_item_id      = [0.67, 0.21, 0.89, 0.12, ...]      <span style="color:#888">// 64 维</span>
+e_age          = [0.50, 0.50, 0.50, 0.50]
+e_time_of_day  = [0.10, 0.30, 0.20, 0.90]</div>
+
+    <p><strong>语义分组</strong>（利用领域知识）：</p>
+    <div class="tensor-grid">
+group_id   = Concat(e_user_id, e_item_id)    <span style="color:#888">// 128 维</span>
+group_stat = Concat(e_age, e_time_of_day)    <span style="color:#888">//   8 维</span></div>
+
+    <p>按固定维度 d=D=4 切分，组内做平均聚合：</p>
+    <div class="tensor-grid">
+token_1 = Proj(group_id[0:64])    = <span class="id-cell">[ 0.41,  0.23,  0.55,  0.18 ]</span>  <span style="color:#888">// ID 子空间</span>
+token_2 = Proj(group_stat[0:4])   = <span class="stat-cell">[ 0.30,  0.40,  0.35,  0.70 ]</span>  <span style="color:#888">// 统计子空间</span></div>
+
+    <p>组成输入张量 <code>X₀</code>：</p>
+    <div class="tensor-grid">
+<span class="tensor-label">X₀  shape = [B=1, T=2, D=4]</span>
+X₀ =  ┌                              ┐
+      │ <span class="id-cell"> 0.41   0.23   0.55   0.18 </span> │  <span style="color:#888">// token_1: ID 类聚合</span>
+      │ <span class="stat-cell"> 0.30   0.40   0.35   0.70 </span> │  <span style="color:#888">// token_2: 统计类聚合</span>
+      └                              ┘</div>
+
+    <h3>7.2 Step 2 — LayerNorm(X₀)</h3>
+    <div class="tensor-grid">
+LN_X₀ =  ┌                                  ┐
+        │ <span class="hl">-0.52</span>  <span class="hl">-1.10</span>   0.39  <span class="hl">-0.95</span> │
+        │ <span class="hl">-1.05</span>  <span class="hl">-0.40</span>   0.18   0.95  │
+        └                                  ┘</div>
+
+    <h3>7.3 Step 3 — Multi-Head Token Mixing <span class="badge green">核心</span></h3>
+    <p>完全无参数的张量重排，替代二次方 Self-Attention。设 <code>H = T = 2</code>，每头 D/H = 2 维：</p>
+
+    <div class="two-col">
+      <div class="col-card">
+        <h4>head = 0</h4>
+        <div class="tensor-grid" style="font-size:12px">
+┌              ┐
+│ <span class="hl">-0.52</span>  <span class="hl">-1.10</span> │  <span style="color:#888">// t1 head0</span>
+│ <span class="hl">-1.05</span>  <span class="hl">-0.40</span> │  <span style="color:#888">// t2 head0</span>
+└              ┘</div>
+      </div>
+      <div class="col-card">
+        <h4>head = 1</h4>
+        <div class="tensor-grid" style="font-size:12px">
+┌              ┐
+│  0.39  -0.95 │  <span style="color:#888">// t1 head1</span>
+│  0.18   0.95 │  <span style="color:#888">// t2 head1</span>
+└              ┘</div>
+      </div>
+    </div>
+
+    <p>把"同一 head、不同 token"的向量拼成新 token — <strong>0 个可学习参数</strong>：</p>
+    <div class="tensor-grid">
+S̃ =  ┌                              ┐
+     │ <span class="id-cell">-0.52</span>  <span class="id-cell">-1.10</span>   0.39  -0.95 │  <span style="color:#888">// 新 token_1 = t1_h0 ⊕ t2_h0</span>
+     │  0.39  -0.95  <span class="stat-cell">-0.52</span>  <span class="stat-cell">-1.10</span> │  <span style="color:#888">// 新 token_2 = t1_h1 ⊕ t2_h1</span>
+     └                              ┘</div>
+
+    <div class="insight">
+      <div class="label">直觉理解</div>
+      <p style="margin-top:6px;">每个新 token 现在<em>混合了所有原 token 在同一子空间的信息</em>。但 <strong>0 个可学习参数</strong>，仅是 <code>reshape + transpose + reshape</code> 三个张量操作。</p>
+    </div>
+
+    <h3>7.4 Step 4 — 残差 + LayerNorm</h3>
+    <div class="tensor-grid">
+Ŝ = S̃ + X₀
+Ŝ =  ┌                                  ┐
+    │ -0.11  -0.87   0.94  -0.77 │
+    │  0.59   0.70   0.63   0.95 │
+    └                                  ┘
+
+LN_Ŝ = LayerNorm(Ŝ)  shape = [1, 2, 4]
+LN_Ŝ =  ┌                              ┐
+        │ -0.40  -1.00   0.80  -0.90 │
+        │  0.20   0.40   0.25   0.95 │
+        └                              ┘</div>
+
+    <h3>7.5 Step 5 — Per-Token FFN <span class="badge orange">关键</span></h3>
+    <p><strong>每个 token 使用独立的 FFN 参数</strong>（与 Transformer 的"所有 token 共享一个 FFN"完全相反）。</p>
+    <p>扩展维度：<code>d_ff = k·D = 2·4 = 8</code></p>
+
+    <div class="two-col">
+      <div class="col-card">
+        <h4>token_1 专属 FFN <span class="badge blue">独立参数 W1_t1, W2_t1</span></h4>
+<pre>h₁ = GELU(W1_t1 · LN_Ŝ[token_1])   <span style="color:#6a9955">// 4 → 8</span>
+v₁ = W2_t1 · h₁                     <span style="color:#6a9955">// 8 → 4</span>
+
+v₁ = [ 0.30,  0.55, -0.20,  0.78 ]</pre>
+        <p style="color:#888;font-size:13px;">↑ ID 子空间专精的 FFN，独立学到了 ID 类特征的交互模式</p>
+      </div>
+      <div class="col-card">
+        <h4>token_2 专属 FFN <span class="badge blue">独立参数 W1_t2, W2_t2</span></h4>
+<pre>h₂ = GELU(W1_t2 · LN_Ŝ[token_2])   <span style="color:#6a9955">// 4 → 8</span>
+v₂ = W2_t2 · h₂                     <span style="color:#6a9955">// 8 → 4</span>
+
+v₂ = [-0.40,  0.12,  0.66, -0.35 ]</pre>
+        <p style="color:#888;font-size:13px;">↑ 统计子空间专精的 FFN，避免被高频 ID 特征"霸占"容量</p>
+      </div>
+    </div>
+
+    <div class="tensor-grid">
+V = PFFN(LN_Ŝ)  shape = [1, 2, 4]
+V =  ┌                                ┐
+    │  0.30   0.55  -0.20   0.78 │  <span style="color:#888">// v1 (ID 子空间)</span>
+    │ -0.40   0.12   0.66  -0.35 │  <span style="color:#888">// v2 (统计子空间)</span>
+    └                                ┘</div>
+
+    <h3>7.6 Step 6 — 残差 → 输出 X₁</h3>
+    <div class="tensor-grid">
+X₁ = V + Ŝ
+X₁ =  ┌                                    ┐
+     │   0.19  -0.32   0.74   0.01 │
+     │   0.19   0.82   1.29   0.60 │
+     └                                    ┘</div>
+    <p>如果 L=2，X₁ 会作为下一层的输入再次进入同一个 Block。</p>
+
+    <h3>7.7 Step 7 — Mean Pooling → 多任务预测</h3>
+    <div class="tensor-grid">
+o = MeanPool(X₁)  shape = [1, 4]
+o = [ 0.19,  0.25,  1.01,  0.31 ]
+
+logit_finish = W_finish · o + b_finish = <span class="hl">0.86</span>   → Sigmoid → 0.703  (完播概率)
+logit_skip   = W_skip   · o + b_skip   = -0.34  → Sigmoid → 0.416  (划走概率)
+logit_like   = W_like   · o + b_like   = 0.12   → Sigmoid → 0.530  (点赞概率)
+logit_follow = W_follow · o + b_follow = 0.42   → Sigmoid → 0.603  (关注概率)</div>
+
+    <h3>7.8 Sparse MoE 变体示例</h3>
+    <p>把 PFFN 升级为 MoE（E=4 个专家，top-2 激活 + ReLU 路由）：</p>
+    <pre><span style="color:#c586c0">def</span> <span style="color:#dcdcaa">moe_ffn</span>(s_t, experts, W_gate):
+    <span style="color:#6a9955"># 1) ReLU 门控（非负，天然稀疏）</span>
+    gate = <span style="color:#dcdcaa">ReLU</span>(W_gate @ s_t)               <span style="color:#6a9955"># shape [E=4]</span>
+    <span style="color:#6a9955">#    → [0.00, 0.45, 0.82, 0.13]</span>
+
+    <span style="color:#6a9955"># 2) 选 top-2 专家</span>
+    top_idx = <span style="color:#dcdcaa">topk</span>(gate, k=2)                <span style="color:#6a9955"># [2, 3]</span>
+
+    <span style="color:#6a9955"># 3) 加权融合</span>
+    y = (gate[2] * experts[2](s_t) + gate[3] * experts[3](s_t)) / (gate[2] + gate[3])
+
+    <span style="color:#6a9955"># 4) 稀疏正则（仅作用于 h_infer）</span>
+    L_reg = α * <span style="color:#dcdcaa">norm</span>(gate, p=1)
+
+    <span style="color:#c586c0">return</span> y, L_reg</pre>
+
+    <p><strong>DTSI 双路由器</strong>：</p>
+    <div class="tensor-grid">
+训练时：<span class="hl">L_total = L_task + α · ||gate_infer||₁</span>     <span style="color:#888"># h_infer 计算正则</span>
+        ├─ h_train 路由器：只用于梯度回传，确保所有专家都"见过"足够样本
+        └─ h_infer 路由器：承担实际激活分布，推理时单独使用
+
+推理时：仅用 h_infer → 在训练时强制保证 h_infer 学到的专家是"充分训练过"的</div>
+
+    <h3>7.9 完整数据流图</h3>
+    <div class="tensor-grid" style="font-size:12px;line-height:1.5">
+X₀  [1, 2, 4]   ← 输入 token
+ │
+ ├─ LayerNorm                                          <span style="color:#888">// [1, 2, 4]</span>
+ │
+ ├─ Token Mixing  (无参数)                              <span style="color:#888">// [1, 2, 4]  ← 跨 token 信息聚合</span>
+ │
+ ├─ 残差 + LayerNorm                                   <span style="color:#888">// [1, 2, 4]</span>
+ │
+ ├─ PFFN  (T=2 个独立 FFN)                              <span style="color:#888">// [1, 2, 4]  ← 子空间专精</span>
+ │
+ ├─ 残差 → X₁  [1, 2, 4]
+ │
+ └─ × L 层
+     │
+     ▼
+MeanPool → o [1, 4] → 多任务塔 (Finish / Skip / Like / Follow)</div>
+
+    <h3>7.10 关键 takeaway</h3>
+    <table>
+      <tr><th>步骤</th><th>作用</th><th>参数量</th><th>FLOPs</th></tr>
+      <tr>
+        <td>Token Mixing</td>
+        <td>跨 token 信息聚合，<strong>替代 Self-Attention</strong></td>
+        <td class="highlight">0（无参数）</td>
+        <td>≈ 0（仅 reshape）</td>
+      </tr>
+      <tr>
+        <td>PFFN</td>
+        <td>每个 token 独立学习</td>
+        <td>T · (2·D·d_ff) ≈ T·4D²·k</td>
+        <td>T · (4·D·d_ff) ≈ T·8D²·k</td>
+      </tr>
+      <tr>
+        <td>MoE 升级</td>
+        <td>进一步提升 ROI</td>
+        <td>+ (E-1) 组专家</td>
+        <td>仅激活 top-k</td>
+      </tr>
+      <tr>
+        <td>Self-Attention（对比）</td>
+        <td>相似度内积</td>
+        <td>4·D²</td>
+        <td class="highlight">2·T·D²  （O(T²D)）</td>
+      </tr>
+    </table>
+
+    <div class="insight">
+      <div class="label">本例中的算力账</div>
+      <p style="margin-top:6px;">
+        ① Token Mixing <strong>完全免费</strong>（0 参数、0 FLOPs），却实现了全局信息交换；<br>
+        ② PFFN 贡献了主要参数和算力，但全是 GPU 友好的大矩阵乘；<br>
+        ③ 相比 Self-Attention，<strong>省掉 71.8% FLOPs</strong>；<br>
+        ④ 这就是 MFU 从 4.5% → 45% 的根本原因——<em>没有 element-wise、没有 sparse gather，全是 cublas 矩阵乘</em>。
+      </p>
+    </div>
+
+    <h3>7.11 从 toy 例子到工业模型</h3>
+    <p>实际抖音线上模型配置：</p>
+    <table>
+      <tr><th>配置</th><th>T</th><th>D</th><th>L</th><th>参数量</th></tr>
+      <tr><td>RankMixer-100M</td><td>16</td><td>768</td><td>2</td><td>~107M</td></tr>
+      <tr><td>RankMixer-1B（线上）</td><td>32</td><td>1536</td><td>2</td><td>~1.1B</td></tr>
+    </table>
+    <p>整个推理过程与 toy 例子<strong>完全同构</strong>，只是矩阵规模变大、Token 切分更细、PFFN 可能升级为 MoE 专家。</p>
+  </section>
+
+  <section id="experiments">
+    <h2><span class="num">8</span>实验结果</h2>
+
+    <h3>11.1 实验环境</h3>
+    <ul>
+      <li><strong>数据</strong>：抖音推荐系统在线日志，每日万亿级记录，实验取两周数据。300+ 特征（数值、ID、交叉、序列），数十亿用户 ID、数亿视频 ID</li>
+      <li><strong>硬件</strong>：数百 GPU，混合分布式训练框架（稀疏部分异步更新，稠密部分同步更新）</li>
+      <li><strong>优化器</strong>：稠密部分 RMSProp (lr=0.01)，稀疏部分 Adagrad</li>
+    </ul>
+
+    <h3>11.2 评估指标</h3>
+    <ul>
+      <li><strong>性能</strong>：AUC, UAUC（Finish / Skip 标签）。工业界 AUC 提升 0.0001 即显著</li>
+      <li><strong>效率</strong>：Dense-Param, Training FLOPs/Batch, MFU</li>
+    </ul>
+
+    <h3>11.3 与 SOTA 方法对比（约 100M 参数级别）</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>模型</th>
+          <th class="num">Finish AUC 提升</th>
+          <th class="num">Skip AUC 提升</th>
+          <th class="num">参数量</th>
+          <th class="num">FLOPs/Batch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>DLRM-MLP-base</td><td class="num">0 (基准)</td><td class="num">0 (基准)</td><td class="num">8.7M</td><td class="num">52G</td></tr>
+        <tr><td>DLRM-MLP-100M</td><td class="num">+0.15%</td><td class="num">+0.15%</td><td class="num">95M</td><td class="num">185G</td></tr>
+        <tr><td>Wukong</td><td class="num">+0.29%</td><td class="num">+0.49%</td><td class="num">122M</td><td class="num">442G</td></tr>
+        <tr><td>HiFormer</td><td class="num">+0.48%</td><td class="num">-</td><td class="num">116M</td><td class="num">326G</td></tr>
+        <tr><td><strong>RankMixer-100M</strong></td><td class="num highlight">+0.64%</td><td class="num highlight">+0.86%</td><td class="num">107M</td><td class="num">233G</td></tr>
+        <tr><td><strong>RankMixer-1B</strong></td><td class="num highlight">+0.95%</td><td class="num highlight">+1.25%</td><td class="num">1.1B</td><td class="num">2.1T</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.4 关键发现</h3>
+    <ol>
+      <li>简单把 DLRM 放大到 100M 收益极小（仅 +0.15%），证明<em>针对推荐数据特性设计架构是必要的</em></li>
+      <li>DCN/RDCN/AutoInt/DHEN 等模型即使参数小，FLOPs 也很大，架构存在效率短板</li>
+      <li>RankMixer 在<strong>取得最佳性能的同时，FLOPs 相对适中</strong>，实现容量与计算负载的最佳平衡</li>
+      <li>从 100M 扩展到 1B，AUC 仍有显著提升（+0.31%），验证 Scaling Law 持续生效</li>
+    </ol>
+  </section>
+
+  <section id="scaling-laws">
+    <h2><span class="num">9</span>Scaling Laws 研究</h2>
+
+    <h3>11.1 核心结论</h3>
+    <p>
+      RankMixer 展现出<strong>最陡峭的 Scaling Law 曲线</strong>（无论参数维度还是 FLOPs 维度）。在工业级数据上验证了 LLM Scaling Laws 经验在推荐系统中的适用性。
+    </p>
+
+    <h3>11.2 各模型扩展性对比</h3>
+    <table>
+      <thead>
+        <tr><th>模型</th><th>参数曲线</th><th>FLOPs 曲线</th><th>问题</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>RankMixer</td><td class="highlight">最陡峭</td><td class="highlight">最陡峭</td><td>✓ 全面领先</td></tr>
+        <tr><td>Wukong</td><td>陡峭</td><td>次陡</td><td>FLOPs 增长过快，ROI 受损</td></tr>
+        <tr><td>HiFormer</td><td>中等</td><td>中等</td><td>特征级 Token 切分 + Attention 效率低</td></tr>
+        <tr><td>DHEN</td><td>平缓</td><td>平缓</td><td>交叉结构可扩展性有限</td></tr>
+        <tr><td>MoE</td><td>不稳定</td><td>不稳定</td><td>专家平衡问题影响扩展性</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.3 扩展维度选择</h3>
+    <blockquote>
+      <strong>关键发现</strong>：与 LLM 一致，模型质量主要与总参数量相关，不同扩展方向（深度 <span class="math">L</span>、宽度 <span class="math">D</span>、Token 数 <span class="math">T</span>）性能几乎相同。
+    </blockquote>
+    <p><strong>但从计算效率看</strong>，<em>增大隐藏维度比堆叠更多层能产生更大的矩阵乘形状</em>，从而获得更高的 MFU。</p>
+
+    <h3>11.4 最终配置</h3>
+    <table>
+      <thead>
+        <tr><th>配置</th><th class="num">D (宽度)</th><th class="num">T (Token 数)</th><th class="num">L (层数)</th><th>参数量</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>RankMixer-100M</td><td class="num">768</td><td class="num">16</td><td class="num">2</td><td>~107M</td></tr>
+        <tr><td>RankMixer-1B</td><td class="num">1536</td><td class="num">32</td><td class="num">2</td><td>~1.1B</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="ablation">
+    <h2><span class="num">10</span>消融实验</h2>
+
+    <h3>11.1 组件消融（RankMixer-100M）</h3>
+    <table>
+      <thead>
+        <tr><th>设置</th><th class="num">Δ AUC</th><th>结论</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>w/o skip connections</td><td class="num">-0.07%</td><td>残差连接有帮助</td></tr>
+        <tr><td><strong>w/o multi-head token mixing</strong></td><td class="num highlight">-0.50%</td><td><strong>核心组件，全局交互不可或缺</strong></td></tr>
+        <tr><td>w/o layer normalization</td><td class="num">-0.05%</td><td>LN 影响较小</td></tr>
+        <tr><td>Per-token FFN → shared FFN</td><td class="num">-0.31%</td><td>独立特征子空间建模重要</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 Token 路由/混合策略对比</h3>
+    <table>
+      <thead>
+        <tr><th>路由策略</th><th class="num">Δ AUC</th><th class="num">Δ Params</th><th class="num">Δ FLOPs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>All-Concat-MLP</td><td class="num">-0.18%</td><td class="num">0.0%</td><td class="num">0.0%</td></tr>
+        <tr><td>All-Share（类似 MoE）</td><td class="num">-0.25%</td><td class="num">0.0%</td><td class="num">0.0%</td></tr>
+        <tr><td>Self-Attention</td><td class="num">-0.03%</td><td class="num">+16%</td><td class="num">+71.8%</td></tr>
+        <tr><td><strong>Multi-Head Token Mixing</strong></td><td class="num highlight">基准</td><td class="num highlight">0%</td><td class="num highlight">0%</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>All-Concat-MLP</strong>：大矩阵学习困难且局部信息丢失</li>
+      <li><strong>All-Share</strong>：失去特征子空间切分和独立建模，性能显著下降</li>
+      <li><strong>Self-Attention</strong>：性能略逊且计算成本暴增（+71.8% FLOPs），证明跨数百异构特征子空间学习相似度的困难性</li>
+    </ul>
+
+    <h3>11.3 Sparse MoE 扩展性 & 专家平衡</h3>
+    <ul>
+      <li><strong>扩展性</strong>：Vanilla SMoE 性能随专家激活减少单调下降；DTSI + ReLU 路由的 SMoE 在稀疏率 1/8 时仍能保留 1B Dense 模型几乎全部精度，吞吐量 +50%</li>
+      <li><strong>专家平衡</strong>：DTSI 保证训练时专家获得充分梯度；ReLU 路由使不同 token 的激活比例动态适应其信息含量。Figure 4 显示不同 token 激活比例呈现健康差异（而非坍缩到少数专家）</li>
+    </ul>
+  </section>
+
+  <section id="deployment">
+    <h2><span class="num">11</span>线上部署与 A/B 测试</h2>
+
+    <h3>11.1 推理成本：参数 70× 增长但延迟不变</h3>
+    <p>从原基线 16M 参数扩展到 RankMixer-1B（<strong>参数量增加 70×</strong>），推理延迟从 14.5ms 降至 14.3ms。原因：</p>
+    <ol>
+      <li><strong>FLOPs/Param 比率下降 3.6×</strong>：RankMixer 设计使参数 +70× 时 FLOPs 仅 +约 20×</li>
+      <li><strong>MFU 提升 10×</strong>：从 4.47% 升至 44.57%，从 Memory-bound 转为 Compute-bound</li>
+      <li><strong>FP16 量化</strong>：理论硬件峰值算力 +2×</li>
+    </ol>
+
+    <h3>11.2 全流量 A/B 测试成果（8 个月长期观察）</h3>
+
+    <h4>📱 抖音主 APP</h4>
+    <table>
+      <thead>
+        <tr><th>指标</th><th>提升幅度</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>活跃天数 (DAU Days)</td><td class="highlight">+0.29%</td></tr>
+        <tr><td>APP 使用时长</td><td class="highlight">+1.08%</td></tr>
+        <tr><td>点赞数</td><td class="highlight">+2.39%</td></tr>
+        <tr><td>完播数</td><td class="highlight">+1.99%</td></tr>
+        <tr><td>评论数</td><td class="highlight">+0.79%</td></tr>
+        <tr><td>低活跃用户活跃天数</td><td class="highlight">+1.74%（最大受益群体）</td></tr>
+      </tbody>
+    </table>
+
+    <h4>📱 抖音 Lite 版</h4>
+    <table>
+      <thead>
+        <tr><th>指标</th><th>提升幅度</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>活跃天数</td><td class="highlight">+0.20%</td></tr>
+        <tr><td>APP 使用时长</td><td class="highlight">+0.99%</td></tr>
+        <tr><td>完播数</td><td class="highlight">+2.07%</td></tr>
+      </tbody>
+    </table>
+
+    <h4>💰 广告场景</h4>
+    <table>
+      <thead>
+        <tr><th>指标</th><th>提升幅度</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AUC</td><td class="highlight">+0.73%</td></tr>
+        <tr><td>广告价值 (ADVV)</td><td class="highlight">+3.90%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="insight">
+      <div class="label">核心结论</div>
+      <p style="margin-top: 6px;">上线了 1B Dense-Parameters 的 RankMixer 进行<strong>全流量服务，且未增加服务成本</strong>。低活跃用户受益最大，证明大规模模型对长尾用户兴趣建模有显著优势。</p>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2><span class="num">12</span>总结与启示</h2>
+
+    <h3>11.1 核心创新点</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🎯</div>
+        <div class="title">硬件感知架构设计</div>
+        <div class="desc">抛弃 CPU 时代交叉模块，用 GPU 友好的矩阵乘和 token 重排实现 10× MFU 提升</div>
+      </div>
+      <div class="card">
+        <div class="icon">🧠</div>
+        <div class="title">取代 Self-Attention</div>
+        <div class="desc">Multi-Head Token Mixing 无参数、更高效，天然适配异构特征</div>
+      </div>
+      <div class="card">
+        <div class="icon">⚖️</div>
+        <div class="title">Per-Token FFN</div>
+        <div class="desc">为每个 token 分配独立 FFN，避免高频特征淹没长尾信号</div>
+      </div>
+      <div class="card">
+        <div class="icon">🚀</div>
+        <div class="title">DTSI + ReLU 路由</div>
+        <div class="desc">解决 MoE 专家饥饿和路由不平衡问题，实现 1B 参数规模</div>
+      </div>
+    </div>
+
+    <h3>11.2 工业价值</h3>
+    <ul>
+      <li>✓ 证明<strong>工业级推荐系统也可遵循 Scaling Laws</strong>，模型质量与参数量正相关</li>
+      <li>✓ 实现<strong>"参数 100× 但延迟不变"</strong>的工程奇迹</li>
+      <li>✓ 全流量上线 1B 模型，<strong>未增加服务成本</strong></li>
+      <li>✓ 在推荐和广告两大场景同时验证通用性</li>
+    </ul>
+
+    <h3>11.3 对搜广推同行的启示</h3>
+    <blockquote>
+      <strong>启示 1</strong>：不要简单堆叠 Transformer，要为推荐数据特性设计专用架构（如 Multi-Head Token Mixing 替代 Self-Attention）。
+    </blockquote>
+    <blockquote>
+      <strong>启示 2</strong>：从 LLM Scaling Laws 借鉴经验，但要注意工业部署的延迟/QPS 约束，<em>MFU 提升带来的成本节约</em>与模型规模同等重要。
+    </blockquote>
+    <blockquote>
+      <strong>启示 3</strong>：MoE 扩展必须配套解决专家饥饿问题，DTSI 训练-推理分离是一种有效方案。
+    </blockquote>
+    <blockquote>
+      <strong>启示 4</strong>：低活跃/长尾用户是大模型最受益的群体，规模化扩展有显著业务价值。
+    </blockquote>
+
+    <h3>11.4 局限性 & 未来方向</h3>
+    <ul>
+      <li>目前仅在抖音场景验证，跨平台泛化性需进一步研究</li>
+      <li>稀疏激活 SMoE 已能保留 1B 精度，但<em>专家合并 / 蒸馏</em>仍有空间</li>
+      <li>Multi-Head Token Mixing 的理论基础（与 MLP-Mixer 的关系）值得深入</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>📄 报告生成于 2026-07-23 | 数据来源：arXiv 2507.15551v3 (RankMixer, ByteDance, 2025)</p>
+    <p>报告路径：/data/html/RankMixer_paper_report.html</p>
+  </footer>
+
+</div>
