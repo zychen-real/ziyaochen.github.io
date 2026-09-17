@@ -54,12 +54,18 @@ exclude:
 # ============================================================
 # Collections
 # ============================================================
-# 2018 年文章合集。Jekyll 不允许以数字开头作为 collection 名（变
-# 量命名限制），所以内部 key 用 y2018，对外的 URL/导航都展示 2018。
+# 每年一个合集。Jekyll 不允许以数字开头作为 collection 名（变量
+# 命名限制），所以内部 key 用 y<年>，对外的 URL/导航都展示年份。
+# 新增年份：1) 在下面加 collection；2) 复制 y2018 的 defaults；
+#          3) 复制 2018.html 出 <年>.html；4) nav.html 加链接；
+#          5) 把 index.html 里的 site.y<最新年份> 换成新集合。
 collections:
   y2018:
     output: true
     permalink: /2018/:path/
+  y2026:
+    output: true
+    permalink: /2026/:path/
 
 # 给所有文章统一补默认值，避免每篇都写重复字段
 defaults:
@@ -75,6 +81,15 @@ defaults:
   - scope:
       path: ""
       type: y2018
+    values:
+      layout: post
+      author: ziyaochen
+      header-img: img/2017-bg.jpg
+      catalog: true
+      mathjax: true
+  - scope:
+      path: ""
+      type: y2026
     values:
       layout: post
       author: ziyaochen

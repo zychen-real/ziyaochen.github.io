@@ -3,40 +3,39 @@ layout: page
 description: "Keep Thinking."
 ---
 
-{% for post in paginator.posts %}
+{%- comment -%}
+  首页默认展示最新年份（2026）的所有文章，按日期倒序。
+  旧年份合集通过导航栏 2018 / 2026 等入口访问。
+  新增年份时这里也要同步换成新的 site.y<年>。
+{%- endcomment -%}
+{% assign items = site.y2026 | sort: 'date' | reverse %}
+
+{% if items.size == 0 %}
+<p class="page-empty">2026 年合集暂还没有文章。前往 <a href="{{ '/2018/' | relative_url }}">2018 合集</a> 查看历史内容。</p>
+{% else %}
+
+<p class="page-article-count">共 {{ items.size }} 篇文章 · <a href="{{ '/2026/' | relative_url }}">2026 合集</a></p>
+
+{% for item in items %}
 <div class="post-preview">
-    <a href="{{ post.url | relative_url }}">
+    <a href="{{ item.url | relative_url }}">
         <h2 class="post-title">
-            {{ post.title }}
+            {{ item.title }}
         </h2>
-        {% if post.subtitle and post.subtitle != "" %}
+        {% if item.subtitle and item.subtitle != "" %}
         <h3 class="post-subtitle">
-            {{ post.subtitle }}
+            {{ item.subtitle }}
         </h3>
         {% endif %}
         <div class="post-content-preview">
-            {{ post.content | strip_html | truncate: 200 }}
+            {{ item.content | strip_html | truncate: 200 }}
         </div>
     </a>
     <p class="post-meta">
-        Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%Y-%m-%d" }}
+        Posted by {% if item.author %}{{ item.author }}{% else %}{{ site.title }}{% endif %} on {{ item.date | date: "%Y-%m-%d" }}
     </p>
 </div>
 <hr>
 {% endfor %}
 
-<!-- Pager -->
-{% if paginator.total_pages > 1 %}
-<ul class="pager">
-    {% if paginator.previous_page %}
-    <li class="previous">
-        <a href="{{ paginator.previous_page_path | relative_url }}">&larr; 上一页</a>
-    </li>
-    {% endif %}
-    {% if paginator.next_page %}
-    <li class="next">
-        <a href="{{ paginator.next_page_path | relative_url }}">下一页 &rarr;</a>
-    </li>
-    {% endif %}
-</ul>
 {% endif %}

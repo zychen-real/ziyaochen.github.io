@@ -128,3 +128,16 @@
     font-size: 16px;
   }
 }
+
+/* --- 列表页（年份合集 / 首页）--- */
+.page-article-count {
+  color: #888;
+  font-size: 0.95em;
+  margin: 0 0 28px;
+}
+.page-empty {
+  color: #888;
+  font-style: italic;
+  padding: 40px 0;
+  text-align: center;
+}

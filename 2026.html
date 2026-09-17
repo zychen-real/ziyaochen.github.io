@@ -1,0 +1,31 @@
+---
+layout: page
+title: 2026 合集
+description: "2026 年发表的所有文章合集"
+permalink: /2026/
+header-img: img/2017-bg.jpg
+---
+
+{% assign items = site.y2026 | sort: 'date' | reverse %}
+<p class="page-article-count">共 {{ items.size }} 篇文章</p>
+
+{% for item in items %}
+<div class="post-preview">
+    <a href="{{ item.url | relative_url }}">
+        <h2 class="post-title">{{ item.title }}</h2>
+        {% if item.subtitle and item.subtitle != "" %}
+        <h3 class="post-subtitle">{{ item.subtitle }}</h3>
+        {% endif %}
+    </a>
+    <p class="post-meta">
+        {{ item.date | date: "%Y-%m-%d" }}
+        {% if item.tags and item.tags.size > 0 %}
+        &nbsp;|&nbsp;
+        {% for tag in item.tags %}
+        <span class="tag">{{ tag }}</span>{% unless forloop.last %} &middot; {% endunless %}
+        {% endfor %}
+        {% endif %}
+    </p>
+</div>
+<hr>
+{% endfor %}
