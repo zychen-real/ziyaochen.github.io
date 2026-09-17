@@ -19,6 +19,9 @@
                     <li>
                         <a href="{{ '/' | relative_url }}">Home</a>
                     </li>
+                    <li>
+                        <a href="{{ '/toy/' | relative_url }}">Toy</a>
+                    </li>
                     {%- comment -%}
                       年份合集下拉：站点所有 collection 里名字形如 y<年份>
                       的都算年份合集，按年份倒序。入口显示最新年份，
@@ -59,9 +62,6 @@
                         {%- endif -%}
                     </li>
                     {%- endif -%}
-                    <li>
-                        <a href="{{ '/toy/' | relative_url }}">Toy</a>
-                    </li>
                     <li>
                         <a href="{{ '/about/' | relative_url }}">About</a>
                     </li>
