@@ -4,38 +4,118 @@ description: "Keep Thinking."
 ---
 
 {%- comment -%}
-  首页默认展示最新年份（2026）的所有文章，按日期倒序。
-  旧年份合集通过导航栏 2018 / 2026 等入口访问。
-  新增年份时这里也要同步换成新的 site.y<年>。
+  首页 = Toy 视频墙。
+  每张卡片的视频 / 封面 / 时长来自各 toy 文章 front matter 的
+  video / poster / duration 字段（新增 toy 时只要写上这三个字段，
+  首页会自动收录，这里不用改）。
+  文章合集仍可通过导航栏 2018 / 2026 进入。
 {%- endcomment -%}
-{% assign items = site.y2026 | sort: 'date' | reverse %}
+{% assign toys = site.toy | sort: 'date' | reverse %}
 
-{% if items.size == 0 %}
-<p class="page-empty">2026 年合集暂还没有文章。前往 <a href="{{ '/2018/' | relative_url }}">2018 合集</a> 查看历史内容。</p>
+<div class="toy-wall">
+
+{% if toys.size == 0 %}
+<p class="page-empty">Toy 合集暂还没有内容。</p>
 {% else %}
 
-<p class="page-article-count">共 {{ items.size }} 篇文章 · <a href="{{ '/2026/' | relative_url }}">2026 合集</a></p>
-
-{% for item in items %}
-<div class="post-preview">
-    <a href="{{ item.url | relative_url }}">
-        <h2 class="post-title">
-            {{ item.title }}
-        </h2>
-        {% if item.subtitle and item.subtitle != "" %}
-        <h3 class="post-subtitle">
-            {{ item.subtitle }}
-        </h3>
-        {% endif %}
-        <div class="post-content-preview">
-            {{ item.content | strip_html | truncate: 200 }}
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by {% if item.author %}{{ item.author }}{% else %}{{ site.title }}{% endif %} on {{ item.date | date: "%Y-%m-%d" }}
-    </p>
+<div class="toy-wall-head">
+    <h2>Toy 合集</h2>
+    <p>一些小工具 / 小实验的演示录屏，共 {{ toys.size }} 条。点封面直接播放，点标题看详情。</p>
 </div>
-<hr>
+
+<div class="toy-grid">
+{% for item in toys %}
+    <div class="toy-card">
+        {% if item.video %}
+        <div class="toy-card-media">
+            <video
+                controls
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                data-toy-video
+                {% if item.poster %}poster="{{ item.poster | relative_url }}"{% endif %}>
+                <source src="{{ item.video | relative_url }}" type="video/mp4">
+                你的浏览器不支持 HTML5 video 标签。
+            </video>
+            {% if item.duration %}<span class="toy-card-dur">{{ item.duration }}</span>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="toy-card-body">
+            <a class="toy-card-title" href="{{ item.url | relative_url }}">{{ item.title }}</a>
+            {% if item.subtitle and item.subtitle != "" %}
+            <p class="toy-card-sub">{{ item.subtitle }}</p>
+            {% endif %}
+
+            <div class="toy-card-foot">
+                <span class="toy-card-date">{{ item.date | date: "%Y-%m-%d" }}</span>
+                {% if item.tags and item.tags.size > 0 %}
+                <span class="toy-card-tags">
+                    {% for tag in item.tags %}{% unless tag == "Toy" %}<span class="toy-chip">{{ tag }}</span>{% endunless %}{% endfor %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 {% endfor %}
+</div>
+
+<p class="toy-wall-more">
+    想看文章？前往 <a href="{{ '/2026/' | relative_url }}">2026 合集</a>
+    或 <a href="{{ '/2018/' | relative_url }}">2018 合集</a>。
+</p>
 
 {% endif %}
+
+</div>
+
+{%- comment -%}
+  视频虽然都带 autoplay，但三条加起来约 35 MB，全部同时缓冲会互相抢
+  带宽。这里用 IntersectionObserver 只播放进入视口的那几个，滚出视口
+  就暂停，省流量也省 CPU。
+  已手动暂停过的视频（data-toy-paused）不再被脚本自动恢复，避免跟用户
+  的操作对抗。浏览器不支持 IntersectionObserver 时不做任何干预，退回
+  成原生 autoplay 行为。
+{%- endcomment -%}
+<script>
+(function () {
+  var videos = Array.prototype.slice.call(
+    document.querySelectorAll('.toy-grid video[data-toy-video]')
+  );
+  if (!videos.length) return;
+
+  videos.forEach(function (v) {
+    v.addEventListener('pause', function () {
+      // 只把「用户主动暂停」记下来；滚出视口时的暂停由脚本自己标记跳过
+      if (!v.dataset.toyAutoPause) v.dataset.toyPaused = '1';
+      delete v.dataset.toyAutoPause;
+    });
+    v.addEventListener('play', function () {
+      delete v.dataset.toyPaused;
+    });
+  });
+
+  if (!('IntersectionObserver' in window)) return;
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var v = entry.target;
+      if (entry.isIntersecting) {
+        if (!v.dataset.toyPaused) {
+          var p = v.play();
+          // Safari 在某些设置下仍会拒绝自动播放，忽略即可（用户可手动点）
+          if (p && typeof p.catch === 'function') p.catch(function () {});
+        }
+      } else if (!v.paused) {
+        v.dataset.toyAutoPause = '1';
+        v.pause();
+      }
+    });
+  }, { threshold: 0.25 });
+
+  videos.forEach(function (v) { io.observe(v); });
+})();
+</script>
