@@ -358,6 +358,25 @@ article:has(.search-recall-report) .catalog-container {
   display: none !important;
 }
 
+/* ==========================================================
+ * About 页（学术主页风格）
+ * ------------------------------------------------------------
+ * 单栏居中、不要侧栏。宽度由页面内 .about-me 的 max-width 控制，
+ * 这里只负责把主题的 col-lg-8 + sidebar 双栏结构拆掉。
+ * 同样走 body class（见 _layouts/default.html 的 body-class），
+ * 不用 :has()——本仓库实测 :has() 不可靠。
+ * ========================================================== */
+.about-page .postlist-container {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  left: auto;
+}
+.about-page .sidebar-container {
+  display: none !important;
+}
+
 .toy-wall-head {
   margin: 0 0 30px;
 }

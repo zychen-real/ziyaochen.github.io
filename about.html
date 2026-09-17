@@ -1,15 +1,381 @@
 ---
 layout: page
-title: "ziyaochen"
-description: "Talk is cheap"
+title: "Ziyao Chen"
+description: "Search & LLM @ Weixin AI, Tencent"
 header-img: "img/2017-bg.jpg"
 permalink: /about/
+body-class: about-page
 ---
 
-<h2><strong>About this site</strong></h2>
+<style>
+  .about-me{ max-width: 860px; margin: 0 auto; }
 
-<p>这是 ziyaochen 的博客，记录一些思考和总结。</p>
+  .about-me .am-name{
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin: 0 0 6px;
+    color: #1f2328;
+  }
+  .about-me .am-affil{
+    color: #424a53;
+    font-size: 15.5px;
+    line-height: 1.75;
+    margin: 0 0 16px;
+  }
+  .about-me .am-links{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin: 0 0 4px;
+  }
+  .about-me .am-links a{
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: #424a53;
+    text-decoration: none;
+    transition: all .16s ease;
+  }
+  .about-me .am-links a:hover{
+    border-color: #1f6feb;
+    color: #1f6feb;
+    background: #f6fafe;
+    text-decoration: none;
+  }
 
-<p>本站使用 <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a> + <a href="https://jekyllrb.com/" target="_blank" rel="noopener">Jekyll</a> 搭建，主题基于 <a href="https://github.com/Huxpro/huxpro.github.io" target="_blank" rel="noopener">Hux Blog</a>，在此深表感谢！</p>
+  .about-me h2{
+    font-size: 20px;
+    font-weight: 700;
+    margin: 42px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8ebef;
+    color: #1f2328;
+    letter-spacing: -0.2px;
+  }
 
-<p>有问题联系：<a href="mailto:707811932@qq.com">707811932@qq.com</a></p>
+  .about-me p{ line-height: 1.85; margin: 0 0 16px; }
+
+  /* 指标卡 */
+  .about-me .am-stats{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+    gap: 12px;
+    margin: 0 0 18px;
+  }
+  .about-me .am-stat{
+    background: #f6f8fa;
+    border: 1px solid #e8ebef;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .about-me .am-stat b{
+    display: block;
+    font-size: 21px;
+    font-weight: 700;
+    color: #1f6feb;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .about-me .am-stat span{
+    font-size: 12px;
+    color: #6a737d;
+    letter-spacing: .3px;
+  }
+
+  /* 时间线（工作经历） */
+  .about-me .am-timeline{
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 22px;
+    border-left: 2px solid #e8ebef;
+  }
+  .about-me .am-timeline > li{
+    position: relative;
+    padding: 0 0 26px;
+    margin: 0;
+  }
+  .about-me .am-timeline > li:last-child{ padding-bottom: 4px; }
+  .about-me .am-timeline > li::before{
+    content: "";
+    position: absolute;
+    left: -29px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #1f6feb;
+  }
+  .about-me .am-when{
+    font-size: 12.5px;
+    color: #8b949e;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .3px;
+  }
+  .about-me .am-what{
+    font-size: 15.5px;
+    font-weight: 650;
+    color: #1f2328;
+    margin: 2px 0 6px;
+  }
+  .about-me .am-desc{
+    font-size: 14px;
+    color: #57606a;
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  /* 论文列表 */
+  .about-me .am-pubs{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .about-me .am-pubs > li{
+    padding: 13px 0;
+    border-bottom: 1px dashed #e8ebef;
+    font-size: 14.2px;
+    line-height: 1.75;
+  }
+  .about-me .am-pubs > li:last-child{ border-bottom: none; }
+  .about-me .am-pubs .t{
+    color: #1f2328;
+    font-weight: 600;
+  }
+  .about-me .am-pubs .au{
+    color: #6a737d;
+    font-size: 13px;
+    display: block;
+    margin-top: 2px;
+  }
+  .about-me .am-pubs .au em{ color: #1f2328; font-style: normal; font-weight: 700; }
+  .about-me .am-venue{
+    display: inline-block;
+    background: #eef6ff;
+    color: #0b62d0;
+    border-radius: 5px;
+    padding: 1px 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .about-me .am-venue.alt{ background: #f3f0ff; color: #6b46c1; }
+
+  .about-me .am-note{
+    font-size: 13px;
+    color: #8b949e;
+    margin: 14px 0 0;
+  }
+  .about-me .am-note a{ color: #1f6feb; }
+
+  .about-me .am-kw{
+    display: inline-block;
+    background: #f6f8fa;
+    border: 1px solid #e8ebef;
+    border-radius: 5px;
+    padding: 2px 9px;
+    font-size: 12.5px;
+    color: #424a53;
+    margin: 0 5px 6px 0;
+  }
+
+  .about-me .am-foot{
+    margin-top: 44px;
+    padding-top: 18px;
+    border-top: 1px solid #e8ebef;
+    font-size: 13px;
+    color: #8b949e;
+    line-height: 1.8;
+  }
+  .about-me .am-foot a{ color: #1f6feb; }
+
+  @media (max-width: 768px){
+    .about-me .am-name{ font-size: 25px; }
+    .about-me h2{ font-size: 18px; margin-top: 34px; }
+    .about-me .am-timeline{ padding-left: 18px; }
+    .about-me .am-timeline > li::before{ left: -25px; }
+  }
+</style>
+
+<div class="about-me">
+
+{%- comment -%}
+  姓名和一句话定位由 _layouts/page.html 的 intro-header 渲染
+  （取 page.title / page.description），这里不再重复写 h1，
+  直接从机构信息开始，避免同一页出现两个姓名标题。
+{%- endcomment -%}
+
+<p class="am-affil">
+  Senior Researcher / Tech Lead, <strong>Weixin (WeChat) Search</strong> — Weixin AI, Tencent<br>
+  Shenzhen, China
+</p>
+
+<div class="am-links">
+  <a href="https://scholar.google.com/citations?user=wXMnE40AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
+  <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener">GitHub</a>
+  <a href="mailto:{{ site.email }}">Email</a>
+</div>
+
+<h2>Biography</h2>
+
+<p>
+  I work on <strong>web-scale search</strong> at Weixin AI, Tencent, where I lead the offline
+  content-understanding, retrieval and pre-ranking stack behind
+  <strong>Weixin Search</strong> — the search engine serving WeChat's user base. My interests sit at
+  the intersection of <strong>large language models</strong> and <strong>search systems</strong>:
+  how to represent and retrieve content at billion scale, and how to make LLMs genuinely useful
+  inside a production ranking funnel rather than just in a demo.
+</p>
+
+<p>
+  I started at Tencent as an intern in <strong>SNG</strong> in 2018 and joined
+  <strong>Tencent Cloud</strong> full-time in 2019, back when conversational AI was the thing
+  everyone was building. I spent that period shipping chatbots — open-domain chit-chat, FAQ
+  retrieval, and KGQA over structured knowledge. In 2020 I moved internally to
+  <strong>WeChat Mini Program Search</strong>, working on ranking and on squeezing BERT into
+  production latency budgets with TensorRT. When Tencent consolidated its search efforts into
+  <strong>Weixin Search</strong> in 2021, my team came along — and we won the internal bake-off
+  against several competing engines. That system is what powers WeChat search today.
+</p>
+
+<p>
+  Since then I have rebuilt the offline content-understanding and retrieval/pre-ranking
+  architecture for both <strong>AI Search</strong> and <strong>main search</strong> from the ground
+  up; the version running in production today is that rewrite. I have also led re-architectures of
+  several vertical searches — <strong>image search</strong>, <strong>text-selection search</strong>
+  and <strong>comment search</strong> — and work closely with the fine-ranking and relevance stack.
+</p>
+
+<p>
+  Before industry, I did research in <strong>nanophotonics</strong> — plasmonic nanowelding and
+  laser-assisted nanoscale soldering. It is a long way from search engines, but chasing precision
+  at the nanometer scale turned out to be decent training for chasing it at billion-document scale.
+</p>
+
+<h2>Research Interests</h2>
+
+<p>
+  <span class="am-kw">Large Language Models</span>
+  <span class="am-kw">Search &amp; Information Retrieval</span>
+  <span class="am-kw">Content Understanding</span>
+  <span class="am-kw">Retrieval &amp; Pre-Ranking</span>
+  <span class="am-kw">Multimodal Learning</span>
+  <span class="am-kw">Inference Acceleration</span>
+</p>
+
+<h2>Work Experience</h2>
+
+<ul class="am-timeline">
+  <li>
+    <div class="am-when">2021 — Present</div>
+    <div class="am-what">Weixin (WeChat) Search · Weixin AI, Tencent</div>
+    <p class="am-desc">
+      Offline data pipelines, content understanding, retrieval and pre-ranking. Rebuilt the offline
+      understanding + retrieval/pre-ranking architecture for AI Search and main search from zero;
+      that rewrite is the version in production. Also re-architected image search,
+      text-selection search and comment search. Our engine won the company-wide internal
+      evaluation against multiple alternatives and became the shipped version of WeChat search.
+    </p>
+  </li>
+  <li>
+    <div class="am-when">2020 — 2021</div>
+    <div class="am-what">WeChat Mini Program Search · Tencent</div>
+    <p class="am-desc">
+      Fine-ranking for Mini Program search, plus BERT inference acceleration with TensorRT to fit
+      transformer models into production latency budgets.
+    </p>
+  </li>
+  <li>
+    <div class="am-when">2019 — 2020</div>
+    <div class="am-what">Tencent Cloud · Tencent</div>
+    <p class="am-desc">
+      Conversational AI: open-domain chit-chat, FAQ retrieval, and knowledge-graph question
+      answering (KGQA) for enterprise chatbot products.
+    </p>
+  </li>
+  <li>
+    <div class="am-when">2018</div>
+    <div class="am-what">SNG (Social Network Group) · Tencent — Intern</div>
+    <p class="am-desc">First taste of large-scale systems at Tencent.</p>
+  </li>
+</ul>
+
+<h2>Selected Publications</h2>
+
+<div class="am-stats">
+  <div class="am-stat"><b>93</b><span>Citations</span></div>
+  <div class="am-stat"><b>5</b><span>h-index</span></div>
+  <div class="am-stat"><b>4</b><span>i10-index</span></div>
+</div>
+
+<ul class="am-pubs">
+  <li>
+    <span class="am-venue">AAAI 2025</span>
+    <span class="t">Implicit Location-Caption Alignment via Complementary Masking for
+      Weakly-Supervised Dense Video Captioning</span>
+    <span class="au">S. Ge, Q. Chen, Z. Jiang, Y. Yin, L. Qin, <em>Z. Chen</em>, Q. Gu</span>
+  </li>
+  <li>
+    <span class="am-venue">ACL 2025 Findings</span>
+    <span class="t">Token-Level Preference Self-Alignment Optimization for Multi-Style Outline
+      Controllable Generation</span>
+    <span class="au">Z. Li, X. Xu, <em>Z. Chen</em>, L. Zou, H. Wu, Q. Chen, C. Li</span>
+  </li>
+  <li>
+    <span class="am-venue">SIGIR 2024</span>
+    <span class="t">Short Video Ordering via Position Decoding and Successor Prediction</span>
+    <span class="au">S. Ge, Q. Chen, Z. Jiang, Y. Yin, <em>Z. Chen</em>, Q. Gu</span>
+  </li>
+  <li>
+    <span class="am-venue">DialDoc @ ACL 2021</span>
+    <span class="t">A Template-Guided Hybrid Pointer Network for Knowledge-Based Task-Oriented
+      Dialogue Systems</span>
+    <span class="au">D. Wang, <em>Z. Chen</em>, W. He, L. Zhong, Y. Tao, M. Yang</span>
+  </li>
+  <li>
+    <span class="am-venue alt">Adv. Electron. Mater. 2018</span>
+    <span class="t">Photothermal-Induced Nanowelding of Metal–Semiconductor Heterojunction in
+      Integrated Nanowire Units</span>
+    <span class="au">P. Ghosh, J. Lu, <em>Z. Chen</em>, H. Yang, M. Qiu, Q. Li</span>
+  </li>
+  <li>
+    <span class="am-venue alt">Appl. Phys. Lett. 2018</span>
+    <span class="t">Plasmonic-Enhanced Targeted Nanohealing of Metallic Nanostructures</span>
+    <span class="au">H. Yang, J. Lu, P. Ghosh, <em>Z. Chen</em>, W. Wang, H. Ye, Q. Yu, M. Qiu, Q. Li</span>
+  </li>
+  <li>
+    <span class="am-venue alt">Optics Letters 2018</span>
+    <span class="t">Au<sub>80</sub>Sn<sub>20</sub>-Based Targeted Noncontact Nanosoldering with Low
+      Power Consumption</span>
+    <span class="au">Q. Li, <em>Z. Chen</em>, X. Zhang, Y. Peng, P. Ghosh, G. Yao, H. Luo, J. Lv, M. Qiu</span>
+  </li>
+</ul>
+
+<p class="am-note">
+  Full list on
+  <a href="https://scholar.google.com/citations?user=wXMnE40AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>.
+  Citation metrics are a snapshot and will drift over time.
+</p>
+
+<h2>About This Site</h2>
+
+<p>
+  Notes, paper reads and small experiments — mostly on search, ranking and LLM systems.
+  The <a href="{{ '/toy/' | relative_url }}">Toy</a> section collects screen recordings of side
+  projects I have hacked together.
+</p>
+
+<div class="am-foot">
+  Built with <a href="https://jekyllrb.com/" target="_blank" rel="noopener">Jekyll</a> on
+  <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a>,
+  theme adapted from <a href="https://github.com/Huxpro/huxpro.github.io" target="_blank" rel="noopener">Hux Blog</a>.<br>
+  Reach me at <a href="mailto:{{ site.email }}">{{ site.email }}</a>.
+</div>
+
+</div>
