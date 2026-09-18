@@ -328,6 +328,25 @@ body-class: about-page
   </li>
 </ul>
 
+{%- comment -%}
+  Education 复用 Work Experience 那套 .am-timeline，视觉一致、不用新增样式。
+  同样按时间倒序（最新在上），格式对齐上面的「团队 · 公司」写成「学位 · 学校」。
+  放在 Work Experience 之后：这页是工业界 Tech Lead 的定位，工作经历是主线，
+  教育经历作补充。
+{%- endcomment -%}
+<h2>Education</h2>
+
+<ul class="am-timeline">
+  <li>
+    <div class="am-when">2016 — 2019</div>
+    <div class="am-what">M.Eng. in Information Engineering · Zhejiang University</div>
+  </li>
+  <li>
+    <div class="am-when">2012 — 2016</div>
+    <div class="am-what">B.Eng. in Engineering · Zhejiang University</div>
+  </li>
+</ul>
+
 <h2>About This Site</h2>
 
 <p>
