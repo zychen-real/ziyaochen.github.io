@@ -46,6 +46,92 @@ body-class: about-page
     text-decoration: none;
   }
 
+  /* 「复制」按钮：和胶囊同一套形状，但用虚线边框区分「这不是跳转链接」 */
+  .about-me .am-copy{
+    display: inline-block;
+    border: 1px dashed #d0d7de;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: #57606a;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: inherit;
+    transition: all .16s ease;
+  }
+  .about-me .am-copy:hover{
+    border-color: #1f6feb;
+    border-style: solid;
+    color: #1f6feb;
+    background: #f6fafe;
+  }
+  .about-me .am-copy:focus-visible{
+    outline: 2px solid #1f6feb;
+    outline-offset: 2px;
+  }
+  /* 复制成功的瞬时反馈 */
+  .about-me .am-copy.is-done{
+    border-style: solid;
+    border-color: #1a7f37;
+    color: #1a7f37;
+    background: #f2f9f4;
+  }
+
+  /* ----------------------------------------------------------
+   * 悬停提示（data-tip）
+   * ----------------------------------------------------------
+   * 不用原生 title：它有 1~2 秒延迟、样式不可控，而这里的目的就是
+   * 「鼠标一放上去就看到邮箱」。用 ::after 取 attr(data-tip) 渲染，
+   * 内容变了会即时反映（复制成功时脚本改 data-tip 就能换文案）。
+   * 只在真正有悬停能力的设备上启用：触屏上 :hover 会在点击后粘住，
+   * 提示框赖在屏幕上不走，所以用 @media (hover: hover) 圈住。
+   * ---------------------------------------------------------- */
+  .about-me [data-tip]{ position: relative; }
+
+  @media (hover: hover) {
+    .about-me [data-tip]::after,
+    .about-me [data-tip]::before{
+      position: absolute;
+      left: 50%;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .15s ease, visibility .15s ease;
+      z-index: 6;
+    }
+    .about-me [data-tip]::after{
+      content: attr(data-tip);
+      bottom: calc(100% + 9px);
+      transform: translateX(-50%);
+      background: #1f2328;
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 400;
+      line-height: 1.4;
+      letter-spacing: 0;
+      padding: 6px 11px;
+      border-radius: 6px;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(27, 31, 35, .22);
+    }
+    /* 指向按钮的小三角 */
+    .about-me [data-tip]::before{
+      content: "";
+      bottom: calc(100% + 3px);
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #1f2328;
+    }
+    .about-me [data-tip]:hover::after,
+    .about-me [data-tip]:hover::before,
+    .about-me [data-tip]:focus-visible::after,
+    .about-me [data-tip]:focus-visible::before{
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
   .about-me h2{
     font-size: 20px;
     font-weight: 700;
@@ -217,9 +303,25 @@ body-class: about-page
 </p>
 
 <div class="am-links">
-  <a href="https://scholar.google.com/citations?user=wXMnE40AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>
+  <a href="https://scholar.google.com/citations?user=wXMnE40AAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar</a>
   <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener">GitHub</a>
-  <a href="mailto:{{ site.email }}">Email</a>
+  {%- comment -%}
+    Email 做成两个动作，因为 mailto: 只有在访客本机配好邮件客户端时才有反应
+    （没配的话点了毫无反馈，看起来就像链接坏了）：
+      - 「Email」胶囊  -> 仍是 mailto，有客户端的人体验最好
+      - 「复制」按钮   -> 没客户端 / 只想拿地址的人，一键复制
+    两者都带 data-tip，悬停即显示完整邮箱，不用再翻到页脚去找。
+    邮箱统一取 site.email，不在这里写死。
+  {%- endcomment -%}
+  <a class="am-mail" href="mailto:{{ site.email }}"
+     data-tip="{{ site.email }}"
+     aria-label="发邮件到 {{ site.email }}">Email</a>
+  <button type="button" class="am-copy"
+          data-copy-email="{{ site.email }}"
+          data-tip="{{ site.email }}"
+          aria-label="复制邮箱地址 {{ site.email }}">
+    <span class="am-copy-txt">复制</span>
+  </button>
 </div>
 
 <h2>Biography</h2>
@@ -381,3 +483,73 @@ body-class: about-page
 </div>
 
 </div>
+
+{%- comment -%}
+  邮箱一键复制。
+  navigator.clipboard 需要安全上下文（https 或 localhost），GitHub Pages
+  是 https 所以正常；但本地用 http://127.0.0.1 之外的方式预览、或旧浏览器
+  下拿不到这个 API，所以保留 textarea + execCommand 的兜底路径。
+  复制成功后直接改 data-tip，CSS 的 attr() 会即时把提示换成「已复制」。
+{%- endcomment -%}
+<script>
+(function () {
+  var btns = Array.prototype.slice.call(
+    document.querySelectorAll('[data-copy-email]')
+  );
+  if (!btns.length) return;
+
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    // 放到视口外，且只读，避免移动端弹出键盘 / 页面跳动
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  btns.forEach(function (btn) {
+    var email = btn.getAttribute('data-copy-email');
+    var txtEl = btn.querySelector('.am-copy-txt');
+    var originalTip = btn.getAttribute('data-tip');
+    var originalTxt = txtEl ? txtEl.textContent : '';
+    var timer = null;
+
+    function feedback(msg, tip, isOk) {
+      if (txtEl) txtEl.textContent = msg;
+      btn.setAttribute('data-tip', tip);
+      btn.classList.toggle('is-done', !!isOk);
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (txtEl) txtEl.textContent = originalTxt;
+        btn.setAttribute('data-tip', originalTip);
+        btn.classList.remove('is-done');
+      }, 1800);
+    }
+
+    btn.addEventListener('click', function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(function () {
+          feedback('已复制', '已复制到剪贴板', true);
+        }, function () {
+          // 权限被拒之类，退回老办法再试一次（只调一次，别重复写剪贴板）
+          var ok = legacyCopy(email);
+          feedback(ok ? '已复制' : '请手动复制',
+                   ok ? '已复制到剪贴板' : email,
+                   ok);
+        });
+      } else {
+        var ok = legacyCopy(email);
+        feedback(ok ? '已复制' : '请手动复制', ok ? '已复制到剪贴板' : email, ok);
+      }
+    });
+  });
+})();
+</script>
