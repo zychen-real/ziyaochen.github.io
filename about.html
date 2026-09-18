@@ -144,34 +144,6 @@ body-class: about-page
 
   .about-me p{ line-height: 1.85; margin: 0 0 16px; }
 
-  /* 指标卡 */
-  .about-me .am-stats{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-    gap: 12px;
-    margin: 0 0 18px;
-  }
-  .about-me .am-stat{
-    background: #f6f8fa;
-    border: 1px solid #e8ebef;
-    border-radius: 10px;
-    padding: 12px 14px;
-    text-align: center;
-  }
-  .about-me .am-stat b{
-    display: block;
-    font-size: 21px;
-    font-weight: 700;
-    color: #1f6feb;
-    line-height: 1.2;
-    font-variant-numeric: tabular-nums;
-  }
-  .about-me .am-stat span{
-    font-size: 12px;
-    color: #6a737d;
-    letter-spacing: .3px;
-  }
-
   /* 时间线（工作经历） */
   .about-me .am-timeline{
     list-style: none;
@@ -214,51 +186,6 @@ body-class: about-page
     line-height: 1.8;
     margin: 0;
   }
-
-  /* 论文列表 */
-  .about-me .am-pubs{
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .about-me .am-pubs > li{
-    padding: 13px 0;
-    border-bottom: 1px dashed #e8ebef;
-    font-size: 14.2px;
-    line-height: 1.75;
-  }
-  .about-me .am-pubs > li:last-child{ border-bottom: none; }
-  .about-me .am-pubs .t{
-    color: #1f2328;
-    font-weight: 600;
-  }
-  .about-me .am-pubs .au{
-    color: #6a737d;
-    font-size: 13px;
-    display: block;
-    margin-top: 2px;
-  }
-  .about-me .am-pubs .au em{ color: #1f2328; font-style: normal; font-weight: 700; }
-  .about-me .am-venue{
-    display: inline-block;
-    background: #eef6ff;
-    color: #0b62d0;
-    border-radius: 5px;
-    padding: 1px 8px;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    margin-right: 6px;
-    vertical-align: 1px;
-  }
-  .about-me .am-venue.alt{ background: #f3f0ff; color: #6b46c1; }
-
-  .about-me .am-note{
-    font-size: 13px;
-    color: #8b949e;
-    margin: 14px 0 0;
-  }
-  .about-me .am-note a{ color: #1f6feb; }
 
   .about-me .am-kw{
     display: inline-block;
@@ -409,63 +336,6 @@ body-class: about-page
     <p class="am-desc">First taste of large-scale systems at Tencent.</p>
   </li>
 </ul>
-
-<h2>Selected Publications</h2>
-
-<div class="am-stats">
-  <div class="am-stat"><b>93</b><span>Citations</span></div>
-  <div class="am-stat"><b>5</b><span>h-index</span></div>
-  <div class="am-stat"><b>4</b><span>i10-index</span></div>
-</div>
-
-<ul class="am-pubs">
-  <li>
-    <span class="am-venue">AAAI 2025</span>
-    <span class="t">Implicit Location-Caption Alignment via Complementary Masking for
-      Weakly-Supervised Dense Video Captioning</span>
-    <span class="au">S. Ge, Q. Chen, Z. Jiang, Y. Yin, L. Qin, <em>Z. Chen</em>, Q. Gu</span>
-  </li>
-  <li>
-    <span class="am-venue">ACL 2025 Findings</span>
-    <span class="t">Token-Level Preference Self-Alignment Optimization for Multi-Style Outline
-      Controllable Generation</span>
-    <span class="au">Z. Li, X. Xu, <em>Z. Chen</em>, L. Zou, H. Wu, Q. Chen, C. Li</span>
-  </li>
-  <li>
-    <span class="am-venue">SIGIR 2024</span>
-    <span class="t">Short Video Ordering via Position Decoding and Successor Prediction</span>
-    <span class="au">S. Ge, Q. Chen, Z. Jiang, Y. Yin, <em>Z. Chen</em>, Q. Gu</span>
-  </li>
-  <li>
-    <span class="am-venue">DialDoc @ ACL 2021</span>
-    <span class="t">A Template-Guided Hybrid Pointer Network for Knowledge-Based Task-Oriented
-      Dialogue Systems</span>
-    <span class="au">D. Wang, <em>Z. Chen</em>, W. He, L. Zhong, Y. Tao, M. Yang</span>
-  </li>
-  <li>
-    <span class="am-venue alt">Adv. Electron. Mater. 2018</span>
-    <span class="t">Photothermal-Induced Nanowelding of Metal–Semiconductor Heterojunction in
-      Integrated Nanowire Units</span>
-    <span class="au">P. Ghosh, J. Lu, <em>Z. Chen</em>, H. Yang, M. Qiu, Q. Li</span>
-  </li>
-  <li>
-    <span class="am-venue alt">Appl. Phys. Lett. 2018</span>
-    <span class="t">Plasmonic-Enhanced Targeted Nanohealing of Metallic Nanostructures</span>
-    <span class="au">H. Yang, J. Lu, P. Ghosh, <em>Z. Chen</em>, W. Wang, H. Ye, Q. Yu, M. Qiu, Q. Li</span>
-  </li>
-  <li>
-    <span class="am-venue alt">Optics Letters 2018</span>
-    <span class="t">Au<sub>80</sub>Sn<sub>20</sub>-Based Targeted Noncontact Nanosoldering with Low
-      Power Consumption</span>
-    <span class="au">Q. Li, <em>Z. Chen</em>, X. Zhang, Y. Peng, P. Ghosh, G. Yao, H. Luo, J. Lv, M. Qiu</span>
-  </li>
-</ul>
-
-<p class="am-note">
-  Full list on
-  <a href="https://scholar.google.com/citations?user=wXMnE40AAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a>.
-  Citation metrics are a snapshot and will drift over time.
-</p>
 
 <h2>About This Site</h2>
 
