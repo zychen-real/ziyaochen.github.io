@@ -1,0 +1,198 @@
+---
+layout: post
+title: "ESP32 机器人女友"
+subtitle: "一块 ESP32 加一个喇叭，做个会说话的桌面小伙伴"
+date: 2026-09-17 19:00:00 +0800
+author: ziyaochen
+header-img: img/2017-bg.jpg
+catalog: false
+mathjax: false
+body-class: toy-post-page
+video: /img/toys/esp32-robot-girlfriend.mp4
+poster: /img/toys/esp32-robot-girlfriend-poster.jpg
+duration: "00:39"
+orientation: portrait
+has-audio: true
+tags:
+    - Toy
+    - ESP32
+    - 硬件
+    - 语音
+    - Demo
+---
+
+<style>
+  .toy-demo{ max-width: 1240px; margin: 0 auto; }
+
+  /* 竖屏视频专用：限制高度，不然 9:16 会把页面拉得极长。
+     视频按高度撑满、宽度自适应居中，两侧留出的空隙用模糊封面填充，
+     视觉上比纯黑边舒服（YouTube Shorts / 视频号网页版的做法）。 */
+  .toy-demo .video-card.portrait{
+    position: relative;
+    background: #161c24;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+  .toy-demo .video-card.portrait .stage{
+    position: relative;
+    height: min(76vh, 720px);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+  }
+  .toy-demo .video-card.portrait .stage .blur-bg{
+    position: absolute;
+    inset: -6%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(26px) brightness(.5) saturate(1.2);
+    transform: scale(1.06);
+  }
+  .toy-demo .video-card.portrait .stage video{
+    position: relative;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    background: transparent;
+  }
+  @media (max-width: 760px){
+    .toy-demo .video-card.portrait{ padding: 10px; }
+    .toy-demo .video-card.portrait .stage{ height: min(68vh, 560px); }
+  }
+
+  .toy-demo .meta-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #8b98a8;
+    font-size: 13.5px;
+    margin: 14px 4px 0;
+  }
+  .toy-demo .meta-row b{ color: #d7e0ea; font-weight: 500; }
+  .toy-demo .sound-tip{
+    background: #fff8e6;
+    border: 1px solid #f0d999;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin: 18px 0;
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: #6b5320;
+  }
+  .toy-demo .sound-tip b{ color: #a06800; }
+  .toy-demo .desc{
+    background: #f6f8fa;
+    border-left: 4px solid #4f9fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .toy-demo .desc b{ color: #1f6feb; }
+  .toy-demo .download{
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #1f6feb;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background .15s;
+  }
+  .toy-demo .download:hover{ background: #0d47a1; color: #fff; text-decoration: none; }
+  .toy-demo .specs{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .toy-demo .specs th, .toy-demo .specs td{
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  .toy-demo .specs th{ background: #f6f8fa; color: #57606a; font-weight: 600; }
+  .toy-demo .chip{
+    display: inline-block;
+    background: #eaf4ea;
+    color: #1a7f37;
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 12.5px;
+    margin: 2px 4px 2px 0;
+  }
+</style>
+
+<div class="toy-demo">
+
+<p><b>ESP32 机器人女友</b> —— 一个放在桌上的语音小伙伴。
+和前面几条纯软件的 Demo 不一样，这条是<b>硬件 + 语音</b>，所以
+<b>请打开声音观看</b>。</p>
+
+<div class="video-card portrait">
+  <div class="stage">
+    <div class="blur-bg" style="background-image:url('{{ '/img/toys/esp32-robot-girlfriend-poster.jpg' | relative_url }}')"></div>
+    <video
+      id="toy-video"
+      controls
+      loop
+      playsinline
+      preload="metadata"
+      poster="{{ '/img/toys/esp32-robot-girlfriend-poster.jpg' | relative_url }}">
+      <source src="{{ '/img/toys/esp32-robot-girlfriend.mp4' | relative_url }}" type="video/mp4">
+      你的浏览器不支持 HTML5 video 标签。
+    </video>
+  </div>
+  <div class="meta-row">
+    <span><b>时长</b> 00:39</span>
+    <span><b>分辨率</b> 720×1280（竖屏 9:16）</span>
+    <span><b>编码</b> H.264 + AAC<b>（有音轨）</b></span>
+    <span><b>大小</b> 6.2 MB</span>
+  </div>
+</div>
+
+<div class="sound-tip">
+  🔊 <b>这条 Demo 有声音。</b>
+  详情页的播放器默认<b>不自动播放</b>，点一下播放键就有声；
+  首页视频墙里因为浏览器限制只能静音自动播，需要点卡片上的
+  <b>「开启声音」</b>按钮。
+</div>
+
+<div style="text-align:center; margin-top:18px;">
+  <a class="download" href="{{ '/img/toys/esp32-robot-girlfriend.mp4' | relative_url }}" download>下载视频（mp4 · 6.2 MB）</a>
+</div>
+
+<h2 id="about">这是什么</h2>
+
+<div class="desc">
+  用 <b>ESP32</b> 做的一个桌面语音小玩具：麦克风拾音 → 语音识别 → 大模型对话 →
+  语音合成 → 喇叭播放，整个链路跑通后就成了一个能聊天的小伙伴。
+  取名「机器人女友」纯属自娱，重点在把<b>语音交互闭环</b>塞进一块几十块钱的开发板。
+</div>
+
+<h2 id="stack">用到的东西</h2>
+
+<table class="specs">
+  <tr><th>环节</th><th>方案</th></tr>
+  <tr><td>主控</td><td>ESP32（带 Wi-Fi，负责联网和音频 I/O）</td></tr>
+  <tr><td>输入</td><td>麦克风模块拾音</td></tr>
+  <tr><td>输出</td><td>小喇叭 / 功放模块</td></tr>
+  <tr><td>对话</td><td>云端大模型 API</td></tr>
+  <tr><td>录制</td><td>手机竖屏直录，含现场环境音</td></tr>
+</table>
+
+<h2 id="notes">说明</h2>
+
+<ul>
+  <li>视频为手机竖屏实拍（720×1280），保留了原始音轨，<b>建议戴耳机或开喇叭观看</b>。</li>
+  <li>这是自己攒的玩具，不是成品；接线和外壳都很随意，重点看交互效果。</li>
+  <li>更多实现细节后续补充。</li>
+</ul>
+
+</div>

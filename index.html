@@ -9,6 +9,13 @@ body-class: toy-wall-page
   每张卡片的视频 / 封面 / 时长来自各 toy 文章 front matter 的
   video / poster / duration 字段（新增 toy 时只要写上这三个字段，
   首页会自动收录，这里不用改）。
+  另外两个可选字段：
+    orientation: portrait  —— 竖屏视频（9:16）。卡片会限制媒体区高度，
+                              视频按高度居中，两侧空隙用模糊封面填充，
+                              否则 9:16 会把卡片拉得极高、破坏网格对齐。
+    has-audio: true        —— 该视频有音轨，卡片左上角会出现「开启声音」
+                              按钮（浏览器禁止带声音自动播放，只能由用户
+                              手势触发，详见页面底部脚本注释）。
   文章合集仍可通过导航栏 2018 / 2026 进入。
 {%- endcomment -%}
 {% assign toys = site.toy | sort: 'date' | reverse %}
@@ -26,9 +33,17 @@ body-class: toy-wall-page
 
 <div class="toy-grid">
 {% for item in toys %}
-    <div class="toy-card">
+    <div class="toy-card{% if item.orientation == 'portrait' %} toy-card--portrait{% endif %}">
         {% if item.video %}
         <div class="toy-card-media">
+            {%- comment -%}
+              竖屏视频两侧会留空。用同一张封面做模糊背景填充，比纯黑边好看。
+              aria-hidden：纯装饰层，不需要读屏软件念出来。
+            {%- endcomment -%}
+            {% if item.orientation == 'portrait' and item.poster %}
+            <div class="toy-media-bg" aria-hidden="true"
+                 style="background-image:url('{{ item.poster | relative_url }}')"></div>
+            {% endif %}
             <video
                 controls
                 autoplay
@@ -41,6 +56,13 @@ body-class: toy-wall-page
                 <source src="{{ item.video | relative_url }}" type="video/mp4">
                 你的浏览器不支持 HTML5 video 标签。
             </video>
+            {% if item['has-audio'] %}
+            <button type="button" class="toy-sound-btn" data-toy-sound
+                    aria-pressed="false" title="这条 Demo 有声音，点击开启">
+                <span class="toy-sound-ico" aria-hidden="true">🔊</span>
+                <span class="toy-sound-txt">开启声音</span>
+            </button>
+            {% endif %}
             {% if item.duration %}<span class="toy-card-dur">{{ item.duration }}</span>{% endif %}
         </div>
         {% endif %}
@@ -74,12 +96,21 @@ body-class: toy-wall-page
 </div>
 
 {%- comment -%}
-  视频虽然都带 autoplay，但三条加起来约 35 MB，全部同时缓冲会互相抢
-  带宽。这里用 IntersectionObserver 只播放进入视口的那几个，滚出视口
-  就暂停，省流量也省 CPU。
+  两件事：
+
+  一、带宽控制
+  视频虽然都带 autoplay，但加起来 40+ MB，全部同时缓冲会互相抢带宽。
+  用 IntersectionObserver 只播放进入视口的那几个，滚出视口就暂停。
   已手动暂停过的视频（data-toy-paused）不再被脚本自动恢复，避免跟用户
-  的操作对抗。浏览器不支持 IntersectionObserver 时不做任何干预，退回
-  成原生 autoplay 行为。
+  的操作对抗。浏览器不支持 IntersectionObserver 时不做干预，退回原生
+  autoplay 行为。
+
+  二、声音
+  Chrome / Safari / Firefox 都禁止「带声音的自动播放」，只允许静音自动
+  播放，这是浏览器策略，无法用代码绕过——非静音的 play() 会被 reject。
+  所以做法是：画面静音自动播（吸引注意），有音轨的视频叠一个「开启声音」
+  按钮，由用户点击触发取消静音。用户手势上下文里 muted=false 一定生效。
+  同一时间只允许一个视频出声，开启新的会自动静音其他，避免几路音频打架。
 {%- endcomment -%}
 <script>
 (function () {
@@ -87,6 +118,66 @@ body-class: toy-wall-page
     document.querySelectorAll('.toy-grid video[data-toy-video]')
   );
   if (!videos.length) return;
+
+  /* ---------- 声音：同一时间只有一个视频出声 ---------- */
+
+  function syncSoundBtn(v) {
+    var media = v.parentNode;
+    var btn = media && media.querySelector('[data-toy-sound]');
+    if (!btn) return;
+    var on = !v.muted && v.volume > 0;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('is-on', on);
+    var ico = btn.querySelector('.toy-sound-ico');
+    var txt = btn.querySelector('.toy-sound-txt');
+    if (ico) ico.textContent = on ? '🔈' : '🔊';
+    if (txt) txt.textContent = on ? '静音' : '开启声音';
+    btn.title = on ? '点击静音' : '这条 Demo 有声音，点击开启';
+  }
+
+  function muteOthers(except) {
+    videos.forEach(function (v) {
+      if (v !== except && !v.muted) {
+        v.muted = true;
+        syncSoundBtn(v);
+      }
+    });
+  }
+
+  videos.forEach(function (v) {
+    var media = v.parentNode;
+    var btn = media && media.querySelector('[data-toy-sound]');
+    if (!btn) return;
+
+    btn.addEventListener('click', function (e) {
+      // 按钮浮在 video 上，别让点击穿透成「暂停/播放」
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (v.muted) {
+        muteOthers(v);
+        v.muted = false;
+        if (v.volume === 0) v.volume = 1;
+        // 用户手势里调 play()，非静音也能放出声
+        var p = v.play();
+        if (p && typeof p.catch === 'function') p.catch(function () {});
+        delete v.dataset.toyPaused;
+      } else {
+        v.muted = true;
+      }
+      syncSoundBtn(v);
+    });
+
+    // 用户也可能直接用原生控件的音量键取消静音，同样要互斥 + 同步 UI
+    v.addEventListener('volumechange', function () {
+      if (!v.muted && v.volume > 0) muteOthers(v);
+      syncSoundBtn(v);
+    });
+
+    syncSoundBtn(v);
+  });
+
+  /* ---------- 带宽：只播放视口内的视频 ---------- */
 
   videos.forEach(function (v) {
     v.addEventListener('pause', function () {
@@ -106,6 +197,7 @@ body-class: toy-wall-page
       var v = entry.target;
       if (entry.isIntersecting) {
         if (!v.dataset.toyPaused) {
+          // 注意：这里不碰 muted，让用户开过的声音在滚回来时保持
           var p = v.play();
           // Safari 在某些设置下仍会拒绝自动播放，忽略即可（用户可手动点）
           if (p && typeof p.catch === 'function') p.catch(function () {});

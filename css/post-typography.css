@@ -501,6 +501,111 @@ article:has(.search-recall-report) .catalog-container {
   line-height: 1.6;
 }
 
+/* ----------------------------------------------------------
+ * 竖屏视频卡片（front matter: orientation: portrait）
+ * ----------------------------------------------------------
+ * 9:16 的视频如果沿用横屏那套 width:100%/height:auto，在两列网格里
+ * 会变成 ~280px 宽 × ~500px 高之后继续按容器宽度放大到 800+px 高，
+ * 把卡片拉得极长、和旁边的横屏卡片完全无法对齐。
+ * 所以这里反过来：固定媒体区高度，视频按高度撑满、宽度自适应居中，
+ * 两侧留出的空隙用同一张封面的模糊放大版填充（.toy-media-bg），
+ * 比纯黑边耐看。高度取 500px，和横屏卡片在两列宽度下的 ~426px 接近，
+ * 网格看起来是齐的。
+ * ---------------------------------------------------------- */
+.toy-card--portrait .toy-card-media {
+  height: 500px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toy-card--portrait .toy-card-media video {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  background: transparent;
+}
+
+/* 模糊填充层。inset 负值 + scale 是为了让 blur 的边缘羽化溢出裁掉，
+   否则四周会露出一圈变浅的描边。 */
+.toy-media-bg {
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(.5) saturate(1.25);
+  transform: scale(1.08);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------
+ * 「开启声音」按钮（front matter: has-audio: true）
+ * ----------------------------------------------------------
+ * 浏览器不允许带声音自动播放，只能静音自动播 + 由用户点击解除静音。
+ * 这个按钮就是那个手势入口，所以默认要显眼：琥珀色 + 呼吸动画。
+ * 用户开启后（.is-on）转为低调的半透明深色，不再抢视线。
+ * 位置放左上角：右上角是时长角标，底部是原生 controls，都得避开。
+ * ---------------------------------------------------------- */
+.toy-sound-btn {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 20px;
+  background: #f0a92b;
+  color: #2b1d00;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+  animation: toy-sound-pulse 2.2s ease-in-out infinite;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+.toy-sound-btn:hover {
+  background: #ffbe45;
+  transform: translateY(-1px);
+}
+.toy-sound-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.toy-sound-btn .toy-sound-ico {
+  font-size: 13.5px;
+  line-height: 1;
+}
+
+/* 已开启：停掉动画，收成低调样式 */
+.toy-sound-btn.is-on {
+  background: rgba(0, 0, 0, .68);
+  color: #e6edf3;
+  font-weight: 500;
+  animation: none;
+  box-shadow: none;
+}
+.toy-sound-btn.is-on:hover {
+  background: rgba(0, 0, 0, .82);
+}
+
+@keyframes toy-sound-pulse {
+  0%, 100% { box-shadow: 0 2px 10px rgba(0, 0, 0, .35), 0 0 0 0 rgba(240, 169, 43, .55); }
+  50%      { box-shadow: 0 2px 10px rgba(0, 0, 0, .35), 0 0 0 7px rgba(240, 169, 43, 0); }
+}
+
+/* 尊重系统「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  .toy-sound-btn { animation: none; }
+}
+
 .toy-wall-more {
   color: #6a737d;
   font-size: 14px;
@@ -522,5 +627,14 @@ article:has(.search-recall-report) .catalog-container {
   .container:has(.toy-wall) {
     padding-left: 14px;
     padding-right: 14px;
+  }
+  /* 单列时卡片变窄，竖屏视频两侧几乎没有空隙了，把高度也收一点，
+     免得一屏放不下一张卡。 */
+  .toy-card--portrait .toy-card-media { height: 420px; }
+  .toy-sound-btn {
+    left: 8px;
+    top: 8px;
+    padding: 6px 11px;
+    font-size: 12px;
   }
 }
