@@ -22,8 +22,12 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ '/css/hux-blog.min.css' | relative_url }}">
 
-    <!-- 文章正文排版增强（须在 hux-blog 之后加载） -->
-    <link rel="stylesheet" href="{{ '/css/post-typography.css' | relative_url }}">
+    <!-- 文章正文排版增强（须在 hux-blog 之后加载）
+         带 ?v=<构建时间戳>：这个文件改动频繁，而 GitHub Pages 对静态资源
+         会下发较长的缓存，之前出现过「样式已上线但浏览器仍用旧版渲染」的
+         情况（竖屏视频卡片限高规则没生效）。用构建时间做版本号，每次部署
+         URL 都会变，强制拉新。 -->
+    <link rel="stylesheet" href="{{ '/css/post-typography.css' | relative_url }}?v={{ site.time | date: '%Y%m%d%H%M%S' }}">
 
     <!-- Highlight CSS -->
     <link rel="stylesheet" href="{{ '/css/googlecode.css' | relative_url }}">

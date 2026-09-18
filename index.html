@@ -10,15 +10,25 @@ body-class: toy-wall-page
   video / poster / duration 字段（新增 toy 时只要写上这三个字段，
   首页会自动收录，这里不用改）。
   另外两个可选字段：
-    orientation: portrait  —— 竖屏视频（9:16）。卡片会限制媒体区高度，
-                              视频按高度居中，两侧空隙用模糊封面填充，
-                              否则 9:16 会把卡片拉得极高、破坏网格对齐。
+    orientation: portrait  —— 竖屏视频（9:16）。这类卡片会被排到最后，
+                              且媒体区高度跟横屏卡片对齐（见 css 里的
+                              aspect-ratio），视频按高度居中、两侧空隙
+                              用模糊封面填充。不加这个字段就当横屏处理。
     has-audio: true        —— 该视频有音轨，卡片左上角会出现「开启声音」
                               按钮（浏览器禁止带声音自动播放，只能由用户
                               手势触发，详见页面底部脚本注释）。
   文章合集仍可通过导航栏 2018 / 2026 进入。
 {%- endcomment -%}
-{% assign toys = site.toy | sort: 'date' | reverse %}
+
+{%- comment -%}
+  排序：横屏在前（按日期新→旧），竖屏统一垫到最后。
+  竖屏视频宽度只有横屏的三分之一，混在中间会把网格切得很碎，
+  所以不管日期多新都排到末尾。将来再加竖屏也会自动跟在这一批后面。
+{%- endcomment -%}
+{% assign toys_by_date = site.toy | sort: 'date' | reverse %}
+{% assign toys_landscape = toys_by_date | where_exp: "t", "t.orientation != 'portrait'" %}
+{% assign toys_portrait = toys_by_date | where_exp: "t", "t.orientation == 'portrait'" %}
+{% assign toys = toys_landscape | concat: toys_portrait %}
 
 <div class="toy-wall">
 

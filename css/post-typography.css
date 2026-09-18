@@ -504,21 +504,38 @@ article:has(.search-recall-report) .catalog-container {
 /* ----------------------------------------------------------
  * 竖屏视频卡片（front matter: orientation: portrait）
  * ----------------------------------------------------------
- * 9:16 的视频如果沿用横屏那套 width:100%/height:auto，在两列网格里
- * 会变成 ~280px 宽 × ~500px 高之后继续按容器宽度放大到 800+px 高，
- * 把卡片拉得极长、和旁边的横屏卡片完全无法对齐。
- * 所以这里反过来：固定媒体区高度，视频按高度撑满、宽度自适应居中，
- * 两侧留出的空隙用同一张封面的模糊放大版填充（.toy-media-bg），
- * 比纯黑边耐看。高度取 500px，和横屏卡片在两列宽度下的 ~426px 接近，
- * 网格看起来是齐的。
+ * 9:16 的视频如果沿用横屏那套 width:100%/height:auto，会按列宽放大到
+ * 800+px 高，把卡片拉成一根长条、和旁边的横屏卡片完全无法对齐。
+ *
+ * 这里反过来做：媒体区的高度不写死，而是用 aspect-ratio 跟横屏视频
+ * （1920×1240）保持同一个比例 —— 于是竖屏卡片的媒体区跟横屏卡片
+ * 「永远一样高」，列宽怎么变都自动跟随，网格是齐的。
+ * 视频在里面按高度撑满、宽度自适应居中，两侧留出的空隙用同一张封面的
+ * 模糊放大版填充（.toy-media-bg），比纯黑边耐看。
+ *
+ * 之前定死 500px 的问题：窄视口下横屏媒体区只有 ~320px 高，竖屏还是
+ * 500px，显得又长又突出。aspect-ratio 方案不存在这个问题。
  * ---------------------------------------------------------- */
 .toy-card--portrait .toy-card-media {
-  height: 500px;
+  /* fallback：不支持 aspect-ratio 的老浏览器用固定高度，
+     不给高度的话 video 的 height:100% 会塌成 0。 */
+  height: 340px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+@supports (aspect-ratio: 16 / 9) {
+  .toy-card--portrait .toy-card-media {
+    height: auto;
+    /* 跟横屏视频 1920×1240 同比例，两种卡片的媒体区严格等高 */
+    aspect-ratio: 1920 / 1240;
+    /* 超宽屏下列宽很大，等比算出来会偏高，这里兜一个上限 */
+    max-height: 440px;
+  }
+}
+
 .toy-card--portrait .toy-card-media video {
   position: relative;
   z-index: 1;
@@ -628,9 +645,15 @@ article:has(.search-recall-report) .catalog-container {
     padding-left: 14px;
     padding-right: 14px;
   }
-  /* 单列时卡片变窄，竖屏视频两侧几乎没有空隙了，把高度也收一点，
-     免得一屏放不下一张卡。 */
-  .toy-card--portrait .toy-card-media { height: 420px; }
+  /* 单列时列宽只有 ~350px，若继续跟横屏等高（约 224px），竖屏视频会被
+     压到 ~126px 宽，基本看不清内容。移动端本来就是竖屏设备，这里给回
+     固定高度，让视频占到卡片宽度的三分之二左右。
+     显式关掉 aspect-ratio，避免和 height 一起生效时产生歧义。 */
+  .toy-card--portrait .toy-card-media {
+    aspect-ratio: auto;
+    height: 420px;
+    max-height: none;
+  }
   .toy-sound-btn {
     left: 8px;
     top: 8px;
